@@ -2,7 +2,6 @@ package cfh.zirconium.gui;
 
 import static javax.swing.JOptionPane.*;
 
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
@@ -17,8 +16,12 @@ import java.util.stream.Collectors;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.BorderFactory;
+import javax.swing.JComponent;
+import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -56,15 +59,21 @@ public class Main {
         var save = new JMenuItem(newAction("Save", this::doSave, "Save code to file"));
         var quit = new JMenuItem(newAction("Quit", this::doQuit, "Quits the program"));
         
-        var file = new JMenu("File");
-        file.add(open);
-        file.add(save);
-        file.addSeparator();
-        file.add(quit);
+        var fileMenu = new JMenu("File");
+        fileMenu.add(open);
+        fileMenu.add(save);
+        fileMenu.addSeparator();
+        fileMenu.add(quit);
+        
+        var help = new JMenuItem(newAction("Help", this::doHelp, "Show help"));
+        
+        var helpMenu = new JMenu("Help");
+        helpMenu.add(help);
         
         var menubar = new JMenuBar();
-        menubar.add(file);
-        
+        menubar.add(fileMenu);
+        menubar.add(helpMenu);
+
         codePane = newTextArea();
         codePane.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -86,8 +95,8 @@ public class Main {
         
         var mainSplit = new JSplitPane();
         mainSplit.setOrientation(mainSplit.VERTICAL_SPLIT);
-        mainSplit.setTopComponent(new JScrollPane(codePane));
-        mainSplit.setBottomComponent(new JScrollPane(logPane));
+        mainSplit.setTopComponent(newScrollPane(codePane));
+        mainSplit.setBottomComponent(newScrollPane(logPane));
         mainSplit.setDividerLocation(500);
         
         frame = new JFrame();
@@ -106,6 +115,22 @@ public class Main {
         frame.validate();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+    }
+    
+    private void doHelp(ActionEvent ev) {
+        var pane = new JEditorPane("text/html", """
+            <HTML><BODY>
+            <H1><CENTER>Zirconium</CENTER></H1>
+            <H2>Stations</H2>
+            <TABLE>
+              <TR><TH><B>.</B><TD>If this is occupied by any amount of drones, dispatch one drone to each linked station.
+              <TR><TH><B>@</B><TD>If this station is not occupied, dispatch one drone to each linked station.
+            </TABLE>
+            """);
+        pane.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+        pane.setEditable(false);
+        pane.setFont(MONOSPACED);
+        showMessageDialog(frame, newScrollPane(pane));
     }
     
     private void doOpen(ActionEvent ev) {
@@ -198,8 +223,13 @@ public class Main {
     
     private JTextArea newTextArea() {
         var pane = new JTextArea();
+        pane.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
         pane.setFont(MONOSPACED);
         return pane;
+    }
+    
+    private JScrollPane newScrollPane(JComponent view) {
+        return new JScrollPane(view);
     }
     
     private void error(Throwable ex, String format, Object... args) {
