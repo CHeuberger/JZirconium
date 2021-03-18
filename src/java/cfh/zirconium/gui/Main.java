@@ -21,7 +21,6 @@ import javax.swing.JComponent;
 import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -32,6 +31,9 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
+
+import cfh.zirconium.Compiler;
+import cfh.zirconium.net.Program;
 
 public class Main {
 
@@ -52,6 +54,7 @@ public class Main {
     private final JTextArea codePane;
     private final JTextArea logPane;
     
+    private Program program = null;
     private boolean changed = false;
     
     private Main() {
@@ -65,6 +68,11 @@ public class Main {
         fileMenu.addSeparator();
         fileMenu.add(quit);
         
+        var compile = new JMenuItem(newAction("Compile", this::doCompile, "Compile current code"));
+        
+        var runMenu = new JMenu("Run");
+        runMenu.add(compile);
+        
         var help = new JMenuItem(newAction("Help", this::doHelp, "Show help"));
         
         var helpMenu = new JMenu("Help");
@@ -72,6 +80,7 @@ public class Main {
         
         var menubar = new JMenuBar();
         menubar.add(fileMenu);
+        menubar.add(runMenu);
         menubar.add(helpMenu);
 
         codePane = newTextArea();
@@ -123,8 +132,9 @@ public class Main {
             <H1><CENTER>Zirconium</CENTER></H1>
             <H2>Stations</H2>
             <TABLE>
-              <TR><TH><B>.</B><TD>If this is occupied by any amount of drones, dispatch one drone to each linked station.
+              <TR><TH><B>0</B><TD>Do not dispatch any drones.
               <TR><TH><B>@</B><TD>If this station is not occupied, dispatch one drone to each linked station.
+              <TR><TH><B>.</B><TD>If this is occupied by any amount of drones, dispatch one drone to each linked station.
             </TABLE>
             """);
         pane.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
@@ -157,6 +167,7 @@ public class Main {
             return;
         }
         changed = false;
+        program = null;
         frame.setTitle(TITLE + " - " + file.getName());
         print("%nLoaded %s%n", file.getAbsolutePath());
     }
@@ -173,6 +184,9 @@ public class Main {
             return;
         }
         file = chooser.getSelectedFile();
+        if (file.getName().indexOf('.') == -1) {
+            file = new File(file.getParentFile(), file.getName() + ".zc");
+        }
         PREFS.put(PREF_FILE, file.getAbsolutePath());
         if (file.exists()) {
             if (showConfirmDialog(frame, "File already exists, overwrite?", "Confirm Save", OK_CANCEL_OPTION) != OK_OPTION) {
@@ -205,6 +219,10 @@ public class Main {
             return;
         }
         frame.dispose();
+    }
+    
+    private void doCompile(ActionEvent ev) {
+        program = new Compiler(this::print).compile(codePane.getText());
     }
     
     private Action newAction(String name, Consumer<ActionEvent> runable, String tooltip) {
@@ -246,5 +264,11 @@ public class Main {
         if (atEnd) {
             logPane.setCaretPosition(logPane.getText().length());
         }
+    }
+    
+    //====================================================================================================
+    
+    public interface Printer {
+        public void print(String format, Object... args);
     }
 }
