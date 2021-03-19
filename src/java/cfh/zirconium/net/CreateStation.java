@@ -1,9 +1,9 @@
 package cfh.zirconium.net;
 
-public class CreateStation extends Station {
+public final class CreateStation extends Station {
 
-    public CreateStation(int row, int col) {
-        super(row, col);
+    public CreateStation(int x, int y) {
+        super(x, y);
     }
 
 }

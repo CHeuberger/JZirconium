@@ -4,23 +4,31 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-public abstract class Station {
+public abstract sealed class Station permits NopStation, CreateStation, DotStation {
 
-    private final int row;
-    private final int col;
+    private final Pos pos;
     private final String string;
     
     private final Set<Station> linked = new HashSet<>();
     
-    public Station(int row, int col) {
-        this.row = row;
-        this.col = col;
-        this.string = String.format("%s[%d,%d]", getClass().getSimpleName(), row, col);
+    public Station(int x, int y) {
+        this(new Pos(x, y));
     }
+    
+    public Station(Pos pos) {
+        this.pos = Objects.requireNonNull(pos);
+        this.string = String.format("%s[%s]", getClass().getSimpleName(), pos);
+    }
+    
+    public Pos pos() { return pos; }
+    
+    public int x() { return pos.x(); }
+    
+    public int y() { return pos.y(); }
     
     @Override
     public int hashCode() {
-        return Objects.hash(row, col);
+        return Objects.hash(pos);
     }
     
     @Override
@@ -28,11 +36,19 @@ public abstract class Station {
         if (obj == this) return true;
         if (obj == null || obj.getClass() != this.getClass()) return false;
         var other = (Station) obj;
-        return other.row == this.row && other.col == this.col;
+        return Objects.equals(other.pos, this.pos);
     }
     
     @Override
     public String toString() {
         return string;
+    }
+
+    public void link(Station station) {
+        if (!linked.add(station)) {
+            System.err.printf("%s already linked to %s%n", this, station);
+        } else {
+            System.out.printf("%s linked to %s%n", this, station);
+        }
     }
 }

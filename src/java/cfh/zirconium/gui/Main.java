@@ -1,6 +1,8 @@
 package cfh.zirconium.gui;
 
+import static java.util.stream.Collectors.*;
 import static javax.swing.JOptionPane.*;
+import static cfh.zirconium.Compiler.*;
 
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -10,8 +12,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.Collections;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.prefs.Preferences;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.swing.AbstractAction;
@@ -31,8 +36,10 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.text.BadLocationException;
 
 import cfh.zirconium.Compiler;
+import cfh.zirconium.Compiler.CompileException;
 import cfh.zirconium.net.Program;
 
 public class Main {
@@ -40,7 +47,7 @@ public class Main {
     private static final String VERSION = "0.0";
     private static final String TITLE = "JZirconium v" + VERSION;
     
-    private static final Font MONOSPACED = new Font("DejaVu Sans Mono", Font.PLAIN, 16);
+    private static final Font MONOSPACED = new Font("DejaVu Sans Mono", Font.PLAIN, 14);
     
     public static void main(String... args) {
         SwingUtilities.invokeLater(Main::new);
@@ -49,6 +56,9 @@ public class Main {
     private static final String PREF_FILE = "zirconium.file";
 
     private final Preferences PREFS = Preferences.userNodeForPackage(getClass());
+    
+    private static final Map<Character, String> HTML_ESC = Collections.unmodifiableMap(
+        Pattern.compile(" ").splitAsStream("<&lt; >&gt;").collect(toMap(s -> s.charAt(0), s -> s.substring(1))));
     
     private final JFrame frame;
     private final JTextArea codePane;
@@ -60,11 +70,14 @@ public class Main {
     private Main() {
         var open = new JMenuItem(newAction("Open", this::doOpen, "Open a new file"));
         var save = new JMenuItem(newAction("Save", this::doSave, "Save code to file"));
+        var clearLog = new JMenuItem(newAction("Clear", this::doClearLog, "Clear log"));
         var quit = new JMenuItem(newAction("Quit", this::doQuit, "Quits the program"));
         
         var fileMenu = new JMenu("File");
         fileMenu.add(open);
         fileMenu.add(save);
+        fileMenu.addSeparator();
+        fileMenu.add(clearLog);
         fileMenu.addSeparator();
         fileMenu.add(quit);
         
@@ -127,20 +140,81 @@ public class Main {
     }
     
     private void doHelp(ActionEvent ev) {
-        var pane = new JEditorPane("text/html", """
-            <HTML><BODY>
-            <H1><CENTER>Zirconium</CENTER></H1>
-            <H2>Stations</H2>
-            <TABLE>
-              <TR><TH><B>0</B><TD>Do not dispatch any drones.
-              <TR><TH><B>@</B><TD>If this station is not occupied, dispatch one drone to each linked station.
-              <TR><TH><B>.</B><TD>If this is occupied by any amount of drones, dispatch one drone to each linked station.
-            </TABLE>
+        
+//        var pane = new JEditorPane("text/html", String.format(
+//            """
+//            <HTML><BODY>
+//            <H1><CENTER>Zirconium</CENTER></H1>
+//            <H2>Stations</H2>
+//            <TABLE>
+//            <TR><TH><TT>%s</TT><TD>If this station is not occupied, dispatch one drone to each linked station.
+//            <TR><TH><TT>%s</TT><TD>If this is occupied by any amount of drones, dispatch one drone to each linked station.
+//            <TR><TH><TT>%s</TT><TD>Dispatch N // K drones to each linked station, where N is the number of drones occupying this station, K is the number of linked stations
+//            <TR><TH><TT>%s</TT><TD>If this station is occupied by N drones, dispatch N - 1 drones to linked stations.
+//            <TR><TH><TT>%s</TT><TD>Dispatch the number of drones occupying this station to each linked station.
+//            <TR><TH><TT>%s</TT><TD>Do not dispatch any drones.
+//            </TABLE>
+//            <H2>Tunnels</H2>
+//            <TABLE>
+//            <TR><TH><TT>%s%s%s%s</TT><TD>horizontal, vertical or diagonals.
+//            <TR><TH><TT>%s</TT><TD>both horizontal and vertical.combination: horizontal and vertical, diagonals, any.
+//            <TR><TH><TT>%s</TT><TD>both diagonals.
+//            <TR><TH><TT>%s</TT><TD>any direction.
+//            </TABLE>
+//            <H2>Apertures</H2>
+//            <TABLE>
+//            <TR><TH><TT>%s%s%s%s</TT><TD>north, east, south, west.
+//            <TR><TH><TT>%s</TT><TD>diagonals.
+//            </TABLE>
+//            """,
+//            escape(CREATE), 
+//            escape(DOT),
+//            escape('O'),
+//            escape('Q'), 
+//            escape('o'), 
+//            escape(NOP), 
+//            
+//            escape(HORZ), escape(VERT), escape(DIAG_U), escape(DIAG_D),
+//            escape(CROSS_HV), escape(CROSS_DD), escape(CROSS_ALL),
+//            escape(APERT_N), escape(APERT_E), escape(APERT_S), escape(APERT_W),
+//            escape(APERT_DIAG)
+//            ));
+        
+        var pane = new JTextArea("""
+            
+                        Z  I  R  C  O  N  I  U  M
+                       =========================== 
+                        
+            STATIONS
+            --------
+            0  Do not dispatch any drones.
+            @  If this station is not occupied, dispatch one drone to each linked station.
+            .  If this is occupied by any amount of drones, dispatch one drone to each linked station.
+            o  Dispatch the number of drones occupying this station to each linked station.
+            Q  If this station is occupied by N drones, dispatch N - 1 drones to linked stations.
+            O  Dispatch N // K drones to each linked station, where N is the number of drones 
+               occupying this station, K is the number of linked stations
+            
+            TUNNELS
+            -------
+            -|/\\  horizontal, vertical or diagonals.
+              +   both horizontal and vertical.combination: horizontal and vertical, diagonals, any.
+              X   both diagonals.
+              *   any direction.
+              
+            APERTURES
+            ---------
+            ^>v<  north, east, south, west.
+              #   diagonals.
             """);
         pane.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
         pane.setEditable(false);
         pane.setFont(MONOSPACED);
         showMessageDialog(frame, newScrollPane(pane));
+    }
+    
+    private static String escape(char ch) {
+        return HTML_ESC.getOrDefault(ch, Character.toString(ch));
     }
     
     private void doOpen(ActionEvent ev) {
@@ -214,6 +288,10 @@ public class Main {
         print("%nSaved  %s%n", file.getAbsoluteFile());
     }
     
+    private void doClearLog(ActionEvent ev) {
+        logPane.setText("");
+    }
+    
     private void doQuit(ActionEvent ev) {
         if (changed && showConfirmDialog(frame, "Code changed, quit anyway?", "Quit?", OK_CANCEL_OPTION) != OK_OPTION) {
             return;
@@ -222,7 +300,27 @@ public class Main {
     }
     
     private void doCompile(ActionEvent ev) {
-        program = new Compiler(this::print).compile(codePane.getText());
+        try {
+            program = new Compiler(this::print).compile(codePane.getText());
+        } catch (CompileException ex) {
+            if (ex.pos != null) {
+                try {
+                    var ls = codePane.getLineStartOffset(ex.pos.y()-1);
+                    var le = codePane.getLineEndOffset(ex.pos.y()-1);
+                    var index = ls + ex.pos.x() - 1;
+                    if (index >= le) {
+                        index = le - 1;
+                    }
+                    codePane.setCaretPosition(index);
+                    if (index < le-1) {
+                        codePane.select(index, index+1);
+                    }
+                } catch (BadLocationException ex1) {
+                    ex1.printStackTrace();
+                }
+            }
+            error(ex, "compiling at %s", ex.pos);
+        }
     }
     
     private Action newAction(String name, Consumer<ActionEvent> runable, String tooltip) {

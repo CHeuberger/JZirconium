@@ -1,8 +1,8 @@
 package cfh.zirconium.net;
 
-public class NopStation extends Station {
+public final class NopStation extends Station {
 
-    public NopStation(int row, int col) {
-        super(row, col);
+    public NopStation(int x, int y) {
+        super(x, y);
     }
 }
