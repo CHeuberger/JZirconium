@@ -2,18 +2,10 @@ package cfh.zirconium;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-
 import cfh.zirconium.gui.Main.Printer;
-import cfh.zirconium.net.CreateStation;
-import cfh.zirconium.net.DotStation;
-import cfh.zirconium.net.NopStation;
-import cfh.zirconium.net.Pos;
-import cfh.zirconium.net.Program;
-import cfh.zirconium.net.Station;
+import cfh.zirconium.net.*;
 
 public class Compiler {
 
@@ -23,6 +15,9 @@ public class Compiler {
     public static final char NOP = '0';
     public static final char CREATE = '@';
     public static final char DOT = '.';
+    public static final char DUP = 'o';
+    public static final char Q = 'Q';
+    public static final char SPLIT = 'O';
     
     // Tunnels
     public static final char HORZ = '-';
@@ -67,18 +62,18 @@ public class Compiler {
         boolean isTunnel(char ch) { return tunnels.indexOf(ch) != -1; }
     }
     
+    //----------------------------------------------------------------------------------------------
+    
     private final Printer printer;
     
     public Compiler(Printer printer) {
         this.printer = Objects.requireNonNull(printer);
     }
     
-    public Program compile(String code) throws CompileException {
+    public Program compile(String name, String code) throws CompileException {
         printer.print("%n");
         
         char[][] chars = parse(code);
-        var rows = chars.length;
-        var cols = rows==0 ? 0 : chars[0].length;
         
         // bubles + lenses
         
@@ -93,7 +88,7 @@ public class Compiler {
         
         // metropolis
         
-        return null;
+        return new Program(name, stations, printer);
     }
     
     private char[][] parse(String code) {
@@ -126,9 +121,12 @@ public class Compiler {
                 var ch = row[x];
                 var station = switch (ch) {
                     case ' ' -> null;
-                    case NOP -> new NopStation(x, y);
-                    case CREATE -> new CreateStation(x, y);
-                    case DOT -> new DotStation(x, y);
+                    case NOP -> new NopStation(x, y, printer);
+                    case CREATE -> new CreateStation(x, y, printer);
+                    case DOT -> new DotStation(x, y, printer);
+                    case DUP -> new DupStation(x, y, printer);
+                    case Q -> new QStation(x, y, printer);
+                    case SPLIT -> new SplitStation(x, y, printer);
                     case HORZ, VERT, DIAG_U, DIAG_D, CROSS_HV, CROSS_DD, CROSS_ALL, 
                          APERT_N, APERT_E, APERT_S, APERT_W, APERT_DIAG -> null;
                     default -> throw new CompileException(new Pos(x, y), "unrecognized symbol '" + ch + "'");

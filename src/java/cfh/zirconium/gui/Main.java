@@ -1,10 +1,6 @@
 package cfh.zirconium.gui;
 
-import static java.util.stream.Collectors.*;
 import static javax.swing.JOptionPane.*;
-import static cfh.zirconium.Compiler.*;
-
-import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -12,18 +8,14 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.util.Collections;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.prefs.Preferences;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.JComponent;
-import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
@@ -41,55 +33,65 @@ import javax.swing.text.BadLocationException;
 import cfh.zirconium.Compiler;
 import cfh.zirconium.Compiler.CompileException;
 import cfh.zirconium.net.Program;
+import cfh.zirconium.Settings;
 
 public class Main {
 
-    private static final String VERSION = "0.0";
+    public static final String VERSION = "0.0";
     private static final String TITLE = "JZirconium v" + VERSION;
-    
-    private static final Font MONOSPACED = new Font("DejaVu Sans Mono", Font.PLAIN, 14);
     
     public static void main(String... args) {
         SwingUtilities.invokeLater(Main::new);
     }
     
     private static final String PREF_FILE = "zirconium.file";
-
-    private final Preferences PREFS = Preferences.userNodeForPackage(getClass());
     
-    private static final Map<Character, String> HTML_ESC = Collections.unmodifiableMap(
-        Pattern.compile(" ").splitAsStream("<&lt; >&gt;").collect(toMap(s -> s.charAt(0), s -> s.substring(1))));
+    //----------------------------------------------------------------------------------------------
+    
+    private final Settings settings = Settings.instance();
+    
+    private final Preferences PREFS = Preferences.userNodeForPackage(getClass());
     
     private final JFrame frame;
     private final JTextArea codePane;
     private final JTextArea logPane;
     
+    private final Action runAction;
+    private final Action stepAction;
+    
+    private String name = "unnamed";
     private Program program = null;
     private boolean changed = false;
     
     private Main() {
-        var open = new JMenuItem(newAction("Open", this::doOpen, "Open a new file"));
-        var save = new JMenuItem(newAction("Save", this::doSave, "Save code to file"));
-        var clearLog = new JMenuItem(newAction("Clear", this::doClearLog, "Clear log"));
-        var quit = new JMenuItem(newAction("Quit", this::doQuit, "Quits the program"));
+        var open = newAction("Open", this::doOpen, "Open a new file");
+        var save = newAction("Save", this::doSave, "Save code to file");
+        var clearLog = newAction("Clear", this::doClearLog, "Clear log");
+        var quit =newAction("Quit", this::doQuit, "Quits the program");
         
         var fileMenu = new JMenu("File");
-        fileMenu.add(open);
-        fileMenu.add(save);
+        fileMenu.add(newMenuItem(open));
+        fileMenu.add(newMenuItem(save));
         fileMenu.addSeparator();
-        fileMenu.add(clearLog);
+        fileMenu.add(newMenuItem(clearLog));
         fileMenu.addSeparator();
-        fileMenu.add(quit);
+        fileMenu.add(newMenuItem(quit));
         
-        var compile = new JMenuItem(newAction("Compile", this::doCompile, "Compile current code"));
+        
+        var compile =newAction("Compile", this::doCompile, "Compile current code");
+        runAction = newAction("Run", this::doRun, "Run the program");
+        stepAction = newAction("Step", this::doStep, "Execute one step is program already started; otherwise it is started but stopped at first tick");
         
         var runMenu = new JMenu("Run");
-        runMenu.add(compile);
+        runMenu.add( newMenuItem(compile));
+        runMenu.addSeparator();
+        runMenu.add(newMenuItem(runAction));
+        runMenu.add(newMenuItem(stepAction));
         
-        var help = new JMenuItem(newAction("Help", this::doHelp, "Show help"));
+        var help = newAction("Help", this::doHelp, "Show help");
         
         var helpMenu = new JMenu("Help");
-        helpMenu.add(help);
+        helpMenu.add(newMenuItem(help));
         
         var menubar = new JMenuBar();
         menubar.add(fileMenu);
@@ -129,92 +131,19 @@ public class Main {
                 doQuit(null);
             }
         });
-        frame.setFont(new Font("monospaced", Font.PLAIN, 14));
         frame.setJMenuBar(menubar);
         frame.setTitle(TITLE);
         frame.add(mainSplit);
         frame.setSize(1000, 900);
         frame.validate();
         frame.setLocationRelativeTo(null);
+        
+        update();
         frame.setVisible(true);
     }
     
     private void doHelp(ActionEvent ev) {
-        
-//        var pane = new JEditorPane("text/html", String.format(
-//            """
-//            <HTML><BODY>
-//            <H1><CENTER>Zirconium</CENTER></H1>
-//            <H2>Stations</H2>
-//            <TABLE>
-//            <TR><TH><TT>%s</TT><TD>If this station is not occupied, dispatch one drone to each linked station.
-//            <TR><TH><TT>%s</TT><TD>If this is occupied by any amount of drones, dispatch one drone to each linked station.
-//            <TR><TH><TT>%s</TT><TD>Dispatch N // K drones to each linked station, where N is the number of drones occupying this station, K is the number of linked stations
-//            <TR><TH><TT>%s</TT><TD>If this station is occupied by N drones, dispatch N - 1 drones to linked stations.
-//            <TR><TH><TT>%s</TT><TD>Dispatch the number of drones occupying this station to each linked station.
-//            <TR><TH><TT>%s</TT><TD>Do not dispatch any drones.
-//            </TABLE>
-//            <H2>Tunnels</H2>
-//            <TABLE>
-//            <TR><TH><TT>%s%s%s%s</TT><TD>horizontal, vertical or diagonals.
-//            <TR><TH><TT>%s</TT><TD>both horizontal and vertical.combination: horizontal and vertical, diagonals, any.
-//            <TR><TH><TT>%s</TT><TD>both diagonals.
-//            <TR><TH><TT>%s</TT><TD>any direction.
-//            </TABLE>
-//            <H2>Apertures</H2>
-//            <TABLE>
-//            <TR><TH><TT>%s%s%s%s</TT><TD>north, east, south, west.
-//            <TR><TH><TT>%s</TT><TD>diagonals.
-//            </TABLE>
-//            """,
-//            escape(CREATE), 
-//            escape(DOT),
-//            escape('O'),
-//            escape('Q'), 
-//            escape('o'), 
-//            escape(NOP), 
-//            
-//            escape(HORZ), escape(VERT), escape(DIAG_U), escape(DIAG_D),
-//            escape(CROSS_HV), escape(CROSS_DD), escape(CROSS_ALL),
-//            escape(APERT_N), escape(APERT_E), escape(APERT_S), escape(APERT_W),
-//            escape(APERT_DIAG)
-//            ));
-        
-        var pane = new JTextArea("""
-            
-                        Z  I  R  C  O  N  I  U  M
-                       =========================== 
-                        
-            STATIONS
-            --------
-            0  Do not dispatch any drones.
-            @  If this station is not occupied, dispatch one drone to each linked station.
-            .  If this is occupied by any amount of drones, dispatch one drone to each linked station.
-            o  Dispatch the number of drones occupying this station to each linked station.
-            Q  If this station is occupied by N drones, dispatch N - 1 drones to linked stations.
-            O  Dispatch N // K drones to each linked station, where N is the number of drones 
-               occupying this station, K is the number of linked stations
-            
-            TUNNELS
-            -------
-            -|/\\  horizontal, vertical or diagonals.
-              +   both horizontal and vertical.combination: horizontal and vertical, diagonals, any.
-              X   both diagonals.
-              *   any direction.
-              
-            APERTURES
-            ---------
-            ^>v<  north, east, south, west.
-              #   diagonals.
-            """);
-        pane.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-        pane.setEditable(false);
-        pane.setFont(MONOSPACED);
-        showMessageDialog(frame, newScrollPane(pane));
-    }
-    
-    private static String escape(char ch) {
-        return HTML_ESC.getOrDefault(ch, Character.toString(ch));
+        showMessageDialog(frame, newScrollPane(new Help().pane()), "Help", OK_OPTION);
     }
     
     private void doOpen(ActionEvent ev) {
@@ -224,7 +153,7 @@ public class Main {
         var file = new File(PREFS.get(PREF_FILE, "."));
         var chooser = new JFileChooser();
         chooser.setAcceptAllFileFilterUsed(true);
-        chooser.setFileFilter(new FileNameExtensionFilter("Zirconium", "zc", "zch"));
+        chooser.setFileFilter(new FileNameExtensionFilter("Zirconium Source", "zc", "zch"));
         chooser.setFileSelectionMode(chooser.FILES_ONLY);
         chooser.setMultiSelectionEnabled(false);
         chooser.setSelectedFile(file);
@@ -241,8 +170,9 @@ public class Main {
             return;
         }
         changed = false;
-        program = null;
-        frame.setTitle(TITLE + " - " + file.getName());
+        name = file.getName();
+        change(null);
+        frame.setTitle(TITLE + " - " + name);
         print("%nLoaded %s%n", file.getAbsolutePath());
     }
     
@@ -250,7 +180,7 @@ public class Main {
         var file = new File(PREFS.get(PREF_FILE, "."));
         var chooser = new JFileChooser();
         chooser.setAcceptAllFileFilterUsed(true);
-        chooser.setFileFilter(new FileNameExtensionFilter("Zirconium", "zc", "zch"));
+        chooser.setFileFilter(new FileNameExtensionFilter("Zirconium Source", "zc", "zch"));
         chooser.setFileSelectionMode(chooser.FILES_ONLY);
         chooser.setMultiSelectionEnabled(false);
         chooser.setSelectedFile(file);
@@ -284,7 +214,8 @@ public class Main {
             return;
         }
         changed = false;
-        frame.setTitle(TITLE + " - " + file.getName());
+        name = file.getName();
+        frame.setTitle(TITLE + " - " + name);
         print("%nSaved  %s%n", file.getAbsoluteFile());
     }
     
@@ -300,9 +231,11 @@ public class Main {
     }
     
     private void doCompile(ActionEvent ev) {
+        // thread
         try {
-            program = new Compiler(this::print).compile(codePane.getText());
+            change(new Compiler(this::print).compile(name, codePane.getText()));
         } catch (CompileException ex) {
+            change(null);
             if (ex.pos != null) {
                 try {
                     var ls = codePane.getLineStartOffset(ex.pos.y()-1);
@@ -323,6 +256,27 @@ public class Main {
         }
     }
     
+    private void doRun(ActionEvent ev) {
+        // TODO
+    }
+    
+    private void doStep(ActionEvent ev) {
+        if (program != null) {
+            program.step();
+        }
+    }
+    
+    private void change(Program program) {
+        this.program = program;
+        update();
+    }
+    
+    private void update() {
+        boolean runable = program != null;
+        runAction.setEnabled(runable);
+        stepAction.setEnabled(runable);
+    }
+    
     private Action newAction(String name, Consumer<ActionEvent> runable, String tooltip) {
         @SuppressWarnings("serial")
         var action = new AbstractAction(name) {
@@ -337,10 +291,14 @@ public class Main {
         return action;
     }
     
+    private JMenuItem newMenuItem(Action action) {
+        return new JMenuItem(action);
+    }
+    
     private JTextArea newTextArea() {
         var pane = new JTextArea();
         pane.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-        pane.setFont(MONOSPACED);
+        pane.setFont(settings.codeFont());
         return pane;
     }
     
