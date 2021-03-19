@@ -79,7 +79,7 @@ public class Compiler {
         
         var stations = scanStations(chars);
         
-        // bounded stations
+//        var bounded = bound(chars, stations);
         
         linkStations(chars, stations);
         // check unconnected tunnels
@@ -88,7 +88,7 @@ public class Compiler {
         
         // metropolis
         
-        return new Program(name, stations, printer);
+        return new Program(name, stations.values(), printer);
     }
     
     private char[][] parse(String code) {
@@ -139,6 +139,10 @@ public class Compiler {
         printer.print("scaned %d stations%n", map.size());
         return map;
     }
+    
+//    private List<Station> bound(char[][] chars, Map<Pos, Station> stations) {
+//        
+//    }
     
     //  \|/
     //  -o-

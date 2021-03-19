@@ -13,7 +13,7 @@ public final class SplitStation extends Station {
     @Override
     protected void tick0() {
         var n = tokens();
-        var k = linked();
+        var k = linked().size();
         var tokens = n / k;
         if (tokens > 0) {
             send(tokens);

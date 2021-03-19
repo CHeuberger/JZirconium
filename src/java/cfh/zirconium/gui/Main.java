@@ -31,8 +31,8 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
 
 import cfh.zirconium.Compiler;
+import cfh.zirconium.Program;
 import cfh.zirconium.Compiler.CompileException;
-import cfh.zirconium.net.Program;
 import cfh.zirconium.Settings;
 
 public class Main {
