@@ -9,60 +9,60 @@ import java.util.Set;
 import cfh.zirconium.gui.Main.Printer;
 
 /** Bound station. */
-public final class Bound extends Node {
+public final class Bound extends Station {
 
-    private final Set<Station> childs;
+    private final Set<Single> childs;
     
     /** Creates a bound station with given child stations. */
-    public Bound(Printer printer, Station... childs) {
+    public Bound(Printer printer, Single... childs) {
         super(printer);
         this.childs = new HashSet<>(Arrays.asList(childs));
         this.childs.forEach(s -> s.parent(this));
     }
     
     /** Child stations of this bound station. */
-    public Collection<Station> childs() {
+    public Collection<Single> childs() {
         return Collections.unmodifiableCollection(childs);
     }
     
     @Override
-    public boolean isNeighbour(Station station) {
+    public boolean isNeighbour(Single station) {
         return childs.stream().anyMatch(s -> s.isNeighbour(station));
     }
 
     /** Adds a bounded station to this bound station. */
-    public void addChild(Station station) {
+    public void addChild(Single station) {
         childs.add(station);
         station.parent(this);
     }
     
     @Override
     public void reset() {
-        childs.forEach(Station::reset);
+        childs.forEach(Single::reset);
     }
 
     @Override
     public void preTick() {
-        childs.forEach(Station::preTick);
+        childs.forEach(Single::preTick);
     }
 
     @Override
     public void tick() {
-        childs.forEach(Station::tick);
+        childs.forEach(Single::tick);
     }
     
     @Override
     public void posTick() {
-        childs.forEach(Station::posTick);
+        childs.forEach(Single::posTick);
     }
 
     @Override
     protected int drones() {
-        return childs.stream().mapToInt(Station::drones).sum();
+        return childs.stream().mapToInt(Single::drones).sum();
     }
 
     @Override
-    protected Collection<Station> linked() {
-        return childs.stream().map(Station::linked).flatMap(Collection::stream).toList();
+    protected Collection<Single> linked() {
+        return childs.stream().map(Single::linked).flatMap(Collection::stream).toList();
     }
 }

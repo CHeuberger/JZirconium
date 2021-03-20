@@ -7,7 +7,7 @@ import cfh.zirconium.gui.Main.Printer;
  * Dispatch N // K drones to each linked station, where N is the number of drones
  * occupying this station, K is the number of linked stations
  */
-public final class SplitStation extends Station {
+public final class SplitStation extends Single {
 
     public SplitStation(int x, int y, Printer printer) {
         super(x, y, printer);

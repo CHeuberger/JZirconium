@@ -6,7 +6,7 @@ import cfh.zirconium.gui.Main.Printer;
  * {@code 0} Station.
  * Do not dispatch any drones.
  */
-public final class NopStation extends Station {
+public final class NopStation extends Single {
 
     public NopStation(int x, int y, Printer printer) {
         super(x, y, printer);
@@ -14,6 +14,6 @@ public final class NopStation extends Station {
 
     @Override
     protected void tick0() {
-        // nothing
+        // receive(drones());  // TODO undocumented
     }
 }

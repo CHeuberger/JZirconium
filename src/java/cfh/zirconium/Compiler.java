@@ -99,11 +99,11 @@ public class Compiler {
         
         // TODO bubles + lenses
         
-        var stations = scanStations(chars);
+        var singles = scanStations(chars);
         
-        var nodes = bound(chars, stations);
+        var nodes = bound(chars, singles);
         
-        linkStations(chars, stations);
+        linkStations(chars, singles);
         // TODO check unconnected tunnels
         
         // exclusion zones
@@ -140,8 +140,8 @@ public class Compiler {
     }
     
     /** Scans the character matrix for stations. */
-    private Map<Pos, Station> scanStations(char[][] chars) throws CompileException {
-        var map = new HashMap<Pos, Station>();
+    private Map<Pos, Single> scanStations(char[][] chars) throws CompileException {
+        var map = new HashMap<Pos, Single>();
         for (var y = 1; y < chars.length; y++) {
             var row = chars[y];
             for (var x = 1; x < row.length; x++) {
@@ -168,18 +168,18 @@ public class Compiler {
     }
     
     /**
-     * Creates bound station from adjacent nodes.
+     * Creates bound station from adjacent single stations.
      * Returns a list including all bound stations and all stations that are not bounded.
      */
-    private List<Node> bound(char[][] chars, Map<Pos, Station> stations) throws CompileException {
-        var nodes = new ArrayList<Node>();
+    private List<Station> bound(char[][] chars, Map<Pos, Single> singles) throws CompileException {
+        var nodes = new ArrayList<Station>();
         var count = 0;
-        for (var station : stations.values()) {
+        for (var station : singles.values()) {
             Bound bound = null;
             for (var n : new ArrayList<>(nodes)) {
                 if (n.isNeighbour(station)) {
                     if (bound == null) {
-                        if (n instanceof Station s) {
+                        if (n instanceof Single s) {
                             nodes.remove(s);
                             bound = new Bound(printer, s, station);
                             nodes.add(bound);
@@ -191,7 +191,7 @@ public class Compiler {
                             throw new CompileException(station.pos(), "unhandled neighbour " + n.getClass().getSimpleName());
                         }
                     } else {
-                        if (n instanceof Station s) {
+                        if (n instanceof Single s) {
                             nodes.remove(s);
                             bound.addChild(s);
                         } else if (n instanceof Bound b) {
@@ -214,8 +214,8 @@ public class Compiler {
     }
     
     /** Links stations. */
-    private void linkStations(char[][] chars, Map<Pos, Station> stations) throws CompileException {
-        for (var station : stations.values()) {
+    private void linkStations(char[][] chars, Map<Pos, Single> singles) throws CompileException {
+        for (var station : singles.values()) {
             for (var dir : Dir.values()) {
                 var link = dir.ordinal() < 4;
                 var x = station.x() + dir.dx;
@@ -228,7 +228,7 @@ public class Compiler {
                         ch = chars[y][x];
                     } while (dir.isTunnel(ch));
                     var pos = new Pos(x, y);
-                    var start = stations.get(pos);
+                    var start = singles.get(pos);
                     if (start == null) {
                         throw new CompileException(pos, "tunnel not starting at station");
                     }
@@ -237,7 +237,7 @@ public class Compiler {
                     }
                 } else if (dir.isOut(ch)) {
                     var pos = new Pos(x+dir.dx, y+dir.dy);
-                    var dest = stations.get(pos);
+                    var dest = singles.get(pos);
                     if (dest == null) {
                         throw new CompileException(pos, "tunnel not ending at station");
                     }
@@ -257,7 +257,7 @@ public class Compiler {
                         ch = chars[y][x];
                     }
                     var pos = new Pos(x, y);
-                    var dest = stations.get(pos);
+                    var dest = singles.get(pos);
                     if (dest == null) {
                         throw new CompileException(pos, "tunnel not ending at station");
                     }

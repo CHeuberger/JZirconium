@@ -6,7 +6,7 @@ import cfh.zirconium.gui.Main.Printer;
  * {@code .} Station.
  * If this is occupied by any amount of drones, dispatch one drone to each linked station.
  */
-public final class DotStation extends Station {
+public final class DotStation extends Single {
 
     public DotStation(int x, int y, Printer printer) {
         super(x, y, printer);
