@@ -32,11 +32,14 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
 
@@ -44,6 +47,7 @@ import cfh.zirconium.Compiler;
 import cfh.zirconium.Program;
 import cfh.zirconium.Compiler.CompileException;
 import cfh.zirconium.Settings;
+import cfh.zirconium.net.Pos;
 
 /** Main for GUI. */
 public class Main {
@@ -167,6 +171,19 @@ public class Main {
         var singleStationTable = new JTable(singleTableModel);
         singleStationTable.setAutoResizeMode(singleStationTable.AUTO_RESIZE_OFF);
         singleStationTable.setFont(settings.mainFont());
+        singleStationTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        singleStationTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            @Override
+            public void valueChanged(ListSelectionEvent e) {
+                if (!e.getValueIsAdjusting()) {
+                    var row = singleStationTable.getSelectedRow();
+                    if (row != -1) {
+                        var station = singleTableModel.station(row);
+                        mark(station.pos());
+                    }
+                }
+            }
+        });
         
         var detailPane = new JTabbedPane();
         detailPane.addTab("Single", newScrollPane(singleStationTable));
@@ -328,20 +345,7 @@ public class Main {
         } catch (CompileException ex) {
             setProgram(null);
             if (ex.pos != null) {
-                try {
-                    var ls = codePane.getLineStartOffset(ex.pos.y()-1);
-                    var le = codePane.getLineEndOffset(ex.pos.y()-1);
-                    var index = ls + ex.pos.x() - 1;
-                    if (index >= le) {
-                        index = le - 1;
-                    }
-                    codePane.setCaretPosition(index);
-                    if (index < le-1) {
-                        codePane.select(index, index+1);
-                    }
-                } catch (BadLocationException ex1) {
-                    ex1.printStackTrace();
-                }
+                mark(ex.pos);
             }
             error(ex, "compiling at %s", ex.pos);
         }
@@ -382,7 +386,26 @@ public class Main {
         runAction.setEnabled(false);  // TODO
         stepAction.setEnabled(runable);
     }
-    
+
+    /** Mark given pos (select it). */
+    private void mark(Pos pos) {
+        try {
+            var ls = codePane.getLineStartOffset(pos.y()-1);
+            var le = codePane.getLineEndOffset(pos.y()-1);
+            var index = ls + pos.x() - 1;
+            if (index >= le) {
+                index = le - 1;
+            }
+            codePane.setCaretPosition(index);
+            if (index < le) {
+                codePane.select(index, index+1);
+            }
+            codePane.requestFocusInWindow();
+        } catch (BadLocationException ex1) {
+            ex1.printStackTrace();
+        }
+    }
+
     /** Creates new Action. */
     private Action newAction(String title, Consumer<ActionEvent> runable, String tooltip) {
         var action = new AbstractAction(title) {

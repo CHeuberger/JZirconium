@@ -12,6 +12,7 @@ import cfh.zirconium.Program;
 import cfh.zirconium.net.Single;
 import cfh.zirconium.net.Station;
 
+/** TableModel for single station details. */
 @SuppressWarnings("serial")
 public class SingleModel extends AbstractTableModel {
     
@@ -24,6 +25,7 @@ public class SingleModel extends AbstractTableModel {
     
     private final List<Single> stations = new ArrayList<>();
     
+    /** Program changed. */
     void program(Program program) {
         stations.clear();
         if (program != null) {
@@ -35,6 +37,11 @@ public class SingleModel extends AbstractTableModel {
             .forEach(stations::add);
         }
         fireTableDataChanged();
+    }
+    
+    /** Return the station at row line. */
+    public Single station(int row) {
+        return stations.get(row);
     }
     
     @Override
