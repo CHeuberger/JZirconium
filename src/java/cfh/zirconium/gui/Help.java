@@ -8,12 +8,14 @@ import javax.swing.JTextArea;
 
 import cfh.zirconium.Settings;
 
+/** Help pane. */
 public class Help {
     
     private final Settings settings = Settings.instance();
     
     private final JTabbedPane pane;
     
+    //* Creates a new help pane. */
     public Help() {
         final var HEADER = String.format("""
                                     J Z I R C O N I U M  v%-5s                         
@@ -24,13 +26,26 @@ public class Help {
         
         final var INTRO = String.format(HEADER + """
                                               INTRO
-                                             =======
+                                             =======                                 
                                              
-            WIP
+            Zirconium is an esoteric programming language made in September of 2020 
+            by RocketRace.
+            
+            A Zirconium program (or a map) is a network of stations in two-dimensional space,
+            linked together with tunnels, akin to a graph with nodes. At each tick of time, 
+            stations will dispatch a number of drones to occupy linked stations. 
+                
+                   0
+                .--+--O
+                 \\ | /
+                  \\|/
+                   o----@
             """);
         final var STATIONS = String.format(HEADER + """
                                              STATIONS
                                             ==========
+            At the beginning of the tick, all stations count the number of drones *occupying* them, 
+            and then consume all those drones. Afterwards, the stations execute the following: 
                                              
             0  Do not dispatch any drones.
             @  If this station is not occupied, dispatch one drone to each linked station.
@@ -38,7 +53,7 @@ public class Help {
             o  Dispatch the number of drones occupying this station to each linked station.
             Q  If this station is occupied by N drones, dispatch N - 1 drones to linked stations.
             O  Dispatch N // K drones to each linked station, where N is the number of drones 
-               occupying this station, K is the number of linked stations
+               occupying this station, K is the number of linked stations (division by 0 returns 0)
             """);
         final var TUNNELS = String.format(HEADER + """
                                              TUNNELS
@@ -69,10 +84,12 @@ public class Help {
         pane.addTab("APERTURES", newArea(APERTURES));
     }
     
+    /** Help pane. */
     public JComponent pane() {
         return pane;
     }
     
+    /** Creates JTextArea. */
     private JComponent newArea(String text) {
         var area = new JTextArea(text);
         area.setBorder(BorderFactory.createEmptyBorder(8, 4, 8, 4));

@@ -8,41 +8,39 @@ import java.util.Set;
 
 import cfh.zirconium.gui.Main.Printer;
 import cfh.zirconium.net.Node;
-import cfh.zirconium.net.Station;
 
+/** A program (map). */
 public class Program {
 
     private final String name;
+    // TODO sourece?
     private final Set<Node> nodes;
     private final Printer printer;
     
     private boolean started = false;
 
-    public Program(String name, Collection<Station> stations, Printer printer) {
+    /** Creates a program with given stations. */
+    public Program(String name, Collection<Node> stations, Printer printer) {
         this.name = Objects.requireNonNull(name);
         this.nodes = Collections.unmodifiableSet(new HashSet<>(stations));
         this.printer = Objects.requireNonNull(printer);
     }
     
+    /** Executes a single step, starting if not already done. */
     public void step() {
         if (!started) {
             start();
-        } else {
-            printer.print("tick %s%n", name);
-            nodes.forEach(Node::tick);
-            printer.print("tack %s%n", name);
-            nodes.forEach(Node::tack);
         }
+        printer.print("step %s%n", name);
+        nodes.forEach(Node::preTick);
+        nodes.forEach(Node::tick);
+        nodes.forEach(Node::posTick);
     }
 
+    /** Starts the program, basically only resets all stations. */
     private void start() {
         printer.print("start %s%n", name);
-        reset();
-        started = true;
-    }
-    
-    private void reset() {
-        printer.print("reset %s%n", name);
         nodes.forEach(Node::reset);
+        started = true;
     }
 }

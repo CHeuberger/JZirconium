@@ -1,12 +1,16 @@
 package cfh.zirconium;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
 import cfh.zirconium.gui.Main.Printer;
 import cfh.zirconium.net.*;
 
+/** Compiler for Zirconium programs. */
 public class Compiler {
 
     public static final char EMPTY = ' ';
@@ -35,6 +39,13 @@ public class Compiler {
     public static final char APERT_W = '<';
     public static final char APERT_DIAG = '#';
     
+    // TODO exclusion zones, defect stations
+    
+    // TODO metropolis, Synthetic stations
+    
+    // TODO add fences as *
+    // TODO add forts as *
+    /** Directions. */
     private enum Dir {
         N ( 0, -1, APERT_S, APERT_N, VERT, CROSS_HV, CROSS_ALL),
         NE(+1, -1, APERT_DIAG, APERT_DIAG, DIAG_U, CROSS_DD, CROSS_ALL),
@@ -45,11 +56,17 @@ public class Compiler {
         W (-1,  0, APERT_E, APERT_W, HORZ, CROSS_HV, CROSS_ALL),
         NW(-1, -1, APERT_DIAG, APERT_DIAG, DIAG_D, CROSS_DD, CROSS_ALL);
         
+        /** X step for this direction. */
         final int dx;
+        /** Y step for this direction. */
         final int dy;
+        /** Aperture comming from this direction. */
         final char apertureIn;
+        /** Aperture at end of this direction. */
         final char apertureOut;
+        /** Valid tunnels for this direction, excluded apertures. */
         final String tunnels;
+        /** Creates direciton instance. */
         private Dir(int dx, int dy, char apertureIn, char apertureOut, char... tunnels) {
             this.dx = dx;
             this.dy = dy;
@@ -57,8 +74,11 @@ public class Compiler {
             this.apertureOut = apertureOut;
             this.tunnels = new String(tunnels);
         }
+        /** Is given character an incomming aperture for this direction. */
         boolean isIn(char ch) { return ch == apertureIn; }
+        /** Is given character an outgoing aperture for this direction. */
         boolean isOut(char ch) { return ch == apertureOut; }
+        /** Is given character a valid tunnel for this direction, excluded apertures. */
         boolean isTunnel(char ch) { return tunnels.indexOf(ch) != -1; }
     }
     
@@ -66,31 +86,37 @@ public class Compiler {
     
     private final Printer printer;
     
+    /** Creates a compiler. */
     public Compiler(Printer printer) {
         this.printer = Objects.requireNonNull(printer);
     }
     
+    /** Compiles the given code and creates a program with givne name. */
     public Program compile(String name, String code) throws CompileException {
         printer.print("%n");
         
         char[][] chars = parse(code);
         
-        // bubles + lenses
+        // TODO bubles + lenses
         
         var stations = scanStations(chars);
         
-//        var bounded = bound(chars, stations);
+        var nodes = bound(chars, stations);
         
         linkStations(chars, stations);
-        // check unconnected tunnels
+        // TODO check unconnected tunnels
         
         // exclusion zones
         
         // metropolis
         
-        return new Program(name, stations.values(), printer);
+        return new Program(name, nodes, printer);
     }
     
+    /** 
+     * Creates a character matrix for given code. 
+     * One extra empty row/column is added to each side of boundary.
+     */
     private char[][] parse(String code) {
         var lines = code.split("\n");
         var rows = lines.length;
@@ -113,6 +139,7 @@ public class Compiler {
         return chars;
     }
     
+    /** Scans the character matrix for stations. */
     private Map<Pos, Station> scanStations(char[][] chars) throws CompileException {
         var map = new HashMap<Pos, Station>();
         for (var y = 1; y < chars.length; y++) {
@@ -140,13 +167,53 @@ public class Compiler {
         return map;
     }
     
-//    private List<Station> bound(char[][] chars, Map<Pos, Station> stations) {
-//        
-//    }
+    /**
+     * Creates bound station from adjacent nodes.
+     * Returns a list including all bound stations and all stations that are not bounded.
+     */
+    private List<Node> bound(char[][] chars, Map<Pos, Station> stations) throws CompileException {
+        var nodes = new ArrayList<Node>();
+        var count = 0;
+        for (var station : stations.values()) {
+            Bound bound = null;
+            for (var n : new ArrayList<>(nodes)) {
+                if (n.isNeighbour(station)) {
+                    if (bound == null) {
+                        if (n instanceof Station s) {
+                            nodes.remove(s);
+                            bound = new Bound(printer, s, station);
+                            nodes.add(bound);
+                            count += 1;
+                        } else if (n instanceof Bound b) {
+                            bound = b;
+                            bound.addChild(station);
+                        } else {
+                            throw new CompileException(station.pos(), "unhandled neighbour " + n.getClass().getSimpleName());
+                        }
+                    } else {
+                        if (n instanceof Station s) {
+                            nodes.remove(s);
+                            bound.addChild(s);
+                        } else if (n instanceof Bound b) {
+                            nodes.remove(b);
+                            b.childs().forEach(bound::addChild);
+                            bound = b;
+                            count -= 1;
+                        } else {
+                            throw new CompileException(station.pos(), "unhandled neighbour " + n.getClass().getSimpleName());
+                        }
+                    }
+                }
+            }
+            if (bound == null) {
+                nodes.add(station);
+            }
+        }
+        printer.print("%d bound stations%n", count);
+        return nodes;
+    }
     
-    //  \|/
-    //  -o-
-    //  /|\
+    /** Links stations. */
     private void linkStations(char[][] chars, Map<Pos, Station> stations) throws CompileException {
         for (var station : stations.values()) {
             for (var dir : Dir.values()) {
@@ -166,7 +233,7 @@ public class Compiler {
                         throw new CompileException(pos, "tunnel not starting at station");
                     }
                     if (link) {
-                        start.link(station);
+                        start.linkTo(station);
                     }
                 } else if (dir.isOut(ch)) {
                     var pos = new Pos(x+dir.dx, y+dir.dy);
@@ -175,7 +242,7 @@ public class Compiler {
                         throw new CompileException(pos, "tunnel not ending at station");
                     }
                     if (link) {
-                        station.link(dest);
+                        station.linkTo(dest);
                     }
                 } else if (dir.isTunnel(ch)) {
                     do {
@@ -195,9 +262,9 @@ public class Compiler {
                         throw new CompileException(pos, "tunnel not ending at station");
                     }
                     if (link) {
-                        station.link(dest);
+                        station.linkTo(dest);
                         if (!directed) {
-                            dest.link(station);
+                            dest.linkTo(station);
                         }
                     }
                 }
@@ -207,11 +274,15 @@ public class Compiler {
     
     //==============================================================================================
     
+    /** Exception throw by {@link Compiler}. */
     public static class CompileException extends Exception {
+        /** Position of error, can be {@code null}. */
         public final Pos pos;
+        /** Creates new exception without position. */
         private CompileException(String message) {
             this(null, message);
         }
+        /** Creates new exception. */
         private CompileException(Pos pos, String message) {
             super(message);
             this.pos = pos;
