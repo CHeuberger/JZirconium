@@ -103,7 +103,7 @@ public class Compiler {
         
         var stations = bound(chars, singles);
         
-        linkStations(chars, singles);
+        link(chars, singles);
         // TODO check unconnected tunnels
         
         // exclusion zones
@@ -154,6 +154,7 @@ public class Compiler {
                     case DUP -> new DupStation(x, y, printer);
                     case Q -> new QStation(x, y, printer);
                     case SPLIT -> new SplitStation(x, y, printer);
+                    case '`' -> new NumOutStation(x, y, printer);
                     case HORZ, VERT, DIAG_U, DIAG_D, CROSS_HV, CROSS_DD, CROSS_ALL, 
                          APERT_N, APERT_E, APERT_S, APERT_W, APERT_DIAG -> null;
                     default -> throw new CompileException(new Pos(x, y), "unrecognized symbol '" + ch + "'");
@@ -215,7 +216,9 @@ public class Compiler {
     }
     
     /** Links stations. */
-    private void linkStations(char[][] chars, Map<Pos, Single> singles) throws CompileException {
+    private void link(char[][] chars, Map<Pos, Single> singles) throws CompileException {
+        // TODO # needs at least one additional connection
+        var count = 0;
         for (var station : singles.values()) {
             for (var dir : Dir.values()) {
                 var link = dir.ordinal() < 4;
@@ -231,19 +234,23 @@ public class Compiler {
                     var pos = new Pos(x, y);
                     var start = singles.get(pos);
                     if (start == null) {
-                        throw new CompileException(pos, "tunnel not starting at station");
+                        throw new CompileException(pos, String.format(
+                            "tunnel not starting at station, %s %s", dir, station));
                     }
                     if (link) {
                         start.linkTo(station);
+                        count += 1;
                     }
                 } else if (dir.isOut(ch)) {
                     var pos = new Pos(x+dir.dx, y+dir.dy);
                     var dest = singles.get(pos);
                     if (dest == null) {
-                        throw new CompileException(pos, "tunnel not ending at station");
+                        throw new CompileException(pos, String.format(
+                            "tunnel not ending at stationm %s %s", dir, station));
                     }
                     if (link) {
                         station.linkTo(dest);
+                        count += 1;
                     }
                 } else if (dir.isTunnel(ch)) {
                     do {
@@ -260,17 +267,21 @@ public class Compiler {
                     var pos = new Pos(x, y);
                     var dest = singles.get(pos);
                     if (dest == null) {
-                        throw new CompileException(pos, "tunnel not ending at station");
+                        throw new CompileException(pos, String.format(
+                            "tunnel not ending at station, %s %s", dir, station));
                     }
                     if (link) {
                         station.linkTo(dest);
+                        count += 1;
                         if (!directed) {
                             dest.linkTo(station);
+                            count += 1;
                         }
                     }
                 }
             }
         }
+        printer.print("%d links created%n", count);
     }
     
     //==============================================================================================

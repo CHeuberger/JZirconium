@@ -31,6 +31,13 @@ public class Program {
         return Collections.unmodifiableCollection(stations);
     }
     
+    /** Reset. */
+    public void reset() {
+        printer.print("reset %s%n", name);
+        stations.forEach(Station::reset);
+        started = false;
+    }
+    
     /** Executes a single step, starting if not already done. */
     public void step() {
         if (!started) {

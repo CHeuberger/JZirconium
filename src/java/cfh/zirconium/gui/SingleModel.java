@@ -17,7 +17,7 @@ import cfh.zirconium.net.Station;
 public class SingleModel extends AbstractTableModel {
     
     private static final Column[] COLUMNS = {
-            new Column("station", Single::toString),
+            new Column("name", Single::toString),
             new Column("drones", Single::drones),
             new Column("parent", Single::parentID),
             new Column("total", Single::total),

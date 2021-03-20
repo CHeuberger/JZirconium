@@ -62,6 +62,7 @@ public class Main {
     private static final String PREF_NAME = "zirconium.name";
     private static final String PREF_CODE = "zirconium.code";
     private static final String PREF_FILE = "zirconium.file";
+    // TODO save window position, split location
     
     //----------------------------------------------------------------------------------------------
     
@@ -84,6 +85,7 @@ public class Main {
     // TODO invalidate program on edit
     // TODO undo
     // TODO include files
+    // TODO recognize no changes
     
     private final Action runAction;
     private final Action stepAction;
@@ -109,12 +111,14 @@ public class Main {
         
         
         var compile =newAction("Compile", this::doCompile, "Compile current code");
+        var reset = newAction("Reset", this::doReset, "Resets program");
         runAction = newAction("Run", this::doRun, "Run the program");
         stepAction = newAction("Step", this::doStep, "Execute one step is program already started; otherwise it is started but stopped at first tick");
         
         var runMenu = new JMenu("Run");
         runMenu.add( newMenuItem(compile));
         runMenu.addSeparator();
+        runMenu.add(newMenuItem(reset));
         runMenu.add(newMenuItem(runAction));
         runMenu.add(newMenuItem(stepAction));
         
@@ -186,7 +190,7 @@ public class Main {
         });
         
         var detailPane = new JTabbedPane();
-        detailPane.addTab("Single", newScrollPane(singleStationTable));
+        detailPane.addTab("Stations", newScrollPane(singleStationTable));
         
         var centerSplit = newSplitPane(false);
         centerSplit.setLeftComponent(codePane);
@@ -350,6 +354,14 @@ public class Main {
             error(ex, "compiling at %s", ex.pos);
         }
         singleTableModel.fireTableDataChanged();
+    }
+    
+    /** Resets program. */
+    private void doReset(ActionEvent ev) {
+        if (program != null) {
+            program.reset();
+            singleTableModel.fireTableDataChanged();
+        }
     }
     
     /** Executes the program. */

@@ -13,7 +13,9 @@ import cfh.zirconium.gui.Main.Printer;
 
 /** Single station. */
 public abstract sealed class Single extends Station
-permits NopStation, CreateStation, DotStation, DupStation, QStation, SplitStation {
+permits NopStation, CreateStation, DotStation, DupStation, QStation, SplitStation,
+        NumOutStation
+{
 
     private final Pos pos;
     
@@ -142,7 +144,7 @@ permits NopStation, CreateStation, DotStation, DupStation, QStation, SplitStatio
         assert ticking : "not ticking " + this;
         posTick0();
         ticking = false;
-        printer.print("%3d => %-3d %s%n", previous, drones, this);
+//        printer.print("%3d => %-3d %s%n", previous, drones, this);
     }
 
     /** {@link #reset} to be overriden by subclass. */
