@@ -6,7 +6,7 @@ import java.awt.Font;
 public class Settings {
 
     private static final String FONT_NAME = "DejaVu Sans Mono";
-    private static final int FONT_SIZE = 16;
+    private static final int FONT_SIZE = 14;
     
     
     private static final Settings instance = new Settings();
@@ -24,10 +24,13 @@ public class Settings {
     }
     
     // GUI
+    /** Font for main pane components. */
+    public Font mainFont() { return new Font(FONT_NAME, Font.PLAIN, FONT_SIZE); }
     /** Font for code pane. */
-    public Font codeFont() { return new Font(FONT_NAME, Font.PLAIN, FONT_SIZE); }
+    public Font codeFont() { return new Font(FONT_NAME, Font.PLAIN, FONT_SIZE+2); }
     
     // help
     /** Font for help pane. */
     public Font helpFont() { return new Font(FONT_NAME, Font.PLAIN, FONT_SIZE); }
+
 }

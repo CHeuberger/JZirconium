@@ -1,6 +1,8 @@
 package cfh.zirconium.gui;
 
 import static javax.swing.JOptionPane.*;
+
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -15,6 +17,7 @@ import java.util.stream.Collectors;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -24,7 +27,10 @@ import javax.swing.JMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
@@ -45,6 +51,7 @@ public class Main {
         SwingUtilities.invokeLater(Main::new);
     }
     
+    private static final String PREF_NAME = "zirconium.name";
     private static final String PREF_CODE = "zirconium.code";
     private static final String PREF_FILE = "zirconium.file";
     
@@ -57,6 +64,9 @@ public class Main {
     private final JFrame frame;
     private final JTextArea codePane;
     private final JTextArea logPane;
+    private final JTextField statusName;
+    private final JTextField statusRow;
+    private final JTextField statusCol;
     
     // TODO station list
     // TODO add/delete column
@@ -68,7 +78,7 @@ public class Main {
     private final Action runAction;
     private final Action stepAction;
     
-    private String name = "unnamed";
+    private String name = "";
     private Program program = null;
     private boolean changed = false;
     
@@ -109,7 +119,23 @@ public class Main {
         menubar.add(helpMenu);
 
         codePane = newTextArea();
+        codePane.setFont(settings.codeFont());
         codePane.setText(PREFS.get(PREF_CODE, ""));
+        codePane.addCaretListener(new CaretListener() {
+            @Override
+            public void caretUpdate(CaretEvent e) {
+                try {
+                    var dot = e.getDot();
+                    var line = codePane.getLineOfOffset(dot);
+                    var col = dot - codePane.getLineStartOffset(line);
+                    statusCol.setText(Integer.toString(col+1));
+                    statusRow.setText(Integer.toString(line+1));
+                } catch (BadLocationException ex) {
+                    ex.printStackTrace();
+                }
+                
+            }
+        });
         codePane.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void removeUpdate(DocumentEvent e) {
@@ -127,6 +153,21 @@ public class Main {
         
         logPane = newTextArea();
         logPane.setEditable(false);
+        
+        statusName = newTextField(30, "Name");
+        statusName.setText(PREFS.get(PREF_NAME, ""));
+        
+        statusRow = newTextField(5, "Row");
+        
+        statusCol = newTextField(5, "Column");
+        
+        var statusLine = Box.createHorizontalBox();
+        statusLine.setBorder(BorderFactory.createEmptyBorder(2, 4, 4, 4));
+        statusLine.add(statusName);
+        statusLine.add(Box.createHorizontalGlue());
+        statusLine.add(Box.createHorizontalStrut(10));
+        statusLine.add(statusRow);
+        statusLine.add(statusCol);
         
         var mainSplit = new JSplitPane();
         mainSplit.setOrientation(mainSplit.VERTICAL_SPLIT);
@@ -150,11 +191,14 @@ public class Main {
         });
         frame.setJMenuBar(menubar);
         frame.setTitle(TITLE);
-        frame.add(mainSplit);
+        frame.setLayout(new BorderLayout());
+        frame.add(mainSplit, BorderLayout.CENTER);
+        frame.add(statusLine, BorderLayout.PAGE_END);
         frame.setSize(1000, 900);
         frame.validate();
         frame.setLocationRelativeTo(null);
         
+        codePane.setCaretPosition(0);
         update();
         frame.setVisible(true);
     }
@@ -189,10 +233,10 @@ public class Main {
             return;
         }
         changed = false;
-        name = file.getName();
-        change(null);
-        frame.setTitle(TITLE + " - " + name);
+        setName(file.getName());
+        setProgram(null);
         print("%nLoaded %s%n", file.getAbsolutePath());
+        frame.repaint();
     }
     
     /** Save program to file. */
@@ -234,9 +278,9 @@ public class Main {
             return;
         }
         changed = false;
-        name = file.getName();
-        frame.setTitle(TITLE + " - " + name);
+        setName(file.getName());
         print("%nSaved  %s%n", file.getAbsoluteFile());
+        frame.repaint();
     }
     
     /** Clears log test. */
@@ -256,9 +300,9 @@ public class Main {
     private void doCompile(ActionEvent ev) {
         // thread
         try {
-            change(new Compiler(this::print).compile(name, codePane.getText()));
+            setProgram(new Compiler(this::print).compile(name, codePane.getText()));
         } catch (CompileException ex) {
-            change(null);
+            setProgram(null);
             if (ex.pos != null) {
                 try {
                     var ls = codePane.getLineStartOffset(ex.pos.y()-1);
@@ -292,9 +336,17 @@ public class Main {
     }
     
     /** Sets a new program and updates GUI (actions). */
-    private void change(Program program) {
+    private void setProgram(Program program) {
         this.program = program;
         update();
+    }
+    
+    /** Sets the name and update GUI. */
+    private void setName(String name) {
+        this.name = name;
+        frame.setTitle(TITLE + " - " + name);
+        statusName.setText(name);
+        PREFS.put(PREF_NAME, name);
     }
     
     /** Updates GUI (actions). */
@@ -328,8 +380,19 @@ public class Main {
     private JTextArea newTextArea() {
         var pane = new JTextArea();
         pane.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
-        pane.setFont(settings.codeFont());
+        pane.setFont(settings.mainFont());
         return pane;
+    }
+    
+    /** Create a JTextField */
+    private JTextField newTextField(int columns, String tooltip) {
+        var field = new JTextField(columns);
+        field.setEditable(false);
+        field.setFont(settings.mainFont());
+        field.setMaximumSize(field.getPreferredSize());
+        field.setHorizontalAlignment(field.CENTER);
+        field.setToolTipText(tooltip);
+        return field;
     }
     
     /** Creates a JScrollPane. */

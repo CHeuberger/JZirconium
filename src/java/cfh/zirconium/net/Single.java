@@ -152,6 +152,6 @@ permits NopStation, CreateStation, DotStation, DupStation, QStation, SplitStatio
     
     @Override
     public String toString() {
-        return String.format("%s[%s]", getClass().getSimpleName(), pos);
+        return String.format("%s-%s", pos, getClass().getSimpleName());
     }
 }
