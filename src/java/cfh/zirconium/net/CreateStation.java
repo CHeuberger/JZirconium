@@ -13,6 +13,9 @@ public final class CreateStation extends Single {
     }
     
     @Override
+    public char type() { return '@'; }
+        
+    @Override
     protected void tick0() {
         if (total() == 0) {
             send(1);

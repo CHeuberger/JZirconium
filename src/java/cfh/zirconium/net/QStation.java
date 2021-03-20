@@ -11,6 +11,9 @@ public final class QStation extends Single {
     public QStation(int x, int y, Printer printer) {
         super(x, y, printer);
     }
+    
+    @Override
+    public char type() { return 'Q'; }
 
     @Override
     protected void tick0() {

@@ -11,6 +11,9 @@ public final class NopStation extends Single {
     public NopStation(int x, int y, Printer printer) {
         super(x, y, printer);
     }
+    
+    @Override
+    public char type() { return '0'; }
 
     @Override
     protected void tick0() {

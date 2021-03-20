@@ -3,6 +3,7 @@ package cfh.zirconium.gui;
 import static javax.swing.JOptionPane.*;
 
 import java.awt.BorderLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -18,6 +19,7 @@ import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -26,6 +28,8 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
@@ -67,6 +71,8 @@ public class Main {
     private final JTextField statusName;
     private final JTextField statusRow;
     private final JTextField statusCol;
+    
+    private final SingleModel singleTableModel;
     
     // TODO station list
     // TODO add/delete column
@@ -117,6 +123,8 @@ public class Main {
         menubar.add(fileMenu);
         menubar.add(runMenu);
         menubar.add(helpMenu);
+        menubar.add(Box.createHorizontalStrut(50));
+        menubar.add(newMenuBarButton(stepAction));
 
         codePane = newTextArea();
         codePane.setFont(settings.codeFont());
@@ -140,19 +148,41 @@ public class Main {
             @Override
             public void removeUpdate(DocumentEvent e) {
                 changed = true;
+                setProgram(null);
             }
             @Override
             public void insertUpdate(DocumentEvent e) {
                 changed = true;
+                setProgram(null);
             }
             @Override
             public void changedUpdate(DocumentEvent e) {
                 changed = true;
+                setProgram(null);
             }
         });
         
+        singleTableModel = new SingleModel();
+        
+        var singleStationTable = new JTable(singleTableModel);
+        singleStationTable.setAutoResizeMode(singleStationTable.AUTO_RESIZE_OFF);
+        singleStationTable.setFont(settings.mainFont());
+        
+        var detailPane = new JTabbedPane();
+        detailPane.addTab("Single", newScrollPane(singleStationTable));
+        
+        var centerSplit = newSplitPane(false);
+        centerSplit.setLeftComponent(codePane);
+        centerSplit.setRightComponent(detailPane);
+        centerSplit.setDividerLocation(720);
+        
         logPane = newTextArea();
         logPane.setEditable(false);
+        
+        var mainSplit = newSplitPane(true);
+        mainSplit.setTopComponent(newScrollPane(centerSplit));
+        mainSplit.setBottomComponent(newScrollPane(logPane));
+        mainSplit.setDividerLocation(600);
         
         statusName = newTextField(30, "Name");
         statusName.setText(PREFS.get(PREF_NAME, ""));
@@ -168,12 +198,6 @@ public class Main {
         statusLine.add(Box.createHorizontalStrut(10));
         statusLine.add(statusRow);
         statusLine.add(statusCol);
-        
-        var mainSplit = new JSplitPane();
-        mainSplit.setOrientation(mainSplit.VERTICAL_SPLIT);
-        mainSplit.setTopComponent(newScrollPane(codePane));
-        mainSplit.setBottomComponent(newScrollPane(logPane));
-        mainSplit.setDividerLocation(500);
         
         frame = new JFrame();
         frame.addWindowListener(new WindowAdapter() {
@@ -321,6 +345,7 @@ public class Main {
             }
             error(ex, "compiling at %s", ex.pos);
         }
+        singleTableModel.fireTableDataChanged();
     }
     
     /** Executes the program. */
@@ -332,12 +357,14 @@ public class Main {
     private void doStep(ActionEvent ev) {
         if (program != null) {
             program.step();
+            singleTableModel.fireTableDataChanged();
         }
     }
     
     /** Sets a new program and updates GUI (actions). */
     private void setProgram(Program program) {
         this.program = program;
+        singleTableModel.program(program);
         update();
     }
     
@@ -352,14 +379,13 @@ public class Main {
     /** Updates GUI (actions). */
     private void update() {
         boolean runable = program != null;
-        runAction.setEnabled(runable);
+        runAction.setEnabled(false);  // TODO
         stepAction.setEnabled(runable);
     }
     
     /** Creates new Action. */
-    private Action newAction(String name, Consumer<ActionEvent> runable, String tooltip) {
-        @SuppressWarnings("serial")
-        var action = new AbstractAction(name) {
+    private Action newAction(String title, Consumer<ActionEvent> runable, String tooltip) {
+        var action = new AbstractAction(title) {
             {
                 putValue(SHORT_DESCRIPTION, tooltip);
             }
@@ -379,12 +405,12 @@ public class Main {
     /** Creates a JTextArea. */
     private JTextArea newTextArea() {
         var pane = new JTextArea();
-        pane.setBorder(BorderFactory.createEmptyBorder(4, 4, 4, 4));
+        pane.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         pane.setFont(settings.mainFont());
         return pane;
     }
     
-    /** Create a JTextField */
+    /** Creates a JTextField */
     private JTextField newTextField(int columns, String tooltip) {
         var field = new JTextField(columns);
         field.setEditable(false);
@@ -398,6 +424,23 @@ public class Main {
     /** Creates a JScrollPane. */
     private JScrollPane newScrollPane(JComponent view) {
         return new JScrollPane(view);
+    }
+    
+    /** Creates a JSplitPane. */
+    private JSplitPane newSplitPane(boolean vertical) {
+        var split = new JSplitPane();
+        split.setOrientation(vertical ? split.VERTICAL_SPLIT : split.HORIZONTAL_SPLIT);
+        split.setOneTouchExpandable(true);
+        split.setResizeWeight(1);
+        return split;
+    }
+    
+    /** Creates a JButton for menu bar. */
+    private JButton newMenuBarButton(Action action) {
+        var button = new JButton(action);
+//        button.setBorderPainted(false);
+        button.setMargin(new Insets(2, 4, 2, 4));
+        return button;
     }
     
     /** Shows and prints error message, including stack trace. */

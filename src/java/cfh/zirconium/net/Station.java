@@ -2,6 +2,7 @@ package cfh.zirconium.net;
 
 import java.util.Collection;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import cfh.zirconium.gui.Main.Printer;
 
@@ -14,6 +15,9 @@ permits Single, Bound {
     protected Station(Printer printer) {
         this.printer = Objects.requireNonNull(printer);
     }
+
+    /** Station stream with childs for bound station, or the station itself if single. */
+    public abstract Stream<Single> stations();
     
     /** Is the given station adjacent to this station. */
     public abstract boolean isNeighbour(Single station);

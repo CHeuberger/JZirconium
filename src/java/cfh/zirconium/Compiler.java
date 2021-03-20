@@ -101,7 +101,7 @@ public class Compiler {
         
         var singles = scanStations(chars);
         
-        var nodes = bound(chars, singles);
+        var stations = bound(chars, singles);
         
         linkStations(chars, singles);
         // TODO check unconnected tunnels
@@ -110,7 +110,7 @@ public class Compiler {
         
         // metropolis
         
-        return new Program(name, nodes, printer);
+        return new Program(name, stations, printer);
     }
     
     /** 
@@ -172,17 +172,18 @@ public class Compiler {
      * Returns a list including all bound stations and all stations that are not bounded.
      */
     private List<Station> bound(char[][] chars, Map<Pos, Single> singles) throws CompileException {
-        var nodes = new ArrayList<Station>();
+        var stations = new ArrayList<Station>();
+        var boundID = 0;
         var count = 0;
         for (var station : singles.values()) {
             Bound bound = null;
-            for (var n : new ArrayList<>(nodes)) {
+            for (var n : new ArrayList<>(stations)) {
                 if (n.isNeighbour(station)) {
                     if (bound == null) {
                         if (n instanceof Single s) {
-                            nodes.remove(s);
-                            bound = new Bound(printer, s, station);
-                            nodes.add(bound);
+                            stations.remove(s);
+                            bound = new Bound(boundID++, printer, s, station);
+                            stations.add(bound);
                             count += 1;
                         } else if (n instanceof Bound b) {
                             bound = b;
@@ -192,10 +193,10 @@ public class Compiler {
                         }
                     } else {
                         if (n instanceof Single s) {
-                            nodes.remove(s);
+                            stations.remove(s);
                             bound.addChild(s);
                         } else if (n instanceof Bound b) {
-                            nodes.remove(b);
+                            stations.remove(b);
                             b.childs().forEach(bound::addChild);
                             bound = b;
                             count -= 1;
@@ -206,11 +207,11 @@ public class Compiler {
                 }
             }
             if (bound == null) {
-                nodes.add(station);
+                stations.add(station);
             }
         }
         printer.print("%d bound stations%n", count);
-        return nodes;
+        return stations;
     }
     
     /** Links stations. */

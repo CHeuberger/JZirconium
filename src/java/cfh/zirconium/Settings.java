@@ -27,7 +27,7 @@ public class Settings {
     /** Font for main pane components. */
     public Font mainFont() { return new Font(FONT_NAME, Font.PLAIN, FONT_SIZE); }
     /** Font for code pane. */
-    public Font codeFont() { return new Font(FONT_NAME, Font.PLAIN, FONT_SIZE+2); }
+    public Font codeFont() { return new Font(FONT_NAME, Font.PLAIN, FONT_SIZE+4); }
     
     // help
     /** Font for help pane. */

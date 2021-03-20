@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import cfh.zirconium.gui.Main.Printer;
 
@@ -44,10 +45,18 @@ permits NopStation, CreateStation, DotStation, DupStation, QStation, SplitStatio
         }
     }
     
+    @Override
+    public Stream<Single> stations() {
+        return Stream.of(this);
+    }
+    
     /** Sets the bound station this station is in. */
     public void parent(Bound bound) {
         parent = Objects.requireNonNull(bound);
     }
+    
+    /** Station type. */
+    public abstract char type(); 
     
     /** Position of this station. */
     public Pos pos() { return pos; }
@@ -59,20 +68,28 @@ permits NopStation, CreateStation, DotStation, DupStation, QStation, SplitStatio
     public int y() { return pos.y(); }
 
     @Override
-    protected final int drones() {
+    public final int drones() {
         return ticking ? previous : drones;
     }
     
+    public int siblings() {
+        return parent==null ? 0 : parent.childs().size()-1;
+    }
+    
+    public String parentID() {
+        return parent==null ? "" : parent.toString();
+    }
+    
+    /** Total number of drones, including drones of bounded siblings, see {@link #drones}. */
+    public final int total() {
+        return (parent==null ? this : parent).drones();
+    }
+  
     @Override
     public boolean isNeighbour(Single station) {
         return station != this 
             && abs(station.pos.x()-this.pos.x()) <= 1 
             && abs(station.pos.y()-this.pos.y()) <= 1;
-    }
-    
-    /** Total number of drones, including drones of bounded siblings, see {@link #drones}. */
-    protected final int total() {
-        return (parent==null ? this : parent).drones();
     }
 
     @Override
@@ -152,6 +169,6 @@ permits NopStation, CreateStation, DotStation, DupStation, QStation, SplitStatio
     
     @Override
     public String toString() {
-        return String.format("%s-%s", pos, getClass().getSimpleName());
+        return String.format("%c%s", type(), pos);
     }
 }

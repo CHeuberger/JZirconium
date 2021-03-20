@@ -14,7 +14,7 @@ public class Program {
 
     private final String name;
     // TODO sourece?
-    private final Set<Station> nodes;
+    private final Set<Station> stations;
     private final Printer printer;
     
     private boolean started = false;
@@ -22,8 +22,13 @@ public class Program {
     /** Creates a program with given stations. */
     public Program(String name, Collection<Station> stations, Printer printer) {
         this.name = Objects.requireNonNull(name);
-        this.nodes = Collections.unmodifiableSet(new HashSet<>(stations));
+        this.stations = Collections.unmodifiableSet(new HashSet<>(stations));
         this.printer = Objects.requireNonNull(printer);
+    }
+    
+    /** All stations. */
+    public Collection<Station> stations() {
+        return Collections.unmodifiableCollection(stations);
     }
     
     /** Executes a single step, starting if not already done. */
@@ -32,15 +37,15 @@ public class Program {
             start();
         }
         printer.print("step %s%n", name);
-        nodes.forEach(Station::preTick);
-        nodes.forEach(Station::tick);
-        nodes.forEach(Station::posTick);
+        stations.forEach(Station::preTick);
+        stations.forEach(Station::tick);
+        stations.forEach(Station::posTick);
     }
 
     /** Starts the program, basically only resets all stations. */
     private void start() {
         printer.print("start %s%n", name);
-        nodes.forEach(Station::reset);
+        stations.forEach(Station::reset);
         started = true;
     }
 }

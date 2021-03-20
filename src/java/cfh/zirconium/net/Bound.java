@@ -5,17 +5,21 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import cfh.zirconium.gui.Main.Printer;
 
 /** Bound station. */
 public final class Bound extends Station {
 
+    private final int id;
     private final Set<Single> childs;
     
-    /** Creates a bound station with given child stations. */
-    public Bound(Printer printer, Single... childs) {
+    /** Creates a bound station with given child stations. 
+     * @param id TODO*/
+    public Bound(int id, Printer printer, Single... childs) {
         super(printer);
+        this.id = id;
         this.childs = new HashSet<>(Arrays.asList(childs));
         this.childs.forEach(s -> s.parent(this));
     }
@@ -23,6 +27,11 @@ public final class Bound extends Station {
     /** Child stations of this bound station. */
     public Collection<Single> childs() {
         return Collections.unmodifiableCollection(childs);
+    }
+    
+    @Override
+    public Stream<Single> stations() {
+        return childs.stream();
     }
     
     @Override
@@ -64,5 +73,10 @@ public final class Bound extends Station {
     @Override
     protected Collection<Single> linked() {
         return childs.stream().map(Single::linked).flatMap(Collection::stream).toList();
+    }
+    
+    @Override
+    public String toString() {
+        return "{" + id + "}";
     }
 }

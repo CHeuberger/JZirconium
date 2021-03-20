@@ -11,6 +11,9 @@ public final class DupStation extends Single {
     public DupStation(int x, int y, Printer printer) {
         super(x, y, printer);
     }
+    
+    @Override
+    public char type() { return 'o'; }
 
     @Override
     protected void tick0() {

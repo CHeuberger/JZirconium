@@ -11,6 +11,9 @@ public final class DotStation extends Single {
     public DotStation(int x, int y, Printer printer) {
         super(x, y, printer);
     }
+    
+    @Override
+    public char type() { return '.'; }
 
     @Override
     protected void tick0() {

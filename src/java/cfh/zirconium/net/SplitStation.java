@@ -12,6 +12,9 @@ public final class SplitStation extends Single {
     public SplitStation(int x, int y, Printer printer) {
         super(x, y, printer);
     }
+    
+    @Override
+    public char type() { return 'O'; }
 
     @Override
     protected void tick0() {
