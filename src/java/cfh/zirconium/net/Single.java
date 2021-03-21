@@ -95,7 +95,7 @@ permits NopStation, CreateStation, DotStation, DupStation, QStation, SplitStatio
     }
 
     @Override
-    protected Collection<Single> linked() {
+    public Collection<Single> linked() {
         // TODO dest parent.childs
         return Collections.unmodifiableCollection(linked);
     }

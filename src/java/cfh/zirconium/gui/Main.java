@@ -1,28 +1,37 @@
 package cfh.zirconium.gui;
 
+import static java.nio.file.StandardOpenOption.*;
 import static javax.swing.JOptionPane.*;
 
 import java.awt.BorderLayout;
 import java.awt.Insets;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.time.LocalDateTime;
 import java.util.function.Consumer;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
+import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -43,6 +52,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
 
+import cfh.graph.Dot;
 import cfh.zirconium.Compiler;
 import cfh.zirconium.Program;
 import cfh.zirconium.Compiler.CompileException;
@@ -89,8 +99,9 @@ public class Main {
     
     private final Action runAction;
     private final Action stepAction;
+    private final Action graphAction;
     
-    private String name = "";
+    private String name = null;
     private Program program = null;
     private boolean changed = false;
     
@@ -110,17 +121,19 @@ public class Main {
         fileMenu.add(newMenuItem(quit));
         
         
-        var compile =newAction("Compile", this::doCompile, "Compile current code");
         var reset = newAction("Reset", this::doReset, "Resets program");
         runAction = newAction("Run", this::doRun, "Run the program");
         stepAction = newAction("Step", this::doStep, "Execute one step is program already started; otherwise it is started but stopped at first tick");
+        var compile = newAction("Compile", this::doCompile, "Compile current code");
+        graphAction = newAction("Graph", this::doGraph, "Show a DOT graph of compiled program");
         
         var runMenu = new JMenu("Run");
-        runMenu.add( newMenuItem(compile));
-        runMenu.addSeparator();
         runMenu.add(newMenuItem(reset));
         runMenu.add(newMenuItem(runAction));
         runMenu.add(newMenuItem(stepAction));
+        runMenu.addSeparator();
+        runMenu.add(newMenuItem(compile));
+        runMenu.add(newMenuItem(graphAction));
         
         var help = newAction("Help", this::doHelp, "Show help");
         
@@ -206,7 +219,6 @@ public class Main {
         mainSplit.setDividerLocation(600);
         
         statusName = newTextField(30, "Name");
-        statusName.setText(PREFS.get(PREF_NAME, ""));
         
         statusRow = newTextField(5, "Row");
         
@@ -244,6 +256,7 @@ public class Main {
         frame.setLocationRelativeTo(null);
         
         codePane.setCaretPosition(0);
+        setName(PREFS.get(PREF_NAME, "unnamed"));
         update();
         frame.setVisible(true);
     }
@@ -356,6 +369,44 @@ public class Main {
         singleTableModel.fireTableDataChanged();
     }
     
+    /** Shows a DOT graph of compiled program. */
+    private void doGraph(ActionEvent ev) {
+        if (program == null) {
+            Toolkit.getDefaultToolkit().beep();
+            return;
+        }
+        var dir = Paths.get(".graph");
+        var filename = name.replaceFirst("\\..*$", "");
+        if (filename.isEmpty()) {
+            filename = "unnamed";
+        }
+        var dotPath = dir.resolve(filename + ".dot");
+        var pngPath = dir.resolve(filename + ".png");
+        
+        try {
+            Files.createDirectories(dir);
+            try (BufferedWriter writer = Files.newBufferedWriter(dotPath)) {
+                program.graph(writer);
+            }
+            try (var inp = Files.newInputStream(dotPath, READ);
+                 var out = Files.newOutputStream(pngPath);) {
+                Dot.dot("png", inp, out);
+            }
+        } catch (IOException | InterruptedException ex) {
+            error(ex, "creating graph \"%s\"", filename);
+            return;
+        }
+        
+        try (var inp = Files.newInputStream(pngPath, READ)) {
+            var img = new ImageIcon(ImageIO.read(inp));
+            var msg = newScrollPane(new JLabel(img));
+            showMessageDialog(frame, msg, filename, PLAIN_MESSAGE);
+        } catch (IOException ex) {
+            error(ex, "reading image \"%s\"", pngPath);
+            return;
+        }
+    }
+    
     /** Resets program. */
     private void doReset(ActionEvent ev) {
         if (program != null) {
@@ -397,6 +448,7 @@ public class Main {
         boolean runable = program != null;
         runAction.setEnabled(false);  // TODO
         stepAction.setEnabled(runable);
+        graphAction.setEnabled(runable);
     }
 
     /** Mark given pos (select it). */

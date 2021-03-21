@@ -1,12 +1,15 @@
 package cfh.zirconium;
 
+import java.io.Writer;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Formatter;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
 import cfh.zirconium.gui.Main.Printer;
+import cfh.zirconium.net.Single;
 import cfh.zirconium.net.Station;
 
 /** A program (map). */
@@ -29,6 +32,25 @@ public class Program {
     /** All stations. */
     public Collection<Station> stations() {
         return Collections.unmodifiableCollection(stations);
+    }
+
+    /** Creates DOT graph. */
+    public void graph(Writer wr) {
+        @SuppressWarnings("resource")
+        var out = new Formatter(wr);
+        out.format("digraph \"%s\" {%n", name);
+        
+        for (var station : stations) {
+            station.stations().forEach(s -> out.format("  \"%s\";%n", s));
+        }
+        out.format("%n");
+        for (var station : stations) {
+            station.stations().forEach(src -> {
+                src.linked().forEach(dst -> out.format("  \"%s\" -> \"%s\";%n", src, dst));
+            });
+        }
+        
+        out.format("}");
     }
     
     /** Reset. */
