@@ -9,12 +9,15 @@ import java.util.Objects;
 import java.util.Set;
 
 import cfh.zirconium.gui.Main.Printer;
+import cfh.zirconium.net.Bound;
 import cfh.zirconium.net.Single;
 import cfh.zirconium.net.Station;
 
 /** A program (map). */
 public class Program {
 
+    private final Settings settings = Settings.instance();
+    
     private final String name;
     // TODO sourece?
     private final Set<Station> stations;
@@ -39,9 +42,21 @@ public class Program {
         @SuppressWarnings("resource")
         var out = new Formatter(wr);
         out.format("digraph \"%s\" {%n", name);
+        out.format("  fontname = \"%s\";%n", settings.codeFont().getName());
+        out.format("  node [fontname = \"%s\"]%n", settings.codeFont().getName());
+        out.format("  edge [fontname = \"%s\"]%n", settings.codeFont().getName());
+        out.format("  concentrate = true;%n");
+        out.format("  splines = true;%n");
         
         for (var station : stations) {
-            station.stations().forEach(s -> out.format("  \"%s\";%n", s));
+            if (station instanceof Single s) {
+                out.format("  \"%s\" [label=\"%1$s\\n%d\"];%n", s, s.drones());
+            } else if (station instanceof Bound b) {
+                out.format("  subgraph \"cluster_%s\" {%n", b);
+                out.format("    label = \"%s:%d\";%n", b, b.drones());
+                b.stations().forEach(s -> out.format("    \"%s\" [label=\"%1$s\\n%d\"];%n", s, s.drones()));
+                out.format("  }%n");
+            }
         }
         out.format("%n");
         for (var station : stations) {

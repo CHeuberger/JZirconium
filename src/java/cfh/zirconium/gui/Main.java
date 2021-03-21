@@ -1,5 +1,6 @@
 package cfh.zirconium.gui;
 
+import static java.nio.file.StandardCopyOption.*;
 import static java.nio.file.StandardOpenOption.*;
 import static javax.swing.JOptionPane.*;
 
@@ -11,12 +12,10 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.time.LocalDateTime;
 import java.util.function.Consumer;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
@@ -364,7 +363,7 @@ public class Main {
             if (ex.pos != null) {
                 mark(ex.pos);
             }
-            error(ex, "compiling at %s", ex.pos);
+            error(ex, "at %s", ex.pos);
         }
         singleTableModel.fireTableDataChanged();
     }
@@ -377,16 +376,21 @@ public class Main {
         }
         var dir = Paths.get(".graph");
         var filename = name.replaceFirst("\\..*$", "");
-        if (filename.isEmpty()) {
+        if (filename.isBlank()) {
             filename = "unnamed";
         }
         var dotPath = dir.resolve(filename + ".dot");
+        var bakPath = dir.resolve(filename + ".bak");
         var pngPath = dir.resolve(filename + ".png");
         
         try {
             Files.createDirectories(dir);
             try (BufferedWriter writer = Files.newBufferedWriter(dotPath)) {
                 program.graph(writer);
+            }
+            
+            if (Files.exists(pngPath)) {
+                Files.move(pngPath, bakPath, REPLACE_EXISTING);
             }
             try (var inp = Files.newInputStream(dotPath, READ);
                  var out = Files.newOutputStream(pngPath);) {
@@ -533,10 +537,10 @@ public class Main {
     /** Shows and prints error message, including stack trace. */
     private void error(Throwable ex, String format, Object... args) {
         var msg = String.format(format, args);
-        System.err.print(msg);
+        System.err.println(msg);
         ex.printStackTrace();
-        print("%n%s%n%s", ex, msg);
-        showMessageDialog(frame, new Object[] {ex.toString(), msg}, ex.getClass().getSimpleName(), ERROR_MESSAGE);
+        print("%n%s %s", ex.getClass().getSimpleName(), msg);
+        showMessageDialog(frame, new Object[] {ex.getClass().getSimpleName(), ex.getMessage(), msg}, ex.getClass().getSimpleName(), ERROR_MESSAGE);
     }
     
     /** prints message to log pane. */

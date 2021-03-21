@@ -2,11 +2,14 @@ package cfh.zirconium;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import cfh.zirconium.expr.Definition;
 import cfh.zirconium.gui.Main.Printer;
 import cfh.zirconium.net.*;
 
@@ -97,7 +100,7 @@ public class Compiler {
         
         char[][] chars = parse(code);
         
-        // TODO bubles + lenses
+        var definitions = bubblesLenses(chars);
         
         var singles = scanStations(chars);
         
@@ -137,6 +140,60 @@ public class Compiler {
             }
         }
         return chars;
+    }
+    
+    /** Removes bubles {@code (...)} and extract definitions from lenses {@code ((...))}. */
+    private Collection<Definition> bubblesLenses(char[][] chars) throws CompileException {
+        var definitions = new HashSet<Definition>();
+        for (var y = 0; y < chars.length; y++) {
+            var row = chars[y];
+            for (var x = 0; x < row.length; x++) {
+                if (row[x] == '(') {
+                    row[x] = ' ';
+                    x += 1;
+                    // lens
+                    if (row[x] == '(') {
+                        row[x] = ' ';
+                        x += 1;
+                        var  start = x;
+                        var expr = "";
+                        while (x < row.length) {
+                            if (row[x] == ')') {
+                                row[x] = ' ';
+                                break;
+                            }
+                            expr += row[x];
+                            row[x] = ' ';
+                            x += 1;
+                        }
+                        if (x == row.length || row[x+1] != ')') {
+                            throw new CompileException(new Pos(x, y), "lens not correctly terminated");
+                        }
+                        x += 1;
+                        row[x] = ' ';
+                        var pos = new Pos(start, y);
+                        var def = Definition.parse(pos, expr);
+                        if (definitions.contains(def)) {
+                            throw new CompileException(pos, "duplicated definition");
+                        }
+                        definitions.add(def);
+                    } else {
+                        while (x < row.length) {
+                            if (row[x] == ')') {
+                                row[x] = ' ';
+                                break;
+                            }
+                            row[x] = ' ';
+                            x += 1;
+                        }
+                        if (x == row.length) {
+                            throw new CompileException(new Pos(x, y), "bubble not correctly terminated");
+                        }
+                    }
+                }
+            }
+        }
+        return definitions;
     }
     
     /** Scans the character matrix for stations. */
@@ -287,17 +344,26 @@ public class Compiler {
     //==============================================================================================
     
     /** Exception throw by {@link Compiler}. */
+    @SuppressWarnings("serial")
     public static class CompileException extends Exception {
         /** Position of error, can be {@code null}. */
         public final Pos pos;
         /** Creates new exception without position. */
-        private CompileException(String message) {
+        public CompileException(String message) {
             this(null, message);
         }
         /** Creates new exception. */
-        private CompileException(Pos pos, String message) {
+        public CompileException(Pos pos, String message) {
             super(message);
             this.pos = pos;
+        }
+        @Override
+        public String getMessage() {
+            return (pos==null?"":pos+" ") + super.getMessage();
+        }
+        @Override
+        public String toString() {
+            return (pos==null?"":pos) + super.toString();
         }
     }
 }

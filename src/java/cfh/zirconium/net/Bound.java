@@ -66,7 +66,7 @@ public final class Bound extends Station {
     }
 
     @Override
-    protected int drones() {
+    public int drones() {
         return childs.stream().mapToInt(Single::drones).sum();
     }
 
