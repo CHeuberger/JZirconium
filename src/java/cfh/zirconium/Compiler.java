@@ -283,33 +283,44 @@ public class Compiler {
                 var y = station.y() + dir.dy;
                 var ch = chars[y][x];
                 if (dir.isIn(ch)) {
+                    boolean diag = ch == APERT_DIAG;
                     do {
                         x += dir.dx;
                         y += dir.dy;
                         ch = chars[y][x];
+                        if (diag && dir.isTunnel(ch)) {
+                            diag = false;
+                        }
                     } while (dir.isTunnel(ch));
-                    var pos = new Pos(x, y);
-                    var start = singles.get(pos);
-                    if (start == null) {
-                        throw new CompileException(pos, String.format(
-                            "tunnel not starting at station, %s %s", dir, station));
+//                    if (diag) {
+//                        continue;
+//                    }
+                    if (!diag) {
+                        var pos = new Pos(x, y);
+                        var start = singles.get(pos);
+                        if (start == null) {
+                            throw new CompileException(pos, String.format(
+                                "tunnel not starting at a station, %s %s", dir, station));
+                        }
+                        if (link) {
+                            start.linkTo(station);
+                            count += 1;
+                        }
                     }
-                    if (link) {
-                        start.linkTo(station);
-                        count += 1;
-                    }
-                } else if (dir.isOut(ch)) {
+                } 
+                if (dir.isOut(ch)) {
                     var pos = new Pos(x+dir.dx, y+dir.dy);
                     var dest = singles.get(pos);
                     if (dest == null) {
                         throw new CompileException(pos, String.format(
-                            "tunnel not ending at stationm %s %s", dir, station));
+                            "tunnel not ending at a stationm %s %s", dir, station));
                     }
                     if (link) {
                         station.linkTo(dest);
                         count += 1;
                     }
-                } else if (dir.isTunnel(ch)) {
+                }
+                if (dir.isTunnel(ch)) {
                     do {
                         x += dir.dx;
                         y += dir.dy;
@@ -325,7 +336,7 @@ public class Compiler {
                     var dest = singles.get(pos);
                     if (dest == null) {
                         throw new CompileException(pos, String.format(
-                            "tunnel not ending at station, %s %s", dir, station));
+                            "tunnel not ending at a station, %s %s", dir, station));
                     }
                     if (link) {
                         station.linkTo(dest);

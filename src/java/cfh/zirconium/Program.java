@@ -16,6 +16,8 @@ import cfh.zirconium.net.Station;
 /** A program (map). */
 public class Program {
 
+    private static final String NODE = "%s\"%s\" [label=\"%2$s\\n%s\"];%n";
+    
     private final Settings settings = Settings.instance();
     
     private final String name;
@@ -50,11 +52,11 @@ public class Program {
         
         for (var station : stations) {
             if (station instanceof Single s) {
-                out.format("  \"%s\" [label=\"%1$s\\n%d\"];%n", s, s.drones());
+                out.format(NODE, "  ", s, num(s.drones()));
             } else if (station instanceof Bound b) {
                 out.format("  subgraph \"cluster_%s\" {%n", b);
-                out.format("    label = \"%s:%d\";%n", b, b.drones());
-                b.stations().forEach(s -> out.format("    \"%s\" [label=\"%1$s\\n%d\"];%n", s, s.drones()));
+                out.format("    label = \"%s %s\";%n", b, num(b.drones()));
+                b.stations().forEach(s -> out.format(NODE, "    ", s, num(s.drones())));
                 out.format("  }%n");
             }
         }
@@ -66,6 +68,10 @@ public class Program {
         }
         
         out.format("}");
+    }
+    
+    private String num(int num) {
+        return num==0 ? "" : Integer.toString(num);
     }
     
     /** Reset. */

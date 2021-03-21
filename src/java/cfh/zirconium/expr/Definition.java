@@ -72,6 +72,9 @@ public class Definition {
                 skipSpaces(buf);
             }
             
+            if (stack.isEmpty()) {
+                throw new CompileException(new Pos(pos.x()+buf.position()-1, pos.y()), "no expression");
+            }
             var expr = stack.pop();
             if (!stack.isEmpty()) {
                 throw new CompileException(new Pos(pos.x()+buf.position()-1, pos.y()), "too many arguments/missing operator");
@@ -128,18 +131,5 @@ public class Definition {
     @Override
     public String toString() {
         return symbol + ":" + expr;
-    }
-    
-    //==============================================================================================
-    
-    /** Just for testing. */
-    public static void main(String[] args) throws Exception {
-        System.out.println(Definition.parse(new Pos(0,0), "a = 2"));
-        System.out.println(Definition.parse(new Pos(0,0), "a = 12 "));
-        System.out.println(Definition.parse(new Pos(0,0), " a = N"));
-        System.out.println(Definition.parse(new Pos(0,0), "a=K"));
-        System.out.println(Definition.parse(new Pos(0,0), "a = 1 2 3 + +"));
-        System.out.println(Definition.parse(new Pos(0,0), "a=NK1=="));
-        System.out.println(Definition.parse(new Pos(0,0), "  a  =  N  K  1  =  =  "));
     }
 }
