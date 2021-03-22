@@ -4,16 +4,16 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import cfh.zirconium.gui.Main.Printer;
+import cfh.zirconium.Environment;
 
 /** A station, single or bound. */
 public sealed abstract class Station 
 permits Single, Bound {
 
-    protected final Printer printer;
+    protected final Environment env;
 
-    protected Station(Printer printer) {
-        this.printer = Objects.requireNonNull(printer);
+    protected Station(Environment env) {
+        this.env = Objects.requireNonNull(env);
     }
 
     /** Station stream with childs for bound station, or the station itself if single. */

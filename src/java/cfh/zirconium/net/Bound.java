@@ -7,7 +7,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import cfh.zirconium.gui.Main.Printer;
+import cfh.zirconium.Environment;
 
 /** Bound station. */
 public final class Bound extends Station {
@@ -17,8 +17,8 @@ public final class Bound extends Station {
     
     /** Creates a bound station with given child stations. 
      * @param id TODO*/
-    public Bound(int id, Printer printer, Single... childs) {
-        super(printer);
+    public Bound(int id, Environment env, Single... childs) {
+        super(env);
         this.id = id;
         this.childs = new HashSet<>(Arrays.asList(childs));
         this.childs.forEach(s -> s.parent(this));

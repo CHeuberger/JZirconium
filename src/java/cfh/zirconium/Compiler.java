@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import cfh.zirconium.expr.Definition;
-import cfh.zirconium.gui.Main.Printer;
 import cfh.zirconium.net.*;
 
 /** Compiler for Zirconium programs. */
@@ -87,16 +86,16 @@ public class Compiler {
     
     //----------------------------------------------------------------------------------------------
     
-    private final Printer printer;
+    private final Environment env;
     
     /** Creates a compiler. */
-    public Compiler(Printer printer) {
-        this.printer = Objects.requireNonNull(printer);
+    public Compiler(Environment env) {
+        this.env = Objects.requireNonNull(env);
     }
     
     /** Compiles the given code and creates a program with givne name. */
     public Program compile(String name, String code) throws CompileException {
-        printer.print("%n");
+        env.print("%n");
         
         char[][] chars = parse(code);
         
@@ -113,7 +112,7 @@ public class Compiler {
         
         // metropolis
         
-        return new Program(name, stations, printer);
+        return new Program(name, stations, env);
     }
     
     /** 
@@ -123,10 +122,10 @@ public class Compiler {
     private char[][] parse(String code) {
         var lines = code.split("\n");
         var rows = lines.length;
-        printer.print("%d rows%n", rows);
+        env.print("%d rows%n", rows);
         
         var cols = Arrays.stream(lines).mapToInt(String::length).max().orElse(0);
-        printer.print("%d columns%n", cols);
+        env.print("%d columns%n", cols);
         
         var chars = new char[rows+2][cols+2];
         Arrays.fill(chars[0], EMPTY);
@@ -205,25 +204,25 @@ public class Compiler {
                 var ch = row[x];
                 var station = switch (ch) {
                     case ' ' -> null;
-                    case NOP -> new NopStation(x, y, printer);
-                    case CREATE -> new CreateStation(x, y, printer);
-                    case DOT -> new DotStation(x, y, printer);
-                    case DUP -> new DupStation(x, y, printer);
-                    case Q -> new QStation(x, y, printer);
-                    case SPLIT -> new SplitStation(x, y, printer);
+                    case NOP -> new NopStation(x, y, env);
+                    case CREATE -> new CreateStation(x, y, env);
+                    case DOT -> new DotStation(x, y, env);
+                    case DUP -> new DupStation(x, y, env);
+                    case Q -> new QStation(x, y, env);
+                    case SPLIT -> new SplitStation(x, y, env);
                     case HORZ, VERT, DIAG_U, DIAG_D, CROSS_HV, CROSS_DD, CROSS_ALL, 
                          APERT_N, APERT_E, APERT_S, APERT_W, APERT_DIAG -> null;
                     default -> throw new CompileException(new Pos(x, y), "unrecognized symbol '" + ch + "'");
                     
                     // {TEST} must be inside exclusion zone
-                    case '`' -> new NumOutStation(x, y, printer);
+                    case '`' -> new NumOutStation(x, y, env);
                 };
                 if (station != null) {
                     map.put(station.pos(), station);
                 }
             }
         }
-        printer.print("scaned %d stations%n", map.size());
+        env.print("scaned %d stations%n", map.size());
         return map;
     }
     
@@ -242,7 +241,7 @@ public class Compiler {
                     if (bound == null) {
                         if (n instanceof Single s) {
                             stations.remove(s);
-                            bound = new Bound(boundID++, printer, s, station);
+                            bound = new Bound(boundID++, env, s, station);
                             stations.add(bound);
                             count += 1;
                         } else if (n instanceof Bound b) {
@@ -270,7 +269,7 @@ public class Compiler {
                 stations.add(station);
             }
         }
-        printer.print("%d bound stations%n", count);
+        env.print("%d bound stations%n", count);
         return stations;
     }
     
@@ -351,7 +350,7 @@ public class Compiler {
                 }
             }
         }
-        printer.print("%d links created%n", count);
+        env.print("%d links created%n", count);
     }
     
     //==============================================================================================

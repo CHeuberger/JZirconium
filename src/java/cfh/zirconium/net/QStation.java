@@ -1,6 +1,6 @@
 package cfh.zirconium.net;
 
-import cfh.zirconium.gui.Main.Printer;
+import cfh.zirconium.Environment;
 
 /** 
  * {@code Q} Station.
@@ -8,8 +8,8 @@ import cfh.zirconium.gui.Main.Printer;
  */
 public final class QStation extends Single {
 
-    public QStation(int x, int y, Printer printer) {
-        super(x, y, printer);
+    public QStation(int x, int y, Environment env) {
+        super(x, y, env);
     }
     
     @Override

@@ -9,7 +9,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import cfh.zirconium.gui.Main.Printer;
+import cfh.zirconium.Environment;
 
 /** Single station. */
 public abstract sealed class Single extends Station
@@ -28,13 +28,13 @@ permits NopStation, CreateStation, DotStation, DupStation, QStation, SplitStatio
     private int previous = 0;
     
     /** Creates a new single station. */
-    public Single(int x, int y, Printer printer) {
-        this(new Pos(x, y), printer);
+    public Single(int x, int y, Environment env) {
+        this(new Pos(x, y), env);
     }
     
     /** Creates a new single station. */
-    public Single(Pos pos, Printer printer) {
-        super(printer);
+    public Single(Pos pos, Environment env) {
+        super(env);
         this.pos = Objects.requireNonNull(pos);
     }
     

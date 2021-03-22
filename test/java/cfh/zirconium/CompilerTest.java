@@ -1,13 +1,27 @@
 package cfh.zirconium;
 
 import cfh.zirconium.Compiler.CompileException;
-import cfh.zirconium.gui.Main.Printer;
+import cfh.zirconium.Environment.*;
 
 public class CompilerTest {
 
     private static final Printer printer = new Printer() {
         @Override
         public void print(String format, Object... args) {
+            //
+        }
+    };
+    private static final Input input = new Input() {
+        public void reset() {
+            //
+        };
+    };
+    private static final Output output = new Output() {
+        public void reset() {
+            //
+        };
+        @Override
+        public void write(String text) {
             //
         }
     };
@@ -20,7 +34,7 @@ public class CompilerTest {
     private final Compiler compiler;
     
     private CompilerTest() {
-        compiler = new Compiler(printer);
+        compiler = new Compiler(new Environment(printer, input, output));
     }
     
     private void mapTest() {

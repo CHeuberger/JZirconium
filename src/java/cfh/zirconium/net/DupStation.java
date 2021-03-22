@@ -1,6 +1,6 @@
 package cfh.zirconium.net;
 
-import cfh.zirconium.gui.Main.Printer;
+import cfh.zirconium.Environment;
 
 /** 
  * {@code o} Station.
@@ -8,8 +8,8 @@ import cfh.zirconium.gui.Main.Printer;
  */
 public final class DupStation extends Single {
 
-    public DupStation(int x, int y, Printer printer) {
-        super(x, y, printer);
+    public DupStation(int x, int y, Environment env) {
+        super(x, y, env);
     }
     
     @Override

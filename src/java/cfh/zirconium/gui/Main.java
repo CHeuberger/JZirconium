@@ -55,13 +55,15 @@ import cfh.graph.Dot;
 import cfh.zirconium.Compiler;
 import cfh.zirconium.Program;
 import cfh.zirconium.Compiler.CompileException;
+import cfh.zirconium.Environment;
+import cfh.zirconium.Environment.*;
 import cfh.zirconium.Settings;
 import cfh.zirconium.net.Pos;
 
 /** Main for GUI. */
 public class Main {
 
-    public static final String VERSION = "0.02";
+    public static final String VERSION = "0.03";
     private static final String TITLE = "JZirconium v" + VERSION;
     
     public static void main(String... args) {
@@ -82,6 +84,8 @@ public class Main {
     private final JFrame frame;
     private final JTextArea codePane;
     private final JTextArea logPane;
+    private final JTextArea inputPane;
+    private final JTextArea outputPane;
     private final JTextField statusName;
     private final JTextField statusRow;
     private final JTextField statusCol;
@@ -99,6 +103,8 @@ public class Main {
     private final Action runAction;
     private final Action stepAction;
     private final Action graphAction;
+
+    private final Environment env;
     
     private String name = null;
     private Program program = null;
@@ -183,7 +189,6 @@ public class Main {
         });
         
         singleTableModel = new SingleModel();
-        
         var singleStationTable = new JTable(singleTableModel);
         singleStationTable.setAutoResizeMode(singleStationTable.AUTO_RESIZE_OFF);
         singleStationTable.setFont(settings.mainFont());
@@ -204,13 +209,23 @@ public class Main {
             singleStationTable.getColumnModel().getColumn(i).setPreferredWidth(singleTableModel.size(i));
         }
         
+        inputPane = newTextArea();
+        
+        outputPane = newTextArea();
+        outputPane.setEditable(false);
+        
+        var io = newSplitPane(true);
+        io.setTopComponent(newScrollPane(inputPane));
+        io.setBottomComponent(newScrollPane(outputPane));
+        
         var detailPane = new JTabbedPane();
         detailPane.addTab("Stations", newScrollPane(singleStationTable));
+        detailPane.addTab("IO", io);
         
         var centerSplit = newSplitPane(false);
         centerSplit.setLeftComponent(codePane);
         centerSplit.setRightComponent(detailPane);
-        centerSplit.setDividerLocation(700);
+        centerSplit.setDividerLocation(850);
         
         logPane = newTextArea();
         logPane.setEditable(false);
@@ -234,6 +249,24 @@ public class Main {
         statusLine.add(statusRow);
         statusLine.add(statusCol);
         
+        var input = new Input() {
+            @Override
+            public void reset() {
+                
+            }
+        };
+        Output output = new Output() {
+            @Override
+            public void reset() {
+                outputPane.setText("");
+            }
+            @Override
+            public void write(String str) {
+                outputPane.append(str);
+            }
+        };
+        env = new Environment(this::print, input, output);
+            
         frame = new JFrame();
         frame.addWindowListener(new WindowAdapter() {
             @Override
@@ -253,7 +286,7 @@ public class Main {
         frame.setLayout(new BorderLayout());
         frame.add(mainSplit, BorderLayout.CENTER);
         frame.add(statusLine, BorderLayout.PAGE_END);
-        frame.setSize(1000, 900);
+        frame.setSize(1200, 900);
         frame.validate();
         frame.setLocationRelativeTo(null);
 
@@ -262,6 +295,7 @@ public class Main {
         update();
         frame.setVisible(true);
 
+        io.setDividerLocation(0.5);
     }
     
     /** Shows help dialog. */
@@ -361,7 +395,7 @@ public class Main {
     private void doCompile(ActionEvent ev) {
         // thread
         try {
-            setProgram(new Compiler(this::print).compile(name, codePane.getText()));
+            setProgram(new Compiler(env).compile(name, codePane.getText()));
         } catch (CompileException ex) {
             setProgram(null);
             if (ex.pos != null) {
@@ -439,6 +473,7 @@ public class Main {
     /** Sets a new program and updates GUI (actions). */
     private void setProgram(Program program) {
         this.program = program;
+        env.reset();
         singleTableModel.program(program);
         update();
     }
@@ -554,13 +589,5 @@ public class Main {
         if (atEnd) {
             logPane.setCaretPosition(logPane.getText().length());
         }
-    }
-    
-    //====================================================================================================
-    
-    /** Used to register Main to accetp messages for the log pane. */
-    public interface Printer {
-        /** Print a formatted message to the log pane (see String.format). */
-        public void print(String format, Object... args);
     }
 }

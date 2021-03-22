@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-import cfh.zirconium.gui.Main.Printer;
 import cfh.zirconium.net.Bound;
 import cfh.zirconium.net.Single;
 import cfh.zirconium.net.Station;
@@ -23,16 +22,16 @@ public class Program {
     private final String name;
     // TODO sourece?
     private final Set<Station> stations;
-    private final Printer printer;
+    private final Environment env;
     
     private boolean started = false;
     // TODO step counter
     
     /** Creates a program with given stations. */
-    public Program(String name, Collection<Station> stations, Printer printer) {
+    public Program(String name, Collection<Station> stations, Environment env) {
         this.name = Objects.requireNonNull(name);
         this.stations = Collections.unmodifiableSet(new HashSet<>(stations));
-        this.printer = Objects.requireNonNull(printer);
+        this.env = Objects.requireNonNull(env);
     }
     
     /** All stations. */
@@ -77,8 +76,9 @@ public class Program {
     
     /** Reset. */
     public void reset() {
-        printer.print("reset %s%n", name);
+        env.print("reset %s%n", name);
         stations.forEach(Station::reset);
+        env.reset();
         started = false;
     }
     
@@ -87,7 +87,7 @@ public class Program {
         if (!started) {
             start();
         }
-        printer.print("step %s%n", name);
+        env.print("step %s%n", name);
         stations.forEach(Station::preTick);
         stations.forEach(Station::tick);
         stations.forEach(Station::posTick);
@@ -95,7 +95,7 @@ public class Program {
 
     /** Starts the program, basically only resets all stations. */
     private void start() {
-        printer.print("start %s%n", name);
+        env.print("start %s%n", name);
         stations.forEach(Station::reset);
         started = true;
     }

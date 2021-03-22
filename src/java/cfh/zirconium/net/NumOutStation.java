@@ -1,6 +1,6 @@
 package cfh.zirconium.net;
 
-import cfh.zirconium.gui.Main.Printer;
+import cfh.zirconium.Environment;
 
 /** 
  * {@code `} Station.
@@ -8,8 +8,8 @@ import cfh.zirconium.gui.Main.Printer;
  */
 public final class NumOutStation extends Single {
 
-    public NumOutStation(int x, int y, Printer printer) {
-        super(x, y, printer);
+    public NumOutStation(int x, int y, Environment env) {
+        super(x, y, env);
     }
 
     @Override
@@ -21,7 +21,8 @@ public final class NumOutStation extends Single {
     protected void tick0() {
         var drones = total();
         if (drones > 0) {
-            printer.print("%d", drones);  // TODO output
+            env.output(Integer.toString(drones));
+            env.print("%d", drones);  // TODO output
             System.out.print(drones);
         }
         

@@ -1,6 +1,8 @@
 package cfh.zirconium;
 
 import java.awt.Font;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /** Global settings. */
 public class Settings {
@@ -22,6 +24,9 @@ public class Settings {
     private Settings() {
         //
     }
+    
+    /** Charset used for input/output. */
+    public Charset charset() { return StandardCharsets.ISO_8859_1; }
     
     // GUI
     /** Font for main pane components. */
