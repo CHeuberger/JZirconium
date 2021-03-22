@@ -17,6 +17,6 @@ public final class NopStation extends Single {
 
     @Override
     protected void tick0() {
-        // receive(drones());  // TODO undocumented
+        // do nothing
     }
 }

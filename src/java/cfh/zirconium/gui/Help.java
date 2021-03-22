@@ -47,7 +47,7 @@ public class Help {
             At the beginning of the tick, all stations count the number of drones *occupying* them, 
             and then consume all those drones. Afterwards, the stations execute the following: 
                                              
-            0  Do not dispatch any drones.
+            0  Do not dispatch any drones (just consume drones).
             @  If this station is not occupied, dispatch one drone to each linked station.
             .  If this is occupied by any amount of drones, dispatch one drone to each linked station.
             o  Dispatch the number of drones occupying this station to each linked station.

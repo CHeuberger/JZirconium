@@ -1,0 +1,13 @@
+( The southwest tunnel is an output which dispatches )
+( 1 drone whenever the register is zero.             )
+( The southern tunnel is an input which increments   )
+( The southeast tunnel is an input which decrements  )
+
+ 0
+Q>0<@
+v ^ ^
+@ | |
+| | |
+` @ .<.<.<.<.<.<.<.<@
+  ^
+  .<.<.<.<@

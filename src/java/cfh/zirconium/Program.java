@@ -26,7 +26,8 @@ public class Program {
     private final Printer printer;
     
     private boolean started = false;
-
+    // TODO step counter
+    
     /** Creates a program with given stations. */
     public Program(String name, Collection<Station> stations, Printer printer) {
         this.name = Objects.requireNonNull(name);

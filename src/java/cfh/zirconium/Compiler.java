@@ -211,10 +211,12 @@ public class Compiler {
                     case DUP -> new DupStation(x, y, printer);
                     case Q -> new QStation(x, y, printer);
                     case SPLIT -> new SplitStation(x, y, printer);
-                    case '`' -> new NumOutStation(x, y, printer);
                     case HORZ, VERT, DIAG_U, DIAG_D, CROSS_HV, CROSS_DD, CROSS_ALL, 
                          APERT_N, APERT_E, APERT_S, APERT_W, APERT_DIAG -> null;
                     default -> throw new CompileException(new Pos(x, y), "unrecognized symbol '" + ch + "'");
+                    
+                    // {TEST} must be inside exclusion zone
+                    case '`' -> new NumOutStation(x, y, printer);
                 };
                 if (station != null) {
                     map.put(station.pos(), station);

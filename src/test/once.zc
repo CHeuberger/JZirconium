@@ -1,0 +1,5 @@
+( dispatches one drone at the start )
+( and does nothing afterwards       )
+
+ @->`
+0>0

@@ -42,8 +42,6 @@ permits NopStation, CreateStation, DotStation, DupStation, QStation, SplitStatio
     public void linkTo(Single station) {
         if (!linked.add(station)) {
             System.err.printf("%s already linked to %s%n", this, station);
-        } else {
-            System.out.printf("%s linked to %s%n", this, station);
         }
     }
     
@@ -86,6 +84,11 @@ permits NopStation, CreateStation, DotStation, DupStation, QStation, SplitStatio
     public final int total() {
         return (parent==null ? this : parent).drones();
     }
+    
+    /** Delta from last tick. */
+    public int delta() {
+        return ticking ? 0 : drones-previous;
+    }
   
     @Override
     public boolean isNeighbour(Single station) {
@@ -114,7 +117,8 @@ permits NopStation, CreateStation, DotStation, DupStation, QStation, SplitStatio
         if (number < 0) {
             throw new IllegalArgumentException(this + ": negative drones: " + number);
         }
-        this.drones += number;
+//        (parent==null ? this : parent).stations().forEach(s -> s.drones += number);
+        drones += number;
     }
 
     @Override
