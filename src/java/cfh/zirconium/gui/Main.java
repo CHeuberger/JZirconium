@@ -61,7 +61,7 @@ import cfh.zirconium.net.Pos;
 /** Main for GUI. */
 public class Main {
 
-    public static final String VERSION = "0.01";
+    public static final String VERSION = "0.02";
     private static final String TITLE = "JZirconium v" + VERSION;
     
     public static void main(String... args) {
@@ -200,6 +200,9 @@ public class Main {
                 }
             }
         });
+        for (var i = 0; i < singleStationTable.getColumnCount(); i++) {
+            singleStationTable.getColumnModel().getColumn(i).setPreferredWidth(singleTableModel.size(i));
+        }
         
         var detailPane = new JTabbedPane();
         detailPane.addTab("Stations", newScrollPane(singleStationTable));
@@ -207,13 +210,13 @@ public class Main {
         var centerSplit = newSplitPane(false);
         centerSplit.setLeftComponent(codePane);
         centerSplit.setRightComponent(detailPane);
-        centerSplit.setDividerLocation(720);
+        centerSplit.setDividerLocation(700);
         
         logPane = newTextArea();
         logPane.setEditable(false);
         
         var mainSplit = newSplitPane(true);
-        mainSplit.setTopComponent(newScrollPane(centerSplit));
+        mainSplit.setTopComponent(centerSplit);
         mainSplit.setBottomComponent(newScrollPane(logPane));
         mainSplit.setDividerLocation(600);
         
@@ -253,11 +256,12 @@ public class Main {
         frame.setSize(1000, 900);
         frame.validate();
         frame.setLocationRelativeTo(null);
-        
+
         codePane.setCaretPosition(0);
         setName(PREFS.get(PREF_NAME, "unnamed"));
         update();
         frame.setVisible(true);
+
     }
     
     /** Shows help dialog. */

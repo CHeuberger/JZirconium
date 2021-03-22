@@ -17,10 +17,11 @@ import cfh.zirconium.net.Station;
 public class SingleModel extends AbstractTableModel {
     
     private static final Column[] COLUMNS = {
-            new Column("name", Single::toString),
-            new Column("drones", Single::drones),
-            new Column("parent", Single::parentID),
-            new Column("total", Single::total),
+            new Column("name", 80, Single::toString),
+            new Column("#", 30, Single::drones),
+            new Column("Δ", 30, Single::delta),
+            new Column("parent", 60, Single::parentID),
+            new Column("Σ", 40, Single::total),
     };
     
     private final List<Single> stations = new ArrayList<>();
@@ -42,6 +43,11 @@ public class SingleModel extends AbstractTableModel {
     /** Return the station at row line. */
     public Single station(int row) {
         return stations.get(row);
+    }
+    
+    /** Column size. */
+    public int size(int col) {
+        return COLUMNS[col].size;
     }
     
     @Override
@@ -69,9 +75,11 @@ public class SingleModel extends AbstractTableModel {
     
     private static class Column {
         private final String name;
+        private final int size;
         private final Function<Single, Object> getter;
-        Column(String name, Function<Single, Object> getter) {
+        Column(String name, int size, Function<Single, Object> getter) {
             this.name = Objects.requireNonNull(name);
+            this.size = size;
             this.getter = Objects.requireNonNull(getter);
         }
     }
