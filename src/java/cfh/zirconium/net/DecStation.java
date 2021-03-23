@@ -6,9 +6,9 @@ import cfh.zirconium.Environment;
  * {@code Q} Station.
  * If this station is occupied by N drones, dispatch N - 1 drones to linked stations.
  */
-public final class QStation extends Single {
+public final class DecStation extends Single {
 
-    public QStation(int x, int y, Environment env) {
+    public DecStation(int x, int y, Environment env) {
         super(x, y, env);
     }
     

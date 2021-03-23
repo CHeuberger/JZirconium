@@ -24,7 +24,6 @@ public class Environment {
     public boolean halted() { return halted; }
     
     public void reset() {
-        print("reset%n");
         halted = false;
         input.reset();
         output.reset();

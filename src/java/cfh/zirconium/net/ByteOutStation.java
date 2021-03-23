@@ -20,9 +20,11 @@ public final class ByteOutStation extends Single {
 
     @Override
     protected void tick0() {
-        var total = total();
-        if (total > 0) {
-            env.output().write(total % 256);
+        var drones = total();
+        if (drones > 0) {
+            int value = drones % 256;
+            env.output().write(value);
+            env.print("%c", (char)value);
         }
     }
 

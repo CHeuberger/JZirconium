@@ -20,10 +20,10 @@ public final class NumOutStation extends Single {
 
     @Override
     protected void tick0() {
-        var drones = total();
-        if (drones > 0) {
-            env.output(Integer.toString(drones) + settings.numberSeparator());
-            env.print("%d", drones);
+        var total = total();
+        if (total > 0) {
+            env.output(Integer.toString(total) + settings.numberSeparator());
+            env.print("%d", total);
         }
         
     }

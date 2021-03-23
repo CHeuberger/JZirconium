@@ -22,7 +22,7 @@ public class Compiler {
     public static final char CREATE = '@';
     public static final char DOT = '.';
     public static final char DUP = 'o';
-    public static final char Q = 'Q';
+    public static final char DEC = 'Q';
     public static final char SPLIT = 'O';
     
     // Tunnels
@@ -214,7 +214,7 @@ public class Compiler {
                     case CREATE -> new CreateStation(x, y, env);
                     case DOT -> new DotStation(x, y, env);
                     case DUP -> new DupStation(x, y, env);
-                    case Q -> new QStation(x, y, env);
+                    case DEC -> new DecStation(x, y, env);
                     case SPLIT -> new SplitStation(x, y, env);
                     case HORZ, VERT, DIAG_U, DIAG_D, CROSS_HV, CROSS_DD, CROSS_ALL, 
                          APERT_N, APERT_E, APERT_S, APERT_W, APERT_DIAG -> null;
