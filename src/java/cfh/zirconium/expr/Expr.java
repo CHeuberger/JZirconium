@@ -1,7 +1,12 @@
 package cfh.zirconium.expr;
 
+import static java.util.Objects.*;
+
 /** {@code expr := value | expr sp* expr sp* operator} */
 sealed abstract class Expr {
+
+    /** Executes this expression using given values for N and K. */
+    abstract int calculate(int n, int k);
 
     //==============================================================================================
     
@@ -15,6 +20,10 @@ sealed abstract class Expr {
     /** Number of drones. */
     static final class N extends Value {
         @Override
+        int calculate(int n, int k) {
+            return n;
+        }
+        @Override
         public String toString() {
             return "N";
         }
@@ -22,6 +31,10 @@ sealed abstract class Expr {
     
     /** Number of links. */
     static final class K extends Value {
+        @Override
+        int calculate(int n, int k) {
+            return k;
+        }
         @Override
         public String toString() {
             return "K";
@@ -35,6 +48,10 @@ sealed abstract class Expr {
             this.value = value;
         }
         @Override
+        int calculate(int n, int k) {
+            return value;
+        }
+        @Override
         public String toString() {
             return Integer.toString(value);
         }
@@ -44,13 +61,30 @@ sealed abstract class Expr {
     
     /** {@code expr sp* expr sp* operator} */
     static final class Operation extends Expr {
+        private static final String OPS = "+-*/=";
         private final Expr arg1;
         private final Expr arg2;
         private final char op;
         Operation(Expr arg1, Expr arg2, char op) {
-            this.arg1 = arg1;
-            this.arg2 = arg2;
+            if (OPS.indexOf(op) == -1) {
+                throw new IllegalArgumentException("invalid operation '" + op + "'");
+            }
+            this.arg1 = requireNonNull(arg1);
+            this.arg2 = requireNonNull(arg2);
             this.op = op;
+        }
+        @Override
+        int calculate(int n, int k) {
+            var val1 = arg1.calculate(n, k);
+            var val2 = arg2.calculate(n, k);
+            return switch (op) {
+                case '+' -> val1 + val2;
+                case '-' -> val1 - val2;
+                case '*' -> val1 * val2;
+                case '/' -> val2==0 ? 0 : val1 / val2;
+                case '=' -> val1==val2 ? 1 : 0;
+                default -> throw new IllegalArgumentException("invalid operation '" + op + "'");
+            };
         }
         @Override
         public String toString() {

@@ -60,13 +60,13 @@ import cfh.zirconium.Settings;
 import cfh.zirconium.net.Pos;
 
 /** Main for GUI. */
-public class Main {
+public class IDE {
 
-    public static final String VERSION = "0.03";
+    public static final String VERSION = "0.04";
     private static final String TITLE = "JZirconium v" + VERSION;
     
     public static void main(String... args) {
-        SwingUtilities.invokeLater(Main::new);
+        SwingUtilities.invokeLater(IDE::new);
     }
     
     private static final String PREF_NAME = "zirconium.name";
@@ -113,7 +113,7 @@ public class Main {
     private boolean changed = false;
     
     /** Builds and shows GUI. */
-    private Main() {
+    private IDE() {
         var open = newAction("Open", this::doOpen, "Open a new file");
         var save = newAction("Save", this::doSave, "Save code to file");
         var clearLog = newAction("Clear", this::doClearLog, "Clear log");

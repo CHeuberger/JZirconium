@@ -4,44 +4,10 @@ import cfh.zirconium.Compiler.CompileException;
 import cfh.zirconium.Environment.*;
 
 public class CompilerTest {
-
-    private static final Printer printer = new Printer() {
-        @Override
-        public void print(String format, Object... args) {
-            //
-        }
-    };
-    private static final Input input = new Input() {
-        @Override
-        public void reset() {
-            //
-        }
-
-        @Override
-        public int read() {
-            // TODO Auto-generated method stub
-            return 0;
-        };
-    };
-    private static final Output output = new Output() {
-        @Override
-        public void reset() {
-            //
-        };
-        @Override
-        public void write(String text) {
-            //
-        }
-        @Override
-        public void write(int b) {
-            // TODO Auto-generated method stub
-            
-        }
-    };
     
     public static void main(String[] args) {
         var test = new CompilerTest();
-        test.mapTest();
+        test.validationTest();
     }
 
     private final Compiler compiler;
@@ -50,7 +16,7 @@ public class CompilerTest {
         compiler = new Compiler(new Environment(printer, input, output));
     }
     
-    private void mapTest() {
+    private void validationTest() {
         var errors = 0;
         for (var code : """
             0 @ .o Q O   
@@ -89,6 +55,8 @@ public class CompilerTest {
         }
         if (errors > 0) {
             System.err.printf("%n=====  %d  ERRORS  =====%n", errors);
+        } else {
+            System.out.println("\nOK");
         }
     }
     
@@ -119,4 +87,40 @@ public class CompilerTest {
         var i = code.indexOf('\n');
         return i==-1 ? code : code.substring(0, i);
     }
+    
+    //----------------------------------------------------------------------------------------------
+    
+    private static final Printer printer = new Printer() {
+        @Override
+        public void print(String format, Object... args) {
+            //
+        }
+    };
+    private static final Input input = new Input() {
+        @Override
+        public void reset() {
+            //
+        }
+
+        @Override
+        public int read() {
+            // TODO Auto-generated method stub
+            return 0;
+        };
+    };
+    private static final Output output = new Output() {
+        @Override
+        public void reset() {
+            //
+        };
+        @Override
+        public void write(String text) {
+            //
+        }
+        @Override
+        public void write(int b) {
+            // TODO Auto-generated method stub
+            
+        }
+    };
 }

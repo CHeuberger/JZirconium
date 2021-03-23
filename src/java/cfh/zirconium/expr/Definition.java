@@ -105,8 +105,8 @@ public class Definition {
     private final Pos pos;
     private final String text;
     
-    private final char symbol;
-    private final Expr expr;
+    public final char symbol;
+    public final Expr expr;
     
     /** Constructor. */
     private Definition(Pos pos, String text, char symbol, Expr expr) {
@@ -131,5 +131,10 @@ public class Definition {
     @Override
     public String toString() {
         return symbol + ":" + expr;
+    }
+
+    /** Execute the expression. */
+    public int calculate(int n, int k) {
+        return expr.calculate(n, k);
     }
 }

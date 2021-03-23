@@ -22,7 +22,7 @@ public class Help {
                                         ############################
             
             """,
-            Main.VERSION);
+            IDE.VERSION);
         
         final var INTRO = String.format(HEADER + """
                                                    INTRO
@@ -106,6 +106,12 @@ public class Help {
                occupying this station in milliseconds.
             !  If any drones occupy this, halt the program.
             """);
+        final var METROPOLIS = String.format(HEADER + """
+                                                 METROPOLIS 
+                                                ============
+            
+            NOT IMPLEMENTED ... yet!
+            """);
 
         pane = new JTabbedPane();
         pane.addTab("INTRO", newArea(INTRO));
@@ -113,6 +119,7 @@ public class Help {
         pane.addTab("TUNNELS", newArea(TUNNELS));
         pane.addTab("APERTURES", newArea(APERTURES));
         pane.addTab("EXCLUSION", newArea(EXCLUSION));
+        pane.addTab("METOPOLIS", newArea(METROPOLIS));
     }
     
     

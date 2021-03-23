@@ -2,9 +2,7 @@ package cfh.zirconium;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -105,18 +103,18 @@ public class Compiler {
         
         char[][] chars = parse(code);
         
-        var definitions = bubblesLenses(chars);
+        Map<Character, Definition> definitions = bubblesLenses(chars);
         
-        var singles = scanStations(chars);
+        Map<Pos, Single> singles = scanStations(chars, definitions);
         
-        var stations = bound(chars, singles);
-        
-        link(chars, singles);
-        // TODO check unconnected tunnels
+        List<Station> stations = bound(chars, singles);
         
         // exclusion zones
         
         // metropolis
+        
+        link(chars, singles);
+        // TODO check unconnected tunnels
         
         return new Program(name, stations, env);
     }
@@ -148,8 +146,8 @@ public class Compiler {
     }
     
     /** Removes bubles {@code (...)} and extract definitions from lenses {@code ((...))}. */
-    private Collection<Definition> bubblesLenses(char[][] chars) throws CompileException {
-        var definitions = new HashSet<Definition>();
+    private Map<Character, Definition> bubblesLenses(char[][] chars) throws CompileException {
+        var definitions = new HashMap<Character, Definition>();
         for (var y = 0; y < chars.length; y++) {
             var row = chars[y];
             for (var x = 0; x < row.length; x++) {
@@ -178,10 +176,10 @@ public class Compiler {
                         row[x] = ' ';
                         var pos = new Pos(start, y);
                         var def = Definition.parse(pos, expr);
-                        if (definitions.contains(def)) {
+                        if (definitions.containsKey(def.symbol)) {
                             throw new CompileException(pos, "duplicated definition");
                         }
-                        definitions.add(def);
+                        definitions.put(def.symbol, def);
                     } else {
                         while (x < row.length) {
                             if (row[x] == ')') {
@@ -201,15 +199,16 @@ public class Compiler {
         return definitions;
     }
     
-    /** Scans the character matrix for stations. */
-    private Map<Pos, Single> scanStations(char[][] chars) throws CompileException {
+    /** Scans the character matrix for stations. 
+     * @param definitions TODO*/
+    private Map<Pos, Single> scanStations(char[][] chars, Map<Character, Definition> definitions) throws CompileException {
         var map = new HashMap<Pos, Single>();
         for (var y = 1; y < chars.length; y++) {
             var row = chars[y];
             for (var x = 1; x < row.length; x++) {
                 var ch = row[x];
                 var station = switch (ch) {
-                    case ' ' -> null;
+                    case ' ','\t' -> null;
                     case NOP -> new NopStation(x, y, env);
                     case CREATE -> new CreateStation(x, y, env);
                     case DOT -> new DotStation(x, y, env);
@@ -218,14 +217,24 @@ public class Compiler {
                     case SPLIT -> new SplitStation(x, y, env);
                     case HORZ, VERT, DIAG_U, DIAG_D, CROSS_HV, CROSS_DD, CROSS_ALL, 
                          APERT_N, APERT_E, APERT_S, APERT_W, APERT_DIAG -> null;
-                    default -> throw new CompileException(new Pos(x, y), "unrecognized symbol '" + ch + "'");
                     
-                    // {TEST} must be inside exclusion zone
+                    // TODO must be inside exclusion zone
                     case BYTE_IN -> new ByteInStation(x, y, env);
                     case BYTE_OUT -> new ByteOutStation(x, y, env);
                     case NUM_OUT -> new NumOutStation(x, y, env);
                     case PAUSE -> new PauseStation(x, y, env);
                     case HALT -> new HaltStation(x, y, env);
+                    
+                    // TODO must be inside metropolis'
+                    default -> {
+                        var def = definitions.get(ch);
+                        if (def == null) {
+                            throw new CompileException(new Pos(x, y), "unrecognized symbol '" + ch + "'");
+                        } else {
+                            yield new SyntheticStation(x, y, env, def);
+                        }
+                    }
+                    
                 };
                 if (station != null) {
                     map.put(station.pos(), station);
