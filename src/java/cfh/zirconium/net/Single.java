@@ -14,7 +14,7 @@ import cfh.zirconium.Environment;
 /** Single station. */
 public abstract sealed class Single extends Station
 permits NopStation, CreateStation, DotStation, DupStation, QStation, SplitStation,
-        NumOutStation
+        ByteInStation, NumOutStation, NumInStation, HaltStation
 {
 
     private final Pos pos;

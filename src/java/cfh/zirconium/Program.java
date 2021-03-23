@@ -76,7 +76,6 @@ public class Program {
     
     /** Reset. */
     public void reset() {
-        env.print("reset %s%n", name);
         stations.forEach(Station::reset);
         env.reset();
         started = false;
@@ -87,15 +86,16 @@ public class Program {
         if (!started) {
             start();
         }
-        env.print("step %s%n", name);
-        stations.forEach(Station::preTick);
-        stations.forEach(Station::tick);
-        stations.forEach(Station::posTick);
+        if (!env.halted()) {
+            stations.forEach(Station::preTick);
+            stations.forEach(Station::tick);
+            stations.forEach(Station::posTick);
+        }
     }
 
     /** Starts the program, basically only resets all stations. */
     private void start() {
-        env.print("start %s%n", name);
+        env.start();
         stations.forEach(Station::reset);
         started = true;
     }

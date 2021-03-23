@@ -12,17 +12,30 @@ public class CompilerTest {
         }
     };
     private static final Input input = new Input() {
+        @Override
         public void reset() {
             //
+        }
+
+        @Override
+        public int read() {
+            // TODO Auto-generated method stub
+            return 0;
         };
     };
     private static final Output output = new Output() {
+        @Override
         public void reset() {
             //
         };
         @Override
         public void write(String text) {
             //
+        }
+        @Override
+        public void write(byte b) {
+            // TODO Auto-generated method stub
+            
         }
     };
     

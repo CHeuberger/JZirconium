@@ -40,7 +40,11 @@ public class Compiler {
     public static final char APERT_S = 'v';
     public static final char APERT_W = '<';
     public static final char APERT_DIAG = '#';
-    
+ 
+    // Defect Stations
+    public static final char BYTE_IN = '?';
+    public static final char NUM_OUT = '`';
+    public static final char HALT = '!';
     // TODO exclusion zones, defect stations
     
     // TODO metropolis, Synthetic stations
@@ -215,7 +219,9 @@ public class Compiler {
                     default -> throw new CompileException(new Pos(x, y), "unrecognized symbol '" + ch + "'");
                     
                     // {TEST} must be inside exclusion zone
-                    case '`' -> new NumOutStation(x, y, env);
+                    case BYTE_IN -> new ByteInStation(x, y, env);
+                    case NUM_OUT -> new NumOutStation(x, y, env);
+                    case HALT -> new HaltStation(x, y, env);
                 };
                 if (station != null) {
                     map.put(station.pos(), station);

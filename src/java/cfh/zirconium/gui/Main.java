@@ -213,6 +213,8 @@ public class Main {
         
         outputPane = newTextArea();
         outputPane.setEditable(false);
+        outputPane.setLineWrap(true);
+        outputPane.setWrapStyleWord(true);
         
         var io = newSplitPane(true);
         io.setTopComponent(newScrollPane(inputPane));
@@ -250,15 +252,32 @@ public class Main {
         statusLine.add(statusCol);
         
         var input = new Input() {
+            private int cursor = 0;
             @Override
             public void reset() {
-                
+                cursor = 0;
+            }
+            @Override
+            public int read() {
+                var doc = inputPane.getDocument();
+                if (cursor < doc.getLength()) {
+                    try {
+                        return doc.getText(cursor++, 1).charAt(0);
+                    } catch (BadLocationException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+                return -1; // TODO ??
             }
         };
         Output output = new Output() {
             @Override
             public void reset() {
                 outputPane.setText("");
+            }
+            @Override
+            public void write(byte b) {
+                // TODO Auto-generated method stub
             }
             @Override
             public void write(String str) {
@@ -454,6 +473,7 @@ public class Main {
         if (program != null) {
             program.reset();
             singleTableModel.fireTableDataChanged();
+            update();
         }
     }
     
@@ -467,6 +487,7 @@ public class Main {
         if (program != null) {
             program.step();
             singleTableModel.fireTableDataChanged();
+            update();
         }
     }
     
@@ -488,7 +509,7 @@ public class Main {
     
     /** Updates GUI (actions). */
     private void update() {
-        boolean runable = program != null;
+        boolean runable = program != null && !env.halted();
         runAction.setEnabled(false);  // TODO
         stepAction.setEnabled(runable);
         graphAction.setEnabled(runable);

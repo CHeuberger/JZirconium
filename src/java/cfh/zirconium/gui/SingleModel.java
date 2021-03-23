@@ -18,10 +18,10 @@ public class SingleModel extends AbstractTableModel {
     
     private static final Column[] COLUMNS = {
             new Column("name", 85, Single::toString),
-            new Column("#", 35, Single::drones),
-            new Column("Δ", 35, Single::delta),
+            new Column("#", 50, Single::drones),
+            new Column("Δ", 50, Single::delta),
             new Column("parent", 60, Single::parentID),
-            new Column("Σ", 45, Single::total),
+            new Column("Σ", 55, Single::total),
     };
     
     private final List<Single> stations = new ArrayList<>();

@@ -33,6 +33,8 @@ public class Settings {
     public Font mainFont() { return new Font(FONT_NAME, Font.PLAIN, FONT_SIZE); }
     /** Font for code pane. */
     public Font codeFont() { return new Font(FONT_NAME, Font.PLAIN, FONT_SIZE+4); }
+    /** Separator printed after number output. */
+    public String numberSeparator() { return " "; }
     
     // help
     /** Font for help pane. */

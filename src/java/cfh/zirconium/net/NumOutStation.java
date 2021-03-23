@@ -21,9 +21,8 @@ public final class NumOutStation extends Single {
     protected void tick0() {
         var drones = total();
         if (drones > 0) {
-            env.output(Integer.toString(drones));
-            env.print("%d", drones);  // TODO output
-            System.out.print(drones);
+            env.output(Integer.toString(drones) + settings.numberSeparator());
+            env.print("%d", drones);
         }
         
     }

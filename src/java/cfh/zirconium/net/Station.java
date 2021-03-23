@@ -5,11 +5,14 @@ import java.util.Objects;
 import java.util.stream.Stream;
 
 import cfh.zirconium.Environment;
+import cfh.zirconium.Settings;
 
 /** A station, single or bound. */
 public sealed abstract class Station 
 permits Single, Bound {
 
+    protected final Settings settings = Settings.instance();
+    
     protected final Environment env;
 
     protected Station(Environment env) {

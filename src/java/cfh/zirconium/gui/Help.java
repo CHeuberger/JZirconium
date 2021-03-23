@@ -18,15 +18,15 @@ public class Help {
     //* Creates a new help pane. */
     public Help() {
         final var HEADER = String.format("""
-                                    J Z I R C O N I U M  v%-5s                         
-                                   ############################
+                                         J Z I R C O N I U M  v%-5s                         
+                                        ############################
             
             """,
             Main.VERSION);
         
         final var INTRO = String.format(HEADER + """
-                                              INTRO
-                                             =======                                 
+                                                   INTRO
+                                                  =======                                 
                                              
             Zirconium is an esoteric programming language made in September of 2020 
             by RocketRace.
@@ -42,9 +42,9 @@ public class Help {
                    o----@
             """);
         final var STATIONS = String.format(HEADER + """
-                                             STATIONS
-                                            ==========
-            At the beginning of the tick, all stations count the number of drones *occupying* them, 
+                                                  STATIONS
+                                                 ==========
+            At the beginning of the tick, all stations count the number of drones occupying them, 
             and then consume all those drones. Afterwards, the stations execute the following: 
                                              
             0  Do not dispatch any drones (just consume drones).
@@ -56,8 +56,8 @@ public class Help {
                occupying this station, K is the number of linked stations (division by 0 returns 0)
             """);
         final var TUNNELS = String.format(HEADER + """
-                                             TUNNELS
-                                            =========
+                                                  TUNNELS
+                                                 =========
                                             
             -   horizontal.
             |   vertical.
@@ -67,8 +67,8 @@ public class Help {
             *   any direction.
             """);
         final var APERTURES = String.format(HEADER + """
-                                            APERTURES
-                                           ===========
+                                                 APERTURES
+                                                ===========
                             
             ^  north.
             >  east.
@@ -76,13 +76,41 @@ public class Help {
             <  west.
             #  all diagonals.
             """);
-        
+        final var EXCLUSION = String.format(HEADER + """
+                                               EXCLUSION ZONE 
+                                              ================
+            
+            NOT IMPLEMENTED ... yet!
+            An area of the program may be enclosed with fences to make it an exclusion zone:
+            
+                 {~~}
+                {    }
+                 {    ~~~~~~}
+                {            }
+                {     ~~     }
+                 {~~~}  {~~~}
+            
+            The fences of an exclusion zone will behave as * tunnels. An exclusion zone 
+            may contain special defect stations, which perform impure computation: 
+            
+            ?  If any drones occupy this, read one byte from Input and 
+               dispatch that many drones to linked stations.
+               {{ do nothing on EOF }}
+            !  If any drones occupy this, halt the program.
+            `  If any drones occupy this, write the number of drones occupying this station 
+               in numeric form to the Output.
+            _  If any drones occupy this, read a numeric value from Input 
+               and dispatch that many drones to linked stations.
+            """);
+
         pane = new JTabbedPane();
         pane.addTab("INTRO", newArea(INTRO));
         pane.addTab("STATIONS", newArea(STATIONS));
         pane.addTab("TUNNELS", newArea(TUNNELS));
         pane.addTab("APERTURES", newArea(APERTURES));
+        pane.addTab("EXCLUSION", newArea(EXCLUSION));
     }
+    
     
     /** Help pane. */
     public JComponent pane() {
