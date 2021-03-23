@@ -90,6 +90,9 @@ public class Program {
             stations.forEach(Station::preTick);
             stations.forEach(Station::tick);
             stations.forEach(Station::posTick);
+            if (stations.stream().flatMap(Station::stations).mapToInt(Single::delta).allMatch(i -> i == 0)) {
+                env.print("nothing changed%n");
+            }
         }
     }
 

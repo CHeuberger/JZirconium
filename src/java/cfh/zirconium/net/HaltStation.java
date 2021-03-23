@@ -2,6 +2,10 @@ package cfh.zirconium.net;
 
 import cfh.zirconium.Environment;
 
+/** 
+ * {@code !} Station.
+ * If any drones occupy this, halt the program.
+ */
 public final class HaltStation extends Single {
 
     public HaltStation(int x, int y, Environment env) {

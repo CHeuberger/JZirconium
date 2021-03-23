@@ -4,7 +4,8 @@ import cfh.zirconium.Environment;
 
 /** 
  * {@code `} Station.
- * If any drones occupy this, write the number of drones occupying this station in numeric form to STDOUT.
+ * If any drones occupy this, write the number of drones occupying this station 
+ * in numeric form to the Output.
  */
 public final class NumOutStation extends Single {
 

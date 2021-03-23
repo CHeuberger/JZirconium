@@ -43,7 +43,9 @@ public class Compiler {
  
     // Defect Stations
     public static final char BYTE_IN = '?';
+    public static final char BYTE_OUT = '%';
     public static final char NUM_OUT = '`';
+    public static final char PAUSE= ';';
     public static final char HALT = '!';
     // TODO exclusion zones, defect stations
     
@@ -220,7 +222,9 @@ public class Compiler {
                     
                     // {TEST} must be inside exclusion zone
                     case BYTE_IN -> new ByteInStation(x, y, env);
+                    case BYTE_OUT -> new ByteOutStation(x, y, env);
                     case NUM_OUT -> new NumOutStation(x, y, env);
+                    case PAUSE -> new PauseStation(x, y, env);
                     case HALT -> new HaltStation(x, y, env);
                 };
                 if (station != null) {

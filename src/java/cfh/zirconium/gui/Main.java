@@ -50,7 +50,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
-
 import cfh.graph.Dot;
 import cfh.zirconium.Compiler;
 import cfh.zirconium.Program;
@@ -81,6 +80,8 @@ public class Main {
     
     private final Preferences PREFS = Preferences.userNodeForPackage(getClass());
     
+    private final InputDocument inputDocument;
+    
     private final JFrame frame;
     private final JTextArea codePane;
     private final JTextArea logPane;
@@ -102,6 +103,7 @@ public class Main {
     
     private final Action runAction;
     private final Action stepAction;
+    private final Action compileAction;
     private final Action graphAction;
 
     private final Environment env;
@@ -129,7 +131,7 @@ public class Main {
         var reset = newAction("Reset", this::doReset, "Resets program");
         runAction = newAction("Run", this::doRun, "Run the program");
         stepAction = newAction("Step", this::doStep, "Execute one step is program already started; otherwise it is started but stopped at first tick");
-        var compile = newAction("Compile", this::doCompile, "Compile current code");
+        compileAction = newAction("Compile", this::doCompile, "Compile current code");
         graphAction = newAction("Graph", this::doGraph, "Show a DOT graph of compiled program");
         
         var runMenu = new JMenu("Run");
@@ -137,7 +139,7 @@ public class Main {
         runMenu.add(newMenuItem(runAction));
         runMenu.add(newMenuItem(stepAction));
         runMenu.addSeparator();
-        runMenu.add(newMenuItem(compile));
+        runMenu.add(newMenuItem(compileAction));
         runMenu.add(newMenuItem(graphAction));
         
         var help = newAction("Help", this::doHelp, "Show help");
@@ -150,6 +152,8 @@ public class Main {
         menubar.add(runMenu);
         menubar.add(helpMenu);
         menubar.add(Box.createHorizontalStrut(50));
+        menubar.add(newMenuBarButton(compileAction));
+        menubar.add(Box.createHorizontalStrut(10));
         menubar.add(newMenuBarButton(stepAction));
 
         codePane = newTextArea();
@@ -208,8 +212,11 @@ public class Main {
         for (var i = 0; i < singleStationTable.getColumnCount(); i++) {
             singleStationTable.getColumnModel().getColumn(i).setPreferredWidth(singleTableModel.size(i));
         }
-        
+
+        inputDocument = new InputDocument();
+
         inputPane = newTextArea();
+        inputPane.setDocument(inputDocument);
         
         outputPane = newTextArea();
         outputPane.setEditable(false);
@@ -252,22 +259,18 @@ public class Main {
         statusLine.add(statusCol);
         
         var input = new Input() {
-            private int cursor = 0;
             @Override
             public void reset() {
-                cursor = 0;
+                inputDocument.reset();
             }
             @Override
             public int read() {
-                var doc = inputPane.getDocument();
-                if (cursor < doc.getLength()) {
-                    try {
-                        return doc.getText(cursor++, 1).charAt(0);
-                    } catch (BadLocationException ex) {
-                        ex.printStackTrace();
-                    }
+                try {
+                    return inputDocument.hasByte() ? inputDocument.nextByte() : -1;
+                } catch (BadLocationException ex) {
+                    ex.printStackTrace();
+                    return -1;
                 }
-                return -1; // TODO ??
             }
         };
         Output output = new Output() {
@@ -276,8 +279,8 @@ public class Main {
                 outputPane.setText("");
             }
             @Override
-            public void write(byte b) {
-                // TODO Auto-generated method stub
+            public void write(int b) {
+                outputPane.append(Character.toString(b & 0xFF));
             }
             @Override
             public void write(String str) {
@@ -485,9 +488,12 @@ public class Main {
     /** Step the program. */
     private void doStep(ActionEvent ev) {
         if (program != null) {
-            program.step();
-            singleTableModel.fireTableDataChanged();
-            update();
+            try {
+                program.step();
+            } finally {
+                singleTableModel.fireTableDataChanged();
+                update();
+            }
         }
     }
     

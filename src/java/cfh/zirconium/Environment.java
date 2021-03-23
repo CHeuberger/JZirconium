@@ -8,6 +8,7 @@ public class Environment {
     private final Printer printer;
     private final Input input;
     private final Output output;
+    // TODO error
     
     private boolean halted = false;
     
@@ -69,7 +70,7 @@ public class Environment {
         public void reset();
 
         /** Write one byte. */
-        public void write(byte b);
+        public void write(int b);
         
         /** Write text to output. */
         public void write(String text);

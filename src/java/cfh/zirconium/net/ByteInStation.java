@@ -2,6 +2,11 @@ package cfh.zirconium.net;
 
 import cfh.zirconium.Environment;
 
+/** 
+ * {@code ?} Station.
+ * If any drones occupy this, read one byte from Input and 
+ * dispatch that many drones to linked stations.
+ */
 public final class ByteInStation extends Single {
 
     public ByteInStation(int x, int y, Environment env) {

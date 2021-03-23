@@ -33,7 +33,7 @@ public class CompilerTest {
             //
         }
         @Override
-        public void write(byte b) {
+        public void write(int b) {
             // TODO Auto-generated method stub
             
         }
