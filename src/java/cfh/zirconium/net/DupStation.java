@@ -13,7 +13,9 @@ public final class DupStation extends Single {
     }
     
     @Override
-    public char type() { return 'o'; }
+    public String name() { 
+        return "o"; 
+    }
 
     @Override
     protected void tick0() {

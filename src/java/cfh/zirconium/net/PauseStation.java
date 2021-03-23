@@ -14,8 +14,8 @@ public final class PauseStation extends Single {
     }
 
     @Override
-    public char type() {
-        return ';';
+    public String name() {
+        return ";";
     }
 
     @Override

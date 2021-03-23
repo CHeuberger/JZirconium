@@ -13,7 +13,9 @@ public final class DecStation extends Single {
     }
     
     @Override
-    public char type() { return 'Q'; }
+    public String name() { 
+        return "Q"; 
+    }
 
     @Override
     protected void tick0() {

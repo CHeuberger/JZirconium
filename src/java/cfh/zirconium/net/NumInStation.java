@@ -14,8 +14,8 @@ public final class NumInStation extends Single {
     }
 
     @Override
-    public char type() {
-        return '_';
+    public String name() {
+        return "_";
     }
 
     @Override

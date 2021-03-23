@@ -14,7 +14,9 @@ public final class SplitStation extends Single {
     }
     
     @Override
-    public char type() { return 'O'; }
+    public String name() { 
+        return "O"; 
+    }
 
     @Override
     protected void tick0() {

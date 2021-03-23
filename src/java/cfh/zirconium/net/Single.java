@@ -57,7 +57,7 @@ permits NopStation, CreateStation, DotStation, DupStation, DecStation, SplitStat
     }
     
     /** Station type. */
-    public abstract char type(); 
+    public abstract String name(); 
     
     /** Position of this station. */
     public Pos pos() { return pos; }
@@ -176,6 +176,6 @@ permits NopStation, CreateStation, DotStation, DupStation, DecStation, SplitStat
     
     @Override
     public String toString() {
-        return String.format("%c%s", type(), pos);
+        return String.format("%s%s", name(), pos);
     }
 }

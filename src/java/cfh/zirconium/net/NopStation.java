@@ -13,7 +13,9 @@ public final class NopStation extends Single {
     }
     
     @Override
-    public char type() { return '0'; }
+    public String name() { 
+        return "0"; 
+    }
 
     @Override
     protected void tick0() {

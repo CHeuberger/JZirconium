@@ -80,12 +80,10 @@ public class Definition {
                 throw new CompileException(new Pos(pos.x()+buf.position()-1, pos.y()), "too many arguments/missing operator");
             }
             
-            return new Definition(pos, text, symbol, expr);
+            return new Definition(symbol, expr);
         } catch (BufferUnderflowException ex) {
             throw new CompileException(new Pos(pos.x()+buf.position()-1, pos.y()), "incomplete definition");
         }
-        
-        // TODO
     }
     
     /** Skip spaces leaving the buffer at the next non-empty char. */
@@ -102,16 +100,11 @@ public class Definition {
 
     //----------------------------------------------------------------------------------------------
     
-    private final Pos pos;
-    private final String text;
-    
     public final char symbol;
     public final Expr expr;
     
     /** Constructor. */
-    private Definition(Pos pos, String text, char symbol, Expr expr) {
-        this.pos = pos;
-        this.text = text;
+    private Definition(char symbol, Expr expr) {
         this.symbol = symbol;
         this.expr = expr;
     }

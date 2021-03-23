@@ -213,6 +213,14 @@ public class IDE {
             singleStationTable.getColumnModel().getColumn(i).setPreferredWidth(singleTableModel.size(i));
         }
 
+        var detailPane = new JTabbedPane();
+        detailPane.addTab("Stations", newScrollPane(singleStationTable));
+        
+        var centerSplit = newSplitPane(false);
+        centerSplit.setLeftComponent(codePane);
+        centerSplit.setRightComponent(detailPane);
+        centerSplit.setDividerLocation(850);
+        
         inputDocument = new InputDocument();
 
         inputPane = newTextArea();
@@ -227,22 +235,17 @@ public class IDE {
         io.setTopComponent(newScrollPane(inputPane));
         io.setBottomComponent(newScrollPane(outputPane));
         
-        var detailPane = new JTabbedPane();
-        detailPane.addTab("Stations", newScrollPane(singleStationTable));
-        detailPane.addTab("IO", io);
-        
-        var centerSplit = newSplitPane(false);
-        centerSplit.setLeftComponent(codePane);
-        centerSplit.setRightComponent(detailPane);
-        centerSplit.setDividerLocation(850);
-        
         logPane = newTextArea();
         logPane.setEditable(false);
         
+        var bottom = new JTabbedPane();
+        bottom.addTab("I O", io);
+        bottom.addTab("LOG", newScrollPane(logPane));
+        
         var mainSplit = newSplitPane(true);
         mainSplit.setTopComponent(centerSplit);
-        mainSplit.setBottomComponent(newScrollPane(logPane));
-        mainSplit.setDividerLocation(600);
+        mainSplit.setBottomComponent(bottom);
+        mainSplit.setDividerLocation(550);
         
         statusName = newTextField(30, "Name");
         

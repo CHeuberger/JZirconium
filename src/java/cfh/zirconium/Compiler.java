@@ -45,6 +45,7 @@ public class Compiler {
     public static final char NUM_OUT = '`';
     public static final char PAUSE= ';';
     public static final char HALT = '!';
+    
     // TODO exclusion zones, defect stations
     
     // TODO metropolis, Synthetic stations

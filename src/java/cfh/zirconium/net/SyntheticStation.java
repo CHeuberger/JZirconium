@@ -20,8 +20,8 @@ public final class SyntheticStation extends Single {
     }
 
     @Override
-    public char type() {
-        return definition.symbol;
+    public String name() {
+        return "[" + definition.symbol + "]";
     }
 
     @Override
