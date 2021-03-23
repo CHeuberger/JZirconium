@@ -101,9 +101,13 @@ public class CompilerTest {
         public void reset() {
             //
         }
-
         @Override
-        public int read() {
+        public int readByte() {
+            // TODO Auto-generated method stub
+            return 0;
+        };
+        @Override
+        public int readInteger() {
             // TODO Auto-generated method stub
             return 0;
         };

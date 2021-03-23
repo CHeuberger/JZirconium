@@ -20,6 +20,11 @@ public final class NumInStation extends Single {
 
     @Override
     protected void tick0() {
-        // TODO
+        if (total() > 0) {
+            int drones = env.input().readInteger();
+            if (drones > 0) {
+                send(drones);
+            }
+        }
     }
 }

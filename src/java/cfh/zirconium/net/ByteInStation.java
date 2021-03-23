@@ -21,7 +21,7 @@ public final class ByteInStation extends Single {
     @Override
     protected void tick0() {
         if (total() > 0) {
-            int drones = env.input().read();
+            int drones = env.input().readByte();
             if (drones > 0) {
                 send(drones);
             }

@@ -60,7 +60,10 @@ public class Environment {
         public void reset();
         
         /** Read one byte. */
-        public int read();
+        public int readByte();
+        
+        /** Read integer. */
+        public int readInteger();
     }
     
     public interface Output {

@@ -48,4 +48,46 @@ public class InputDocument extends PlainDocument {
         }
         return getText(cursor++, 1).charAt(0);
     }
+    
+    synchronized boolean hasInteger() {
+        var tmp = cursor;
+        while (hasByte()) {
+            int b;
+            try {
+                b = nextByte();
+            } catch (BadLocationException ex) {
+                ex.printStackTrace();
+                throw new RuntimeException(ex);
+            }
+            if (Character.isDigit((char)b)) {
+                cursor = tmp;
+                return true;
+            }
+            if (b != ' ' && b != '\t') {
+                break;
+            }
+        }
+        cursor = tmp;
+        return false;
+    }
+    
+    synchronized int nextInteger() throws BadLocationException {
+        while (hasByte()) {
+            var b = nextByte();
+            if (Character.isDigit((char)b)) {
+                break;
+            }
+            if (b != ' ' && b != '\t') {
+                throw new BadLocationException("no integer available", cursor-1);
+            }
+        }
+        var offset = cursor-1;
+        while (hasByte()) {
+            if (!Character.isDigit((char)nextByte())) {
+                cursor -= 1;
+                break;
+            }
+        }
+        return Integer.parseInt(getText(offset, cursor-offset));
+    }
 }

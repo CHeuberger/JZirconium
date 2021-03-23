@@ -267,9 +267,18 @@ public class IDE {
                 inputDocument.reset();
             }
             @Override
-            public int read() {
+            public int readByte() {
                 try {
                     return inputDocument.hasByte() ? inputDocument.nextByte() : -1;
+                } catch (BadLocationException ex) {
+                    ex.printStackTrace();
+                    return -1;
+                }
+            }
+            @Override
+            public int readInteger() {
+                try {
+                    return inputDocument.hasInteger() ? inputDocument.nextInteger() : -1;
                 } catch (BadLocationException ex) {
                     ex.printStackTrace();
                     return -1;
