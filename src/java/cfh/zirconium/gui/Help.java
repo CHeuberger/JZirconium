@@ -80,7 +80,6 @@ public class Help {
                                                EXCLUSION ZONE 
                                               ================
             
-            NOT IMPLEMENTED ... yet!
             An area of the program may be enclosed with fences to make it an exclusion zone:
             
                  {~~}
@@ -110,7 +109,54 @@ public class Help {
                                                  METROPOLIS 
                                                 ============
             
-            NOT IMPLEMENTED ... yet!
+            An area of the program may be enclosed with forts to make it a metropolis:
+
+                 [==]
+                [    ]
+                 [    ======]
+                [            ]
+                [     ==     ]
+                 [===]  [===]
+
+            Like the fences of an exclusion zone, the forts of a metropolis behave as * tunnels.
+
+            A metropolis may contain special synthetic stations.
+            """);
+        final var SYNTHETIC = String.format(HEADER + """
+                                              SYNTHETIC STATION 
+                                             ===================
+            
+            A synthetic station is a station whose behavior is defined by the user. Each tick, 
+            a synthetic station dispatches some number of drones based on the number of 
+            occupying drones and the number of linked stations using some arithmetic expression.
+
+            A synthetic station must be defined using a specific grammar. The definition 
+            includes a target symbol, which is the synthetic station to be defined, and an 
+            arithmetic expression in postfix notation. The expression is evaluated for the 
+            station on each tick, and represents the number of drones dispatched. 
+            The expression can be in terms of integer literals, as well as special 
+            variables N and K, which represent the number of drones currently occupying 
+            the station and the number of linked station.
+
+            For instance,
+                Z = N 1 +
+            The Z station here is defined to dispatch N + 1 drones to each linked station.
+
+            Expressions may contain the following operators: +, -, *, /, =, corresponding 
+            to addition, subtraction, multiplication, floor division (zero if divisor is 0) 
+            and equality (1 if equal, 0 otherwise).
+
+            The following is a complete grammar for synthetic station definitions.
+                definition := symbol sp* "=" sp* expr
+                symbol := [^\s]
+                expr := value | expr sp* expr sp* operator
+                value := "N" | "K" | integer
+                integer := ["0"-"9"]+
+                operator := "+" | "-" | "*" | "/" | "=" 
+                sp := " " | "\t"
+
+            A synthetic station may be defined inside a lens. A lens is parsed at compile time:
+                ((r = N K / 1 +))
             """);
 
         pane = new JTabbedPane();
@@ -120,6 +166,7 @@ public class Help {
         pane.addTab("APERTURES", newArea(APERTURES));
         pane.addTab("EXCLUSION", newArea(EXCLUSION));
         pane.addTab("METROPOLIS", newArea(METROPOLIS));
+        pane.addTab("SYNTHETIC", newArea(SYNTHETIC));
     }
     
     

@@ -93,10 +93,8 @@ public class IDE {
     
     private final SingleModel singleTableModel;
     
-    // TODO station list
+    // TODO Probes ?
     // TODO add/delete column
-    // TODO show graph
-    // TODO invalidate program on edit
     // TODO undo
     // TODO include files
     // TODO recognize no changes

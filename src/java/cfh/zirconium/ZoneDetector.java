@@ -5,6 +5,8 @@ import static java.util.Objects.*;
 import cfh.zirconium.Compiler.CompileException;
 import cfh.zirconium.net.Pos;
 
+// TODO settings
+// TODO javadoc
 public class ZoneDetector {
 
     private final String name;
@@ -26,6 +28,8 @@ public class ZoneDetector {
         
         zones = new int[chars.length][chars[0].length];
     }
+    
+    // TODO great walk, not optimized
     
     int[][] detect() throws CompileException {
         var next = 1;

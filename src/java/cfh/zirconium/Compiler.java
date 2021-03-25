@@ -51,24 +51,31 @@ public class Compiler {
     public static final char EZ_L = '{';
     public static final char EZ_H = '~';
     public static final char EZ_R = '}';
+    public static final String FENCES = "" + EZ_L + EZ_H + EZ_R;
     
     // Metropolis
     public static final char MP_L = '[';
     public static final char MP_H = '=';
     public static final char MP_R = ']';
+    public static final String FORTS = "" + MP_L + MP_H + MP_R;
     
+    public static final String NOT_STATION = " \t"
+        +  HORZ + VERT + DIAG_U + DIAG_D + CROSS_HV + CROSS_DD + CROSS_ALL
+        + APERT_N + APERT_E + APERT_S + APERT_W + APERT_DIAG
+        + FENCES + FORTS;
+
     // TODO add fences as *
     // TODO add forts as *
     /** Directions. */
     private enum Dir {
-        N ( 0, -1, APERT_S, APERT_N, VERT, CROSS_HV, CROSS_ALL),
-        NE(+1, -1, APERT_DIAG, APERT_DIAG, DIAG_U, CROSS_DD, CROSS_ALL),
-        E (+1,  0, APERT_W, APERT_E, HORZ, CROSS_HV, CROSS_ALL),
-        SE(+1, +1, APERT_DIAG, APERT_DIAG, DIAG_D, CROSS_DD, CROSS_ALL),
-        S ( 0, +1, APERT_N, APERT_S, VERT, CROSS_HV, CROSS_ALL),
-        SW(-1, +1, APERT_DIAG, APERT_DIAG, DIAG_U, CROSS_DD, CROSS_ALL),
-        W (-1,  0, APERT_E, APERT_W, HORZ, CROSS_HV, CROSS_ALL),
-        NW(-1, -1, APERT_DIAG, APERT_DIAG, DIAG_D, CROSS_DD, CROSS_ALL);
+        N ( 0, -1, APERT_S, APERT_N, VERT, CROSS_HV),
+        NE(+1, -1, APERT_DIAG, APERT_DIAG, DIAG_U, CROSS_DD),
+        E (+1,  0, APERT_W, APERT_E, HORZ, CROSS_HV),
+        SE(+1, +1, APERT_DIAG, APERT_DIAG, DIAG_D, CROSS_DD),
+        S ( 0, +1, APERT_N, APERT_S, VERT, CROSS_HV),
+        SW(-1, +1, APERT_DIAG, APERT_DIAG, DIAG_U, CROSS_DD),
+        W (-1,  0, APERT_E, APERT_W, HORZ, CROSS_HV),
+        NW(-1, -1, APERT_DIAG, APERT_DIAG, DIAG_D, CROSS_DD);
         
         /** X step for this direction. */
         final int dx;
@@ -78,20 +85,25 @@ public class Compiler {
         final char apertureIn;
         /** Aperture at end of this direction. */
         final char apertureOut;
+        /** Direct tunnel. */
+        final char direct;
         /** Valid tunnels for this direction, excluded apertures. */
         final String tunnels;
         /** Creates direciton instance. */
-        private Dir(int dx, int dy, char apertureIn, char apertureOut, char... tunnels) {
+        private Dir(int dx, int dy, char apertureIn, char apertureOut, char direct, char... tunnels) {
             this.dx = dx;
             this.dy = dy;
             this.apertureIn = apertureIn;
             this.apertureOut = apertureOut;
-            this.tunnels = new String(tunnels);
+            this.direct = direct;
+            this.tunnels = direct + new String(tunnels) + CROSS_ALL + FENCES + FORTS;
         }
         /** Is given character an incomming aperture for this direction. */
         boolean isIn(char ch) { return ch == apertureIn; }
         /** Is given character an outgoing aperture for this direction. */
         boolean isOut(char ch) { return ch == apertureOut; }
+        /** Is direct tunnel. */
+        boolean isDirect(char ch) { return ch == direct; }
         /** Is given character a valid tunnel for this direction, excluded apertures. */
         boolean isTunnel(char ch) { return tunnels.indexOf(ch) != -1; }
     }
@@ -224,56 +236,40 @@ public class Compiler {
             var row = chars[y];
             for (var x = 1; x < row.length; x++) {
                 var ch = row[x];
-                Single station;
-                var excl = exclusion[y][x] != 0;
-                var metro = metropolis[y][x] != 0;
-                if (!excl && !metro) {
-                    station = switch (ch) {
-                        case ' ','\t' -> null;
-                        case HORZ, VERT, DIAG_U, DIAG_D, CROSS_HV, CROSS_DD, CROSS_ALL,
-                             APERT_N, APERT_E, APERT_S, APERT_W, APERT_DIAG,
-                             EZ_L, EZ_H, EZ_R, MP_L, MP_H, MP_R -> null;
-                        case NOP -> new NopStation(x, y, env);
-                        case CREATE -> new CreateStation(x, y, env);
-                        case DOT -> new DotStation(x, y, env);
-                        case DUP -> new DupStation(x, y, env);
-                        case DEC -> new DecStation(x, y, env);
-                        case SPLIT -> new SplitStation(x, y, env);
-                        default -> throw new CompileException(new Pos(x, y), "unrecognized station symbol '" + ch + "'");
-                    };
-                } else if (excl && !metro) {
-                    station = switch (ch) {
-                        case ' ','\t' -> null;
-                        case HORZ, VERT, DIAG_U, DIAG_D, CROSS_HV, CROSS_DD, CROSS_ALL,
-                             APERT_N, APERT_E, APERT_S, APERT_W, APERT_DIAG,
-                             EZ_L, EZ_H, EZ_R, MP_L, MP_H, MP_R -> null;
-                        case BYTE_IN -> new ByteInStation(x, y, env);
-                        case BYTE_OUT -> new ByteOutStation(x, y, env);
-                        case NUM_IN -> new NumInStation(x, y, env);
-                        case NUM_OUT -> new NumOutStation(x, y, env);
-                        case PAUSE -> new PauseStation(x, y, env);
-                        case HALT -> new HaltStation(x, y, env);
-                        default -> throw new CompileException(new Pos(x, y), "unrecognized station symbol '" + ch + "'");
-                    };
-                } else if (!excl && metro) {
-                    station = switch (ch) {
-                        case ' ','\t' -> null;
-                        case HORZ, VERT, DIAG_U, DIAG_D, CROSS_HV, CROSS_DD, CROSS_ALL,
-                             APERT_N, APERT_E, APERT_S, APERT_W, APERT_DIAG,
-                             EZ_L, EZ_H, EZ_R, MP_L, MP_H, MP_R -> null;
-                        default -> {
-                            var def = definitions.get(ch);
-                            if (def == null) {
-                                throw new CompileException(new Pos(x, y), "unrecognized symbol '" + ch + "'");
-                            } else {
-                                yield new SyntheticStation(x, y, env, def);
-                            }
+                if (NOT_STATION.indexOf(ch) == -1) {
+                    Single station;
+                    var excl = exclusion[y][x] != 0;
+                    var metro = metropolis[y][x] != 0;
+                    if (!excl && !metro) {
+                        station = switch (ch) {
+                            case NOP -> new NopStation(x, y, env);
+                            case CREATE -> new CreateStation(x, y, env);
+                            case DOT -> new DotStation(x, y, env);
+                            case DUP -> new DupStation(x, y, env);
+                            case DEC -> new DecStation(x, y, env);
+                            case SPLIT -> new SplitStation(x, y, env);
+                            default -> throw new CompileException(new Pos(x, y), "unrecognized station symbol '" + ch + "'");
+                        };
+                    } else if (excl && !metro) {
+                        station = switch (ch) {
+                            case BYTE_IN -> new ByteInStation(x, y, env);
+                            case BYTE_OUT -> new ByteOutStation(x, y, env);
+                            case NUM_IN -> new NumInStation(x, y, env);
+                            case NUM_OUT -> new NumOutStation(x, y, env);
+                            case PAUSE -> new PauseStation(x, y, env);
+                            case HALT -> new HaltStation(x, y, env);
+                            default -> throw new CompileException(new Pos(x, y), "unrecognized station symbol '" + ch + "'");
+                        };
+                    } else if (!excl && metro) {
+                        var def = definitions.get(ch);
+                        if (def == null) {
+                            throw new CompileException(new Pos(x, y), "unrecognized symbol '" + ch + "'");
+                        } else {
+                            station =  new SyntheticStation(x, y, env, def);
                         }
-                    };
-                } else {
-                    throw new CompileException(new Pos(x, y), "mixed zones");
-                }
-                if (station != null) {
+                    } else {
+                        throw new CompileException(new Pos(x, y), "mixed zones");
+                    }
                     map.put(station.pos(), station);
                 }
             }
@@ -331,6 +327,43 @@ public class Compiler {
     
     /** Links stations. */
     private void link(char[][] chars, Map<Pos, Single> singles) throws CompileException {
+        var count = 0;
+        for (var station : singles.values()) {
+            for (var dir : Dir.values()) {
+                var x = station.x() + dir.dx;
+                var y = station.y() + dir.dy;
+                var ch = chars[y][x];
+                if (dir.isTunnel(ch) || dir.isOut(ch) && !dir.isIn(ch)) {
+                    var direct = false;
+                    do {
+                        if (dir.isDirect(ch) ) {
+                            direct = true;
+                        }
+                        x += dir.dx;
+                        y += dir.dy;
+                        ch = chars[y][x];
+                    } while (dir.isTunnel(ch));
+                    if (dir.isOut(ch)) {
+                        direct = true;
+                        x += dir.dx;
+                        y += dir.dy;
+                    }
+                    var pos = new Pos(x, y);
+                    var dest = singles.get(pos);
+                    if (dest != null) {
+                        station.linkTo(dest);
+                        count += 1;
+                    } else if (direct) {
+                        throw new CompileException(pos, String.format(
+                            "tunnel not ending at a stationm %s %s", dir, station));
+                    }
+                }
+            }
+        }
+        env.print("%d links created%n", count);
+    }
+    
+    private void link0(char[][] chars, Map<Pos, Single> singles) throws CompileException {
         // TODO # needs at least one additional connection
         var count = 0;
         for (var station : singles.values()) {
