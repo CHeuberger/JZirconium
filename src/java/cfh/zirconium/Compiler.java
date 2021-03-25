@@ -47,9 +47,15 @@ public class Compiler {
     public static final char PAUSE= ';';
     public static final char HALT = '!';
     
-    // TODO exclusion zones, defect stations
+    // Exclusion Zones
+    public static final char EZ_L = '{';
+    public static final char EZ_H = '~';
+    public static final char EZ_R = '}';
     
-    // TODO metropolis, Synthetic stations
+    // Metropolis
+    public static final char MP_L = '[';
+    public static final char MP_H = '=';
+    public static final char MP_R = ']';
     
     // TODO add fences as *
     // TODO add forts as *
@@ -107,13 +113,13 @@ public class Compiler {
         
         Map<Character, Definition> definitions = bubblesLenses(chars);
         
-        Map<Pos, Single> singles = scanStations(chars, definitions);
+        // TODO boolean[][]
+        int[][] exclusion = new ZoneDetector("fence", EZ_L, EZ_H, EZ_R, chars).detect();
+        int[][] metropolis = new ZoneDetector("fort", MP_L, MP_H, MP_R, chars).detect();
+        
+        Map<Pos, Single> singles = scanStations(chars, exclusion, metropolis, definitions);
         
         List<Station> stations = bound(chars, singles);
-        
-        // exclusion zones
-        
-        // metropolis
         
         link(chars, singles);
         // TODO check unconnected tunnels
@@ -136,12 +142,12 @@ public class Compiler {
         var chars = new char[rows+2][cols+2];
         Arrays.fill(chars[0], EMPTY);
         Arrays.fill(chars[rows+1], EMPTY);
-        for (var i = 0; i < rows; i++) {
-            var line = lines[i];
-            var row = chars[i+1];
-            Arrays.fill(row, ' ');
-            for (var j = 0; j < line.length(); j++) {
-                row[j+1] = line.charAt(j);
+        for (var y = 0; y < rows; y++) {
+            var line = lines[y];
+            var row = chars[y+1];
+            Arrays.fill(row, EMPTY);
+            for (var x = 0; x < line.length(); x++) {
+                row[x+1] = line.charAt(x);
             }
         }
         return chars;
@@ -201,44 +207,72 @@ public class Compiler {
         return definitions;
     }
     
+    /** Find exclusion zones. 
+     * @param name TODO
+     * @throws CompileException */
+    int[][] zones(String name, char left, char horiz, char right, char[][] chars) throws CompileException {
+        return new ZoneDetector(name, left, horiz, right, chars).detect0();
+    }
+    
     /** Scans the character matrix for stations. 
+     * @param exclusion TODO
+     * @param metropolis TODO
      * @param definitions TODO*/
-    private Map<Pos, Single> scanStations(char[][] chars, Map<Character, Definition> definitions) throws CompileException {
+    private Map<Pos, Single> scanStations(char[][] chars, int[][] exclusion, int[][] metropolis, Map<Character, Definition> definitions) throws CompileException {
         var map = new HashMap<Pos, Single>();
         for (var y = 1; y < chars.length; y++) {
             var row = chars[y];
             for (var x = 1; x < row.length; x++) {
                 var ch = row[x];
-                var station = switch (ch) {
-                    case ' ','\t' -> null;
-                    case NOP -> new NopStation(x, y, env);
-                    case CREATE -> new CreateStation(x, y, env);
-                    case DOT -> new DotStation(x, y, env);
-                    case DUP -> new DupStation(x, y, env);
-                    case DEC -> new DecStation(x, y, env);
-                    case SPLIT -> new SplitStation(x, y, env);
-                    case HORZ, VERT, DIAG_U, DIAG_D, CROSS_HV, CROSS_DD, CROSS_ALL, 
-                         APERT_N, APERT_E, APERT_S, APERT_W, APERT_DIAG -> null;
-                    
-                    // TODO must be inside exclusion zone
-                    case BYTE_IN -> new ByteInStation(x, y, env);
-                    case BYTE_OUT -> new ByteOutStation(x, y, env);
-                    case NUM_IN -> new NumInStation(x, y, env);
-                    case NUM_OUT -> new NumOutStation(x, y, env);
-                    case PAUSE -> new PauseStation(x, y, env);
-                    case HALT -> new HaltStation(x, y, env);
-                    
-                    // TODO must be inside metropolis'
-                    default -> {
-                        var def = definitions.get(ch);
-                        if (def == null) {
-                            throw new CompileException(new Pos(x, y), "unrecognized symbol '" + ch + "'");
-                        } else {
-                            yield new SyntheticStation(x, y, env, def);
+                Single station;
+                var excl = exclusion[y][x] != 0;
+                var metro = metropolis[y][x] != 0;
+                if (!excl && !metro) {
+                    station = switch (ch) {
+                        case ' ','\t' -> null;
+                        case HORZ, VERT, DIAG_U, DIAG_D, CROSS_HV, CROSS_DD, CROSS_ALL,
+                             APERT_N, APERT_E, APERT_S, APERT_W, APERT_DIAG,
+                             EZ_L, EZ_H, EZ_R, MP_L, MP_H, MP_R -> null;
+                        case NOP -> new NopStation(x, y, env);
+                        case CREATE -> new CreateStation(x, y, env);
+                        case DOT -> new DotStation(x, y, env);
+                        case DUP -> new DupStation(x, y, env);
+                        case DEC -> new DecStation(x, y, env);
+                        case SPLIT -> new SplitStation(x, y, env);
+                        default -> throw new CompileException(new Pos(x, y), "unrecognized station symbol '" + ch + "'");
+                    };
+                } else if (excl && !metro) {
+                    station = switch (ch) {
+                        case ' ','\t' -> null;
+                        case HORZ, VERT, DIAG_U, DIAG_D, CROSS_HV, CROSS_DD, CROSS_ALL,
+                             APERT_N, APERT_E, APERT_S, APERT_W, APERT_DIAG,
+                             EZ_L, EZ_H, EZ_R, MP_L, MP_H, MP_R -> null;
+                        case BYTE_IN -> new ByteInStation(x, y, env);
+                        case BYTE_OUT -> new ByteOutStation(x, y, env);
+                        case NUM_IN -> new NumInStation(x, y, env);
+                        case NUM_OUT -> new NumOutStation(x, y, env);
+                        case PAUSE -> new PauseStation(x, y, env);
+                        case HALT -> new HaltStation(x, y, env);
+                        default -> throw new CompileException(new Pos(x, y), "unrecognized station symbol '" + ch + "'");
+                    };
+                } else if (!excl && metro) {
+                    station = switch (ch) {
+                        case ' ','\t' -> null;
+                        case HORZ, VERT, DIAG_U, DIAG_D, CROSS_HV, CROSS_DD, CROSS_ALL,
+                             APERT_N, APERT_E, APERT_S, APERT_W, APERT_DIAG,
+                             EZ_L, EZ_H, EZ_R, MP_L, MP_H, MP_R -> null;
+                        default -> {
+                            var def = definitions.get(ch);
+                            if (def == null) {
+                                throw new CompileException(new Pos(x, y), "unrecognized symbol '" + ch + "'");
+                            } else {
+                                yield new SyntheticStation(x, y, env, def);
+                            }
                         }
-                    }
-                    
-                };
+                    };
+                } else {
+                    throw new CompileException(new Pos(x, y), "mixed zones");
+                }
                 if (station != null) {
                     map.put(station.pos(), station);
                 }
