@@ -11,6 +11,8 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -69,7 +71,7 @@ import cfh.zirconium.net.Pos;
 /** Main for GUI. */
 public class IDE {
 
-    public static final String VERSION = "0.06";
+    public static final String VERSION = "0.07";
     private static final String TITLE = "JZirconium v" + VERSION;
     
     public static void main(String... args) {
@@ -172,7 +174,7 @@ public class IDE {
         menubar.add(Box.createHorizontalStrut(10));
         menubar.add(stepButton);
 
-        codePane = newTextArea();
+        codePane = newTextArea(false);
         codePane.setFont(settings.codeFont());
         codePane.setText(PREFS.get(PREF_CODE, ""));
         codePane.addCaretListener(new CaretListener() {
@@ -239,18 +241,19 @@ public class IDE {
         
         inputDocument = new InputDocument();
 
-        inputPane = newTextArea();
+        inputPane = newTextArea(false);
         inputPane.setDocument(inputDocument);
         
-        outputPane = newTextArea();
+        outputPane = newTextArea(true);
         outputPane.setEditable(false);
         outputPane.setLineWrap(true);
         outputPane.setWrapStyleWord(true);
         
-        errorPane = newTextArea();
+        errorPane = newTextArea(true);
         errorPane.setEditable(false);
         errorPane.setLineWrap(true);
         errorPane.setWrapStyleWord(true);
+        errorPane.setForeground(Color.RED);
         
         var out = newSplitPane(false);
         out.setLeftComponent(newScrollPane(outputPane));
@@ -260,7 +263,7 @@ public class IDE {
         io.setTopComponent(newScrollPane(inputPane));
         io.setBottomComponent(out);
         
-        logPane = newTextArea();
+        logPane = newTextArea(false);
         logPane.setEditable(false);
         
         var bottom = new JTabbedPane();
@@ -548,6 +551,7 @@ public class IDE {
                        // TODO stop? break;
                    }
                    publish((Void)null);
+                   Thread.yield();
                 }
                 return null;
             }
@@ -555,7 +559,6 @@ public class IDE {
             protected void process(java.util.List<Void> chunks) {
                 statusRun.setText(STATUS.get(0));
                 Collections.rotate(STATUS, 1);
-                frame.repaint();
             };
             @Override
             protected void done() {
@@ -616,6 +619,7 @@ public class IDE {
         stepAction.setEnabled(runable);
         graphAction.setEnabled(runable);
         codePane.setEditable(!running);
+        singleTableModel.fireTableDataChanged();
     }
 
     /** Mark given pos (select it). */
@@ -657,10 +661,27 @@ public class IDE {
     }
     
     /** Creates a JTextArea. */
-    private JTextArea newTextArea() {
+    private JTextArea newTextArea(boolean jumpEnd) {
         var pane = new JTextArea();
         pane.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         pane.setFont(settings.mainFont());
+        if (jumpEnd) {
+            pane.getDocument().addDocumentListener(new DocumentListener() {
+                @Override
+                public void removeUpdate(DocumentEvent e) {
+                    // empty
+                }
+                @Override
+                public void insertUpdate(DocumentEvent e) {
+                    pane.setCaretPosition(e.getOffset()+e.getLength());
+                }
+                
+                @Override
+                public void changedUpdate(DocumentEvent e) {
+                    pane.setCaretPosition(e.getOffset()+e.getLength());
+                }
+            });
+        }
         return pane;
     }
     
