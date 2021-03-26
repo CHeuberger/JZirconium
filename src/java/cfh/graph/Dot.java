@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import javax.swing.plaf.synth.SynthSeparatorUI;
+
 public final class Dot {
 
     static final String CMD;
@@ -13,6 +15,7 @@ public final class Dot {
             String path = System.getenv("GRAPHVIZ_HOME");
             if (path == null) {
                 cmd = "/usr/local/bin/dot";
+                System.err.println("neither \"Graph\" nor \"GRAPHVIZ_HOME\" environmrnt variables set, using \"" + cmd + "\"");
             } else {
                 cmd = path + "/bin/dot";
             }

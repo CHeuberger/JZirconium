@@ -97,6 +97,8 @@ public class Help {
                {{ do nothing on EOF }}
             %%  If any drones occupy this, print the number of drones occupying this station 
                as a byte modulo 256 to Output.
+            &  If any drones occupy this, write the number of drones occupying this 
+               as a byte modulo 256 to Error.
             _  If any drones occupy this, read a numeric value from Input 
                and dispatch that many drones to linked stations.
             `  If any drones occupy this, write the number of drones occupying this station 

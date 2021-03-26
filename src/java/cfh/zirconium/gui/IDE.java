@@ -5,6 +5,7 @@ import static java.nio.file.StandardOpenOption.*;
 import static javax.swing.JOptionPane.*;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -16,6 +17,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
@@ -42,6 +48,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.event.CaretEvent;
 import javax.swing.event.CaretListener;
 import javax.swing.event.DocumentEvent;
@@ -62,7 +69,7 @@ import cfh.zirconium.net.Pos;
 /** Main for GUI. */
 public class IDE {
 
-    public static final String VERSION = "0.05";
+    public static final String VERSION = "0.06";
     private static final String TITLE = "JZirconium v" + VERSION;
     
     public static void main(String... args) {
@@ -73,6 +80,8 @@ public class IDE {
     private static final String PREF_CODE = "zirconium.code";
     private static final String PREF_FILE = "zirconium.file";
     // TODO save window position, split location
+    
+    private static final List<String> STATUS = new ArrayList<>(Arrays.asList("-/|\\".split("")));
     
     //----------------------------------------------------------------------------------------------
     
@@ -87,7 +96,9 @@ public class IDE {
     private final JTextArea logPane;
     private final JTextArea inputPane;
     private final JTextArea outputPane;
+    private final JTextArea errorPane;
     private final JTextField statusName;
+    private final JTextField statusRun;
     private final JTextField statusRow;
     private final JTextField statusCol;
     
@@ -103,18 +114,21 @@ public class IDE {
     private final Action stepAction;
     private final Action compileAction;
     private final Action graphAction;
+    
+    private final JButton stepButton;
 
     private final Environment env;
     
     private String name = null;
     private Program program = null;
     private boolean changed = false;
+    private boolean running = false;
     
     /** Builds and shows GUI. */
     private IDE() {
         var open = newAction("Open", this::doOpen, "Open a new file");
         var save = newAction("Save", this::doSave, "Save code to file");
-        var clearLog = newAction("Clear", this::doClearLog, "Clear log");
+        var clearLog = newAction("Clear Log", this::doClearLog, "Clear log");
         var quit =newAction("Quit", this::doQuit, "Quits the program");
         
         var fileMenu = new JMenu("File");
@@ -125,12 +139,10 @@ public class IDE {
         fileMenu.addSeparator();
         fileMenu.add(newMenuItem(quit));
         
-        
         var reset = newAction("Reset", this::doReset, "Resets program");
         runAction = newAction("Run", this::doRun, "Run the program");
         stepAction = newAction("Step", this::doStep, "Execute one step is program already started; otherwise it is started but stopped at first tick");
         compileAction = newAction("Compile", this::doCompile, "Compile current code");
-        graphAction = newAction("Graph", this::doGraph, "Show a DOT graph of compiled program");
         
         var runMenu = new JMenu("Run");
         runMenu.add(newMenuItem(reset));
@@ -138,12 +150,16 @@ public class IDE {
         runMenu.add(newMenuItem(stepAction));
         runMenu.addSeparator();
         runMenu.add(newMenuItem(compileAction));
-        runMenu.add(newMenuItem(graphAction));
         
         var help = newAction("Help", this::doHelp, "Show help");
+        graphAction = newAction("Graph", this::doGraph, "Show a DOT graph of compiled program");
         
         var helpMenu = new JMenu("Help");
         helpMenu.add(newMenuItem(help));
+        helpMenu.addSeparator();
+        helpMenu.add(newMenuItem(graphAction));
+        
+        stepButton = newMenuBarButton(stepAction);
         
         var menubar = new JMenuBar();
         menubar.add(fileMenu);
@@ -151,8 +167,10 @@ public class IDE {
         menubar.add(helpMenu);
         menubar.add(Box.createHorizontalStrut(50));
         menubar.add(newMenuBarButton(compileAction));
+        menubar.add(Box.createHorizontalStrut(20));
+        menubar.add(newMenuBarButton(runAction));
         menubar.add(Box.createHorizontalStrut(10));
-        menubar.add(newMenuBarButton(stepAction));
+        menubar.add(stepButton);
 
         codePane = newTextArea();
         codePane.setFont(settings.codeFont());
@@ -229,9 +247,18 @@ public class IDE {
         outputPane.setLineWrap(true);
         outputPane.setWrapStyleWord(true);
         
+        errorPane = newTextArea();
+        errorPane.setEditable(false);
+        errorPane.setLineWrap(true);
+        errorPane.setWrapStyleWord(true);
+        
+        var out = newSplitPane(false);
+        out.setLeftComponent(newScrollPane(outputPane));
+        out.setRightComponent(newScrollPane(errorPane));
+        
         var io = newSplitPane(true);
         io.setTopComponent(newScrollPane(inputPane));
-        io.setBottomComponent(newScrollPane(outputPane));
+        io.setBottomComponent(out);
         
         logPane = newTextArea();
         logPane.setEditable(false);
@@ -246,9 +273,8 @@ public class IDE {
         mainSplit.setDividerLocation(550);
         
         statusName = newTextField(30, "Name");
-        
+        statusRun = newTextField(2, "Running");
         statusRow = newTextField(5, "Row");
-        
         statusCol = newTextField(5, "Column");
         
         var statusLine = Box.createHorizontalBox();
@@ -256,6 +282,7 @@ public class IDE {
         statusLine.add(statusName);
         statusLine.add(Box.createHorizontalGlue());
         statusLine.add(Box.createHorizontalStrut(10));
+        statusLine.add(statusRun);
         statusLine.add(statusRow);
         statusLine.add(statusCol);
         
@@ -297,7 +324,21 @@ public class IDE {
                 outputPane.append(str);
             }
         };
-        env = new Environment(this::print, input, output);
+        Output error = new Output() {
+            @Override
+            public void reset() {
+                errorPane.setText("");
+            }
+            @Override
+            public void write(int b) {
+                errorPane.append(Character.toString(b & 0xFF));
+            }
+            @Override
+            public void write(String str) {
+                errorPane.append(str);
+            }
+        };
+        env = new Environment(this::print, input, output, error);
             
         frame = new JFrame();
         frame.addWindowListener(new WindowAdapter() {
@@ -484,25 +525,69 @@ public class IDE {
     /** Resets program. */
     private void doReset(ActionEvent ev) {
         if (program != null) {
+            running = false;
             program.reset();
             singleTableModel.fireTableDataChanged();
+            stepButton.setForeground(Color.BLACK);
             update();
         }
     }
     
     /** Executes the program. */
     private void doRun(ActionEvent ev) {
-        // TODO run, SwingWorker?
+        running = true;
+        update();
+        new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                while (running && !env.halted()) {
+                   if (program.step()) {
+                       if (running) {
+                           stepButton.setForeground(Color.ORANGE.darker());
+                       }
+                       // TODO stop? break;
+                   }
+                   publish((Void)null);
+                }
+                return null;
+            }
+            @Override
+            protected void process(java.util.List<Void> chunks) {
+                statusRun.setText(STATUS.get(0));
+                Collections.rotate(STATUS, 1);
+                frame.repaint();
+            };
+            @Override
+            protected void done() {
+                running = false;
+                update();
+                try {
+                    get();
+                } catch (InterruptedException ex) {
+                    error(ex, "running");
+                } catch (ExecutionException ex) {
+                    error(ex.getCause(), "running");
+                }
+            };
+        }.execute();
     }
     
     /** Step the program. */
     private void doStep(ActionEvent ev) {
         if (program != null) {
-            try {
-                program.step();
-            } finally {
-                singleTableModel.fireTableDataChanged();
-                update();
+            if (running) {
+                running = false;
+            } else {
+                try {
+                    statusRun.setText(STATUS.get(0));
+                    Collections.rotate(STATUS, 1);
+                    if (program.step()) {
+                        stepButton.setForeground(Color.ORANGE.darker());
+                    }
+                } finally {
+                    singleTableModel.fireTableDataChanged();
+                    update();
+                }
             }
         }
     }
@@ -512,6 +597,7 @@ public class IDE {
         this.program = program;
         env.reset();
         singleTableModel.program(program);
+        stepButton.setForeground(Color.BLACK);
         update();
     }
     
@@ -526,9 +612,10 @@ public class IDE {
     /** Updates GUI (actions). */
     private void update() {
         boolean runable = program != null && !env.halted();
-        runAction.setEnabled(false);  // TODO
+        runAction.setEnabled(runable && !running);
         stepAction.setEnabled(runable);
         graphAction.setEnabled(runable);
+        codePane.setEditable(!running);
     }
 
     /** Mark given pos (select it). */

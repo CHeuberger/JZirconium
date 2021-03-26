@@ -15,7 +15,7 @@ public class CompilerTest {
     private final Compiler compiler;
     
     private CompilerTest() {
-        compiler = new Compiler(new Environment(printer, input, output));
+        compiler = new Compiler(new Environment(printer, input, output, output));
     }
     
     private void validationTest() {

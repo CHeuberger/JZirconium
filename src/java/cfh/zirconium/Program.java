@@ -81,8 +81,11 @@ public class Program {
         started = false;
     }
     
-    /** Executes a single step, starting if not already done. */
-    public void step() {
+    /** 
+     * Executes a single step, starting if not already done.
+     * @return {@code true} if the number of drones of no station was changeed 
+     */
+    public boolean step() {
         if (!started) {
             start();
         }
@@ -90,10 +93,9 @@ public class Program {
             stations.forEach(Station::preTick);
             stations.forEach(Station::tick);
             stations.forEach(Station::posTick);
-            if (stations.stream().flatMap(Station::stations).mapToInt(Single::delta).allMatch(i -> i == 0)) {
-                env.print("nothing changed%n");
-            }
+            return stations.stream().flatMap(Station::stations).mapToInt(Single::delta).allMatch(i -> i == 0);
         }
+        return true;
     }
 
     /** Starts the program, basically only resets all stations. */

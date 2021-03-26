@@ -8,25 +8,28 @@ public class Environment {
     private final Printer printer;
     private final Input input;
     private final Output output;
-    // TODO error
+    private final Output error;
     
     private boolean halted = false;
     
-    public Environment(Printer printer, Input input, Output output) {
+    public Environment(Printer printer, Input input, Output output, Output error) {
         this.printer = requireNonNull(printer);
         this.input = requireNonNull(input);
         this.output = requireNonNull(output);
+        this.error = requireNonNull(error);
     }
     
     public Printer printer() { return printer; }
     public Input input() { return input; }
     public Output output() { return output; }
+    public Output error() { return error; }
     public boolean halted() { return halted; }
     
     public void reset() {
         halted = false;
         input.reset();
         output.reset();
+        error.reset();
     }
     
     public void start() {

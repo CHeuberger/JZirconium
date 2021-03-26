@@ -31,6 +31,7 @@ public class Compiler {
     public static final char CROSS_HV = '+';
     public static final char CROSS_DD = 'X';
     public static final char CROSS_ALL = '*';
+    public static final String TUNNELS = "" + HORZ + VERT + DIAG_U + DIAG_D + CROSS_HV + CROSS_DD + CROSS_ALL;
     
     // Apertures
     public static final char APERT_N = '^';
@@ -38,10 +39,12 @@ public class Compiler {
     public static final char APERT_S = 'v';
     public static final char APERT_W = '<';
     public static final char APERT_DIAG = '#';
+    public static final String APERTURES = "" + APERT_N + APERT_E + APERT_S + APERT_W + APERT_DIAG;
  
     // Defect Stations
     public static final char BYTE_IN = '?';
     public static final char BYTE_OUT = '%';
+    public static final char BYTE_ERR = '&';
     public static final char NUM_IN  = '_';
     public static final char NUM_OUT = '`';
     public static final char PAUSE= ';';
@@ -59,13 +62,8 @@ public class Compiler {
     public static final char MP_R = ']';
     public static final String FORTS = "" + MP_L + MP_H + MP_R;
     
-    public static final String NOT_STATION = " \t"
-        +  HORZ + VERT + DIAG_U + DIAG_D + CROSS_HV + CROSS_DD + CROSS_ALL
-        + APERT_N + APERT_E + APERT_S + APERT_W + APERT_DIAG
-        + FENCES + FORTS;
+    public static final String NOT_STATION = " \t" + TUNNELS + APERTURES + FENCES + FORTS;
 
-    // TODO add fences as *
-    // TODO add forts as *
     /** Directions. */
     private enum Dir {
         N ( 0, -1, APERT_S, APERT_N, VERT, CROSS_HV),
@@ -117,6 +115,7 @@ public class Compiler {
         this.env = Objects.requireNonNull(env);
     }
     
+    // TODO compile as much as possible, accumulate errors
     /** Compiles the given code and creates a program with givne name. */
     public Program compile(String name, String code) throws CompileException {
         env.print("%n");
@@ -219,17 +218,12 @@ public class Compiler {
         return definitions;
     }
     
-    /** Find exclusion zones. 
-     * @param name TODO
-     * @throws CompileException */
+    /** Find exclusion zones. */
     int[][] zones(String name, char left, char horiz, char right, char[][] chars) throws CompileException {
         return new ZoneDetector(name, left, horiz, right, chars).detect0();
     }
     
-    /** Scans the character matrix for stations. 
-     * @param exclusion TODO
-     * @param metropolis TODO
-     * @param definitions TODO*/
+    /** Scans the character matrix for stations. */
     private Map<Pos, Single> scanStations(char[][] chars, int[][] exclusion, int[][] metropolis, Map<Character, Definition> definitions) throws CompileException {
         var map = new HashMap<Pos, Single>();
         for (var y = 1; y < chars.length; y++) {
@@ -248,22 +242,27 @@ public class Compiler {
                             case DUP -> new DupStation(x, y, env);
                             case DEC -> new DecStation(x, y, env);
                             case SPLIT -> new SplitStation(x, y, env);
-                            default -> throw new CompileException(new Pos(x, y), "unrecognized station symbol '" + ch + "'");
+                            case BYTE_IN, BYTE_OUT, BYTE_ERR, NUM_IN, NUM_OUT, PAUSE, HALT 
+                                 -> throw new CompileException(new Pos(x, y), "'" + ch + "' station only valid in Exclusion Zone");
+                            default -> throw new CompileException(new Pos(x, y), "unrecognized station  '" + ch + "'");
                         };
                     } else if (excl && !metro) {
                         station = switch (ch) {
                             case BYTE_IN -> new ByteInStation(x, y, env);
                             case BYTE_OUT -> new ByteOutStation(x, y, env);
+                            case BYTE_ERR -> new ByteErrStation(x, y, env);
                             case NUM_IN -> new NumInStation(x, y, env);
                             case NUM_OUT -> new NumOutStation(x, y, env);
                             case PAUSE -> new PauseStation(x, y, env);
                             case HALT -> new HaltStation(x, y, env);
-                            default -> throw new CompileException(new Pos(x, y), "unrecognized station symbol '" + ch + "'");
+                            case NOP, CREATE, DOT, DUP, DEC, SPLIT
+                                 -> throw new CompileException(new Pos(x, y), "'" + ch + "' station not valid in Exclusion Zone");
+                            default -> throw new CompileException(new Pos(x, y), "unrecognized station  '" + ch + "'");
                         };
                     } else if (!excl && metro) {
                         var def = definitions.get(ch);
                         if (def == null) {
-                            throw new CompileException(new Pos(x, y), "unrecognized symbol '" + ch + "'");
+                            throw new CompileException(new Pos(x, y), "unrecognized station  '" + ch + "'");
                         } else {
                             station =  new SyntheticStation(x, y, env, def);
                         }
@@ -284,7 +283,7 @@ public class Compiler {
      */
     private List<Station> bound(char[][] chars, Map<Pos, Single> singles) throws CompileException {
         var stations = new ArrayList<Station>();
-        var boundID = 0;
+        var boundID = 0;  // TODO string names
         var count = 0;
         for (var station : singles.values()) {
             Bound bound = null;
