@@ -1,5 +1,7 @@
 package cfh.zirconium.net;
 
+import static java.util.Objects.*;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -12,14 +14,14 @@ import cfh.zirconium.Environment;
 /** Bound station. */
 public final class Bound extends Station {
 
-    private final int id;
+    private final String id;
     private final Set<Single> childs;
     
     /** Creates a bound station with given child stations. 
      * @param id TODO*/
-    public Bound(int id, Environment env, Single... childs) {
+    public Bound(String id, Environment env, Single... childs) {
         super(env);
-        this.id = id;
+        this.id = requireNonNull(id);
         this.childs = new HashSet<>(Arrays.asList(childs));
         this.childs.forEach(s -> s.parent(this));
     }

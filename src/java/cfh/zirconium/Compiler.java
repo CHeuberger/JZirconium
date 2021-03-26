@@ -283,7 +283,7 @@ public class Compiler {
      */
     private List<Station> bound(char[][] chars, Map<Pos, Single> singles) throws CompileException {
         var stations = new ArrayList<Station>();
-        var boundID = 0;  // TODO string names
+        var boundID = 0;
         var count = 0;
         for (var station : singles.values()) {
             Bound bound = null;
@@ -292,7 +292,9 @@ public class Compiler {
                     if (bound == null) {
                         if (n instanceof Single s) {
                             stations.remove(s);
-                            bound = new Bound(boundID++, env, s, station);
+                            var id = "" + (char)('A' + boundID / 10) + (boundID % 10);
+                            boundID += 1;
+                            bound = new Bound(id, env, s, station);
                             stations.add(bound);
                             count += 1;
                         } else if (n instanceof Bound b) {
