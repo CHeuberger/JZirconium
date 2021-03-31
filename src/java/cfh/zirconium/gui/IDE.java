@@ -11,8 +11,6 @@ import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
@@ -142,7 +140,7 @@ public class IDE {
         fileMenu.add(newMenuItem(quit));
         
         var reset = newAction("Reset", this::doReset, "Resets program");
-        runAction = newAction("Run", this::doRun, "Run the program");
+        runAction = newAction("Run", this::doRun, "Run the program; CTRL to not stop in case of no changes");
         stepAction = newAction("Step", this::doStep, "Execute one step is program already started; otherwise it is started but stopped at first tick");
         compileAction = newAction("Compile", this::doCompile, "Compile current code");
         
@@ -538,6 +536,7 @@ public class IDE {
     
     /** Executes the program. */
     private void doRun(ActionEvent ev) {
+        var stopNoChange = (ev.getModifiers() & ev.CTRL_MASK) == 0;
         running = true;
         update();
         new SwingWorker<Void, Void>() {
@@ -548,7 +547,9 @@ public class IDE {
                        if (running) {
                            stepButton.setForeground(Color.ORANGE.darker());
                        }
-                       // TODO stop? break;
+                       if (stopNoChange) {
+                           break;
+                       }
                    }
                    publish((Void)null);
                    Thread.yield();

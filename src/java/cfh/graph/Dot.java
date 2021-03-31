@@ -4,8 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import javax.swing.plaf.synth.SynthSeparatorUI;
-
 public final class Dot {
 
     static final String CMD;

@@ -7,6 +7,7 @@ public class ZoneDetectorTest {
 
     public static void main(String[] args) {
         var test = new ZoneDetectorTest();
+        test.testW();
         test.test();
         
         if (test.errors > 0) {
@@ -18,18 +19,70 @@ public class ZoneDetectorTest {
 
     private int errors = 0;
     
-    private void test0() {
-        System.out.println(exclusionZone("""
-            
-            /
-            """));
+    private void testW() {
+        for (var code : """
+             ~~ 
+            {aa}
+             ~~
+            =======
+                {~~~~~~~~~~~~~}
+             ~  {aaaaaaaaaaaaa}
+            {a} {a}~~~~~~~~~{a}
+            {a} {a}         {a}
+            {a} {a}  ~~~~~  {a}
+            {a} {a} {aaaaa} {a}
+            {a} {a} {a~~~a} {a}
+            {a} {a} {a} {a} {a}
+            {a} {a}  ~  {a} {a}
+            {a} {a}     {a} {a}
+            {a} {a}~~~~~{a} {a}
+            {a} {aaaaaaaaa} {a}
+            {a}  ~~~~~~~~~  {a}
+            {a}             {a}
+            {a~~~~~~~~~~~~~~~a}
+            {aaaaaaaaaaaaaaaaa}
+            {~~~~~~~~~~~~~~~~~}
+            """.split("\n$|\n *===+ *\n"))
+        {
+            var parsed = parse(code);
+            try {
+                var zones = new ZoneDetector("fence", '{', '~', '}', parsed.chars).detect();
+                Arrays.stream(zones).map(Arrays::toString).forEach(System.out::println);
+                System.out.println();
+                errors += parsed.check(zones);
+            } catch (CompileException ex) {
+                ex.printStackTrace();
+            }
+        }
     }
     
     private void test() {
         for (var code : """
-             ~
-            {a}
-             ~
+             ~~
+            {aa{
+             ~~
+            =======
+             ~~
+            }aa}
+             ~~
+            =======
+             {{
+            {aa}
+             ~~
+            """.split("\n$|\n *===+ *\n"))
+        {
+            errors += invalid(code);
+        }
+        
+        for (var code : """
+               ~~
+             {~xx}
+            {xxx}
+            {~~~}
+            =======
+             ~~
+            {aa}
+             {}
             ===============
                ~~~
               {bbb}
@@ -74,7 +127,35 @@ public class ZoneDetectorTest {
       }
     }
     
+    private int invalid(String code) {
+        var parsed = parse(code);
+        
+        try {
+            new ZoneDetector("fence", '{', '~', '}', parsed.chars).detect();
+            System.err.printf("Missing exception for %n\"%s\"%n", code);
+            return 1;
+        } catch (CompileException expected) {
+            System.out.println(expected);
+            return 0;
+        }
+    }
+    
     private int exclusionZone(String code) {
+        var parsed = parse(code);
+        
+        int[][] zones;
+        try {
+            zones = new ZoneDetector("fence", '{', '~', '}', parsed.chars).detect();
+        } catch (CompileException ex) {
+            System.err.printf("Unexpected %s: %s for %n%s%n",
+                ex.getClass().getSimpleName(), ex.getMessage(), code);
+            return 1;
+        }
+        System.out.println();
+        return parsed.check(zones);
+    }
+    
+    private Parsed parse(String code) {
         var lines = code.split("\n");
         var rows = lines.length;
         var cols = Arrays.stream(lines).mapToInt(String::length).max().orElse(0);
@@ -99,41 +180,44 @@ public class ZoneDetectorTest {
                 }
             }
         }
+        return new Parsed(rows, cols, chars, expected);
+    }
+    
+    //----------------------------------------------------------------------------------------------
+    
+    record Parsed(
+        int rows,
+        int cols,
+        char[][] chars,
+        char[][] expected) {
         
-        int[][] zones;
-        try {
-            zones = new ZoneDetector("fence", '{', '~', '}', chars).detect();
-        } catch (CompileException ex) {
-            System.err.printf("Unexpected %s: %s for %n%s%n",
-                ex.getClass().getSimpleName(), ex.getMessage(), code);
-            return 1;
-        }
-        System.out.println();
-        var map = new int['z'-'a'+1];
-        for (var y = 0; y < rows+2; y++) {
-            for (var x = 0; x < cols+2; x++) {
-                var expect = expected[y][x];
-                if (expect == ' ') {
-                    if (zones[y][x] != 0) {
-                        System.err.printf("should not be a zone at [%d,%d]: %d%n", x, y, zones[y][x]);
-                        return 1;
-                    }
-                } else {
-                    if (zones[y][x] == 0) {
-                        System.err.printf("should be a zone at [%d,%d]: %d%n", x, y, zones[y][x]);
-                        return 1;
-                    }
-                    var i = expect - 'a';
-                    if (map[i] == 0) {
-                        map[i] = zones[y][x];
+        int check(int[][] zones) {
+            var map = new int['z'-'a'+1];
+            for (var y = 0; y < rows+2; y++) {
+                for (var x = 0; x < cols+2; x++) {
+                    var expect = expected[y][x];
+                    if (expect == ' ') {
+                        if (zones[y][x] != 0) {
+                            System.err.printf("should not be a zone at [%d,%d]: %d%n", x, y, zones[y][x]);
+                            return 1;
+                        }
                     } else {
-                        if (zones[y][x] != map[i]) {
-                            System.err.printf("zone missmatch at [%d,%d] %d != %d(%c)%n", x, y, zones[y][x], map[i], expect);
+                        if (zones[y][x] == 0) {
+                            System.err.printf("should be a zone at [%d,%d]: %d%n", x, y, zones[y][x]);
+                            return 1;
+                        }
+                        var i = expect - 'a';
+                        if (map[i] == 0) {
+                            map[i] = zones[y][x];
+                        } else {
+                            if (zones[y][x] != map[i]) {
+                                System.err.printf("zone missmatch at [%d,%d] %d != %d(%c)%n", x, y, zones[y][x], map[i], expect);
+                            }
                         }
                     }
                 }
             }
+            return 0;
         }
-        return 0;
     }
 }

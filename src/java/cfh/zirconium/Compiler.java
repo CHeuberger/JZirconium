@@ -65,7 +65,7 @@ public class Compiler {
     public static final String NOT_STATION = " \t" + TUNNELS + APERTURES + FENCES + FORTS;
 
     /** Directions. */
-    private enum Dir {
+    enum Dir {
         N ( 0, -1, APERT_S, APERT_N, VERT, CROSS_HV),
         NE(+1, -1, APERT_DIAG, APERT_DIAG, DIAG_U, CROSS_DD),
         E (+1,  0, APERT_W, APERT_E, HORZ, CROSS_HV),
@@ -220,7 +220,7 @@ public class Compiler {
     
     /** Find exclusion zones. */
     int[][] zones(String name, char left, char horiz, char right, char[][] chars) throws CompileException {
-        return new ZoneDetector(name, left, horiz, right, chars).detect0();
+        return new ZoneDetector(name, left, horiz, right, chars).detect();
     }
     
     /** Scans the character matrix for stations. */
@@ -336,18 +336,23 @@ public class Compiler {
                 var ch = chars[y][x];
                 if (dir.isTunnel(ch) || dir.isOut(ch) && !dir.isIn(ch)) {
                     var direct = false;
-                    do {
+                    while (dir.isTunnel(ch)) {
                         if (dir.isDirect(ch) ) {
                             direct = true;
                         }
                         x += dir.dx;
                         y += dir.dy;
                         ch = chars[y][x];
-                    } while (dir.isTunnel(ch));
+                    }
                     if (dir.isOut(ch)) {
                         direct = true;
                         x += dir.dx;
                         y += dir.dy;
+                        ch = chars[y][x];
+                        if ((FENCES+FORTS).indexOf(ch) != -1) {
+                            x += dir.dx;
+                            y += dir.dy;
+                        }
                     }
                     var pos = new Pos(x, y);
                     var dest = singles.get(pos);
@@ -357,85 +362,6 @@ public class Compiler {
                     } else if (direct) {
                         throw new CompileException(pos, String.format(
                             "tunnel not ending at a stationm %s %s", dir, station));
-                    }
-                }
-            }
-        }
-        env.print("%d links created%n", count);
-    }
-    
-    private void link0(char[][] chars, Map<Pos, Single> singles) throws CompileException {
-        // TODO # needs at least one additional connection
-        var count = 0;
-        for (var station : singles.values()) {
-            for (var dir : Dir.values()) {
-                var link = dir.ordinal() < 4;
-                var x = station.x() + dir.dx;
-                var y = station.y() + dir.dy;
-                var ch = chars[y][x];
-                if (dir.isIn(ch)) {
-                    boolean diag = ch == APERT_DIAG;
-                    do {
-                        x += dir.dx;
-                        y += dir.dy;
-                        ch = chars[y][x];
-                        if (diag && dir.isTunnel(ch)) {
-                            diag = false;
-                        }
-                    } while (dir.isTunnel(ch));
-//                    if (diag) {
-//                        continue;
-//                    }
-                    if (!diag) {
-                        var pos = new Pos(x, y);
-                        var start = singles.get(pos);
-                        if (start == null) {
-                            throw new CompileException(pos, String.format(
-                                "tunnel not starting at a station, %s %s", dir, station));
-                        }
-                        if (link) {
-                            start.linkTo(station);
-                            count += 1;
-                        }
-                    }
-                } 
-                if (dir.isOut(ch)) {
-                    var pos = new Pos(x+dir.dx, y+dir.dy);
-                    var dest = singles.get(pos);
-                    if (dest == null) {
-                        throw new CompileException(pos, String.format(
-                            "tunnel not ending at a stationm %s %s", dir, station));
-                    }
-                    if (link) {
-                        station.linkTo(dest);
-                        count += 1;
-                    }
-                }
-                if (dir.isTunnel(ch)) {
-                    do {
-                        x += dir.dx;
-                        y += dir.dy;
-                        ch = chars[y][x];
-                    } while (dir.isTunnel(ch));
-                    var directed = dir.isOut(ch);
-                    if (directed) {
-                        x += dir.dx;
-                        y += dir.dy;
-                        ch = chars[y][x];
-                    }
-                    var pos = new Pos(x, y);
-                    var dest = singles.get(pos);
-                    if (dest == null) {
-                        throw new CompileException(pos, String.format(
-                            "tunnel not ending at a station, %s %s", dir, station));
-                    }
-                    if (link) {
-                        station.linkTo(dest);
-                        count += 1;
-                        if (!directed) {
-                            dest.linkTo(station);
-                            count += 1;
-                        }
                     }
                 }
             }
