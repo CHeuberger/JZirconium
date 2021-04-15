@@ -39,13 +39,20 @@ public class ZoneDetector {
             boolean inWall = false;
             for (var x = 1; x < row.length-1; x++) {
                 if (inWall) {
-                    if (zones[y][x] == 0 && !wall(x, y)) {
-                        inWall = false;
-                        for (var tx = x+1; tx < row.length; tx++) {
-                            if (wall(tx, y)) {
-                                walk(x, y, next++);
-                                x = tx+1;
-                                break;
+                    if (wall(x, y)) {
+                        if (zones[y][x-1] != 0) {
+                            inWall = false;
+                            continue;
+                        }
+                    } else {
+                        if (zones[y][x] == 0) {
+                            inWall = false;
+                            for (var tx = x+1; tx < row.length; tx++) {
+                                if (wall(tx, y)) {
+                                    walk(x, y, next++);
+                                    x = tx+1;
+                                    break;
+                                }
                             }
                         }
                     }

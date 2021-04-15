@@ -618,7 +618,7 @@ public class IDE {
         boolean runable = program != null && !env.halted();
         runAction.setEnabled(runable && !running);
         stepAction.setEnabled(runable);
-        graphAction.setEnabled(runable);
+        graphAction.setEnabled(program != null);
         codePane.setEditable(!running);
         singleTableModel.fireTableDataChanged();
     }
