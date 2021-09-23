@@ -41,7 +41,7 @@ public class Help {
                   \\|/
                    o----@
             
-            Based on specification from 2021-04-04 https://esolangs.org/wiki/Zirconium
+            Based on specification from 2021-09-23 https://esolangs.org/wiki/Zirconium
             """);
         final var STATIONS = String.format(HEADER + """
                                                   STATIONS
@@ -55,7 +55,9 @@ public class Help {
             o  Dispatch the number of drones occupying this station to each linked station.
             Q  If this station is occupied by N drones, dispatch N - 1 drones to linked stations.
             O  Dispatch N // K drones to each linked station, where N is the number of drones 
-               occupying this station, K is the number of linked stations (division by 0 returns 0)
+               occupying this station, K is the number of linked stations. (division by 0 returns 0)
+            
+            These stations can be placed anywhere.
             """);
         final var TUNNELS = String.format(HEADER + """
                                                   TUNNELS

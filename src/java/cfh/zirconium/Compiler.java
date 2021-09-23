@@ -49,7 +49,8 @@ public class Compiler {
     public static final char NUM_OUT = '`';
     public static final char PAUSE= ';';
     public static final char HALT = '!';
-    
+    public static final String DEFECT_STATIONS = "" + BYTE_IN + BYTE_OUT + BYTE_ERR + NUM_IN + NUM_OUT + PAUSE + HALT;
+
     // Exclusion Zones
     public static final char EZ_L = '{';
     public static final char EZ_H = '~';
@@ -235,17 +236,14 @@ public class Compiler {
                     var excl = exclusion[y][x] != 0;
                     var metro = metropolis[y][x] != 0;
                     if (!excl && !metro) {
-                        station = switch (ch) {
-                            case NOP -> new NopStation(x, y, env);
-                            case CREATE -> new CreateStation(x, y, env);
-                            case DOT -> new DotStation(x, y, env);
-                            case DUP -> new DupStation(x, y, env);
-                            case DEC -> new DecStation(x, y, env);
-                            case SPLIT -> new SplitStation(x, y, env);
-                            case BYTE_IN, BYTE_OUT, BYTE_ERR, NUM_IN, NUM_OUT, PAUSE, HALT 
-                                 -> throw new CompileException(new Pos(x, y), "'" + ch + "' station only valid in Exclusion Zone");
-                            default -> throw new CompileException(new Pos(x, y), "unrecognized station  '" + ch + "'");
-                        };
+                        station = pureStation(ch, x, y, env);
+                        if (station == null) {
+                            if (DEFECT_STATIONS.indexOf(ch) != -1) {
+                                throw new CompileException(new Pos(x, y), "'" + ch + "' station only valid in Exclusion Zone");
+                            } else {
+                                throw new CompileException(new Pos(x, y), "unrecognized station  '" + ch + "'");
+                            }
+                        }
                     } else if (excl && !metro) {
                         station = switch (ch) {
                             case BYTE_IN -> new ByteInStation(x, y, env);
@@ -256,15 +254,18 @@ public class Compiler {
                             case PAUSE -> new PauseStation(x, y, env);
                             case HALT -> new HaltStation(x, y, env);
                             case NOP, CREATE, DOT, DUP, DEC, SPLIT
-                                 -> throw new CompileException(new Pos(x, y), "'" + ch + "' station not valid in Exclusion Zone");
+                                 -> pureStation(ch, x, y, env);
                             default -> throw new CompileException(new Pos(x, y), "unrecognized station  '" + ch + "'");
                         };
                     } else if (!excl && metro) {
                         var def = definitions.get(ch);
-                        if (def == null) {
-                            throw new CompileException(new Pos(x, y), "unrecognized station  '" + ch + "'");
-                        } else {
+                        if (def != null) {
                             station =  new SyntheticStation(x, y, env, def);
+                        } else {
+                            station = pureStation(ch, x, y, env);
+                            if (station == null) {
+                                throw new CompileException(new Pos(x, y), "unrecognized station  '" + ch + "'");
+                            }
                         }
                     } else {
                         throw new CompileException(new Pos(x, y), "mixed zones");
@@ -275,6 +276,18 @@ public class Compiler {
         }
         env.print("scaned %d stations%n", map.size());
         return map;
+    }
+    
+    private Single pureStation(char ch, int x, int y, Environment env) {
+        return switch (ch) {
+            case NOP -> new NopStation(x, y, env);
+            case CREATE -> new CreateStation(x, y, env);
+            case DOT -> new DotStation(x, y, env);
+            case DUP -> new DupStation(x, y, env);
+            case DEC -> new DecStation(x, y, env);
+            case SPLIT -> new SplitStation(x, y, env);
+            default -> null;
+        };
     }
     
     /**

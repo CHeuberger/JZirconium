@@ -1,6 +1,7 @@
 /build/
 /.settings/
 /.graph/
+/dist/.graph/
 *.bak
 *.swp
 *~
