@@ -40,6 +40,8 @@ public class Help {
                  \\ | /
                   \\|/
                    o----@
+            
+            Based on specification from 2021-04-04 https://esolangs.org/wiki/Zirconium
             """);
         final var STATIONS = String.format(HEADER + """
                                                   STATIONS
@@ -150,12 +152,12 @@ public class Help {
 
             The following is a complete grammar for synthetic station definitions.
                 definition := symbol sp* "=" sp* expr
-                symbol := [^\s]
+                symbol := [^\\s]
                 expr := value | expr sp* expr sp* operator
                 value := "N" | "K" | integer
                 integer := ["0"-"9"]+
                 operator := "+" | "-" | "*" | "/" | "=" 
-                sp := " " | "\t"
+                sp := " " | "\\t"
 
             A synthetic station may be defined inside a lens. A lens is parsed at compile time:
                 ((r = N K / 1 +))

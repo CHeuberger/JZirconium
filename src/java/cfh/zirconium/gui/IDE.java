@@ -69,7 +69,7 @@ import cfh.zirconium.net.Pos;
 /** Main for GUI. */
 public class IDE {
 
-    public static final String VERSION = "0.07";
+    public static final String VERSION = "0.08";
     private static final String TITLE = "JZirconium v" + VERSION;
     
     public static void main(String... args) {
