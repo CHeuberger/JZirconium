@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ====================================================================== 
+     23.09.2021
+
+     JZirconium
+     Zirconium IDE
+
+     Carlos F. Heuberger                                                                
+     ====================================================================== -->
+<project name="JZirconium" default="dist" basedir=".">
+    <description>
+            JZirconium Language
+    </description>
+    
+
+	<property name="resources.dir" location="src/resources"/>
+
+	<property name="java.dir" location="src/java"/>
+	<property name="debug.flag" value="true"/>
+	<property name="deprecation.flag" value="true"/>
+
+	<property name="build.dir" location="build"/>
+	<property name="dist.dir" location="dist"/>
+	<property name="jar.file" location="dist/jzirconium.jar"/>
+	<property name="manifest.file" location="src/manifest.txt"/>
+
+	
+    <target name="-init" description="Create directories">
+        <tstamp />
+        <mkdir dir="${build.dir}" />
+    	<mkdir dir="${dist.dir}" />
+    </target>
+
+
+    <target name="clean" description="Remove generated files and directories.">
+        <delete dir="${build.dir}" />
+    	<delete dir="${dist.dir}" />
+    </target>
+
+	
+    <target name="resources" depends="-init" description="Copy resources.">
+        <copy todir="${build.dir}">
+            <fileset dir="${resources.dir}" />
+        </copy>
+    </target>   
+
+
+    <target name="compile" depends="-init" description="Compile the sources.">
+        <javac 
+            srcdir="${java.dir}" 
+            destdir="${build.dir}" 
+            debug="${debug.flag}"
+            deprecation="${deprecation.flag}"
+        	includeAntRuntime="no">
+        </javac>
+    </target>
+	
+	
+	<target name="dist" depends="resources,compile" description="Create JAR file.">
+        <jar
+		    destfile="${jar.file}"
+		    basedir="${build.dir}"
+		    manifest="${manifest.file}"
+		    duplicate="fail"
+		/>
+	</target>
+		    
+</project>

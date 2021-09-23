@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Main-Class: cfh.zirconium.gui.IDE
+Implementation-Vendor: Carlos F. Heuberger
+Implementation-Version: 0.08
+SplashScreen-Image: splash.png
+Application-Name: JZirconium
