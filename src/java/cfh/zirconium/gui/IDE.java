@@ -71,6 +71,7 @@ public class IDE {
 
     public static final String VERSION = "0.08";
     private static final String TITLE = "JZirconium v" + VERSION;
+    private static final String ICON = "icon.png";
     
     public static void main(String... args) {
         SwingUtilities.invokeLater(IDE::new);
@@ -363,6 +364,16 @@ public class IDE {
         frame.setSize(1200, 900);
         frame.validate();
         frame.setLocationRelativeTo(null);
+        
+        try {
+            var url = getClass().getResource(ICON);
+            if (url != null) {
+                var img = ImageIO.read(url);
+                frame.setIconImage(img);
+            }
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
 
         codePane.setCaretPosition(0);
         setName(PREFS.get(PREF_NAME, "unnamed"));
