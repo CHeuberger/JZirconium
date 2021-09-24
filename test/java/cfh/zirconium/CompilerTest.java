@@ -58,10 +58,14 @@ public class CompilerTest {
         
         System.out.println();
         for (var code : """
-              {aaa}  
-            =========
                ~~~
-              {bbb}
+              {aaa}
+              {aaa}  
+               ~~~
+            =========
+                ~
+               {a}
+              {aaa}
                ~~~
             """.split("\n$|\n *===+ *\n"))
         {

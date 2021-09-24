@@ -11,7 +11,7 @@ public class ZoneDetectorTest {
         test.test();
         
         if (test.errors > 0) {
-            System.err.printf("%n=====  %d  ERRORS  =====%n", test.errors);
+            System.err.printf("%n=====  ERRORS: %d  =====%n", test.errors);
         } else {
             System.out.println("\nOK");
         }
@@ -21,6 +21,11 @@ public class ZoneDetectorTest {
     
     private void testW() {
         for (var code : """
+                 ~
+             ~  {a}
+            {b}  ~
+             ~
+            =======
              ~
             {a}  ~
             {a} {b}
@@ -57,11 +62,13 @@ public class ZoneDetectorTest {
                 errors += parsed.check(zones);
             } catch (CompileException ex) {
                 ex.printStackTrace();
+                errors += 1;
             }
         }
     }
     
     private void test() {
+        // expect Exception
         for (var code : """
              ~~
             {aa{
@@ -79,6 +86,7 @@ public class ZoneDetectorTest {
             errors += invalid(code);
         }
         
+        // no Exception expected
         for (var code : """
                ~~
              {~xx}
@@ -123,12 +131,6 @@ public class ZoneDetectorTest {
             """.split("\n$|\n *===+ *\n"))
       {
           errors += exclusionZone(code);
-      }
-      
-      if (errors > 0) {
-          System.err.printf("%n=====  %d  ERRORS  =====%n", errors);
-      } else {
-          System.out.println("\nOK");
       }
     }
     
