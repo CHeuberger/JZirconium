@@ -2,6 +2,7 @@ package cfh.zirconium;
 
 import java.util.Arrays;
 import cfh.zirconium.Compiler.CompileException;
+import cfh.zirconium.Compiler.Zone;
 
 public class ZoneDetectorTest {
 
@@ -21,6 +22,10 @@ public class ZoneDetectorTest {
     
     private void testW() {
         for (var code : """
+              ~
+             {a}
+              ~
+            =======
                  ~
              ~  {a}
             {b}  ~
@@ -56,8 +61,11 @@ public class ZoneDetectorTest {
         {
             var parsed = parse(code);
             try {
-                var zones = new ZoneDetector("fence", '{', '~', '}', parsed.chars).detect();
-                Arrays.stream(zones).map(Arrays::toString).forEach(System.out::println);
+                var zones = new ZoneDetector(parsed.chars).detect();
+                Arrays.stream(zones)
+                .map(Arrays::stream).map(s -> s.map(z -> z.toString().substring(0, 1)).toList())
+                .forEach(System.out::println);
+                
                 System.out.println();
                 errors += parsed.check(zones);
             } catch (CompileException ex) {
@@ -71,11 +79,11 @@ public class ZoneDetectorTest {
         // expect Exception
         for (var code : """
              ~~
-            {aa{
+            {aa]
              ~~
             =======
              ~~
-            }aa}
+            [aa}
              ~~
             =======
              {{
@@ -138,7 +146,7 @@ public class ZoneDetectorTest {
         var parsed = parse(code);
         
         try {
-            new ZoneDetector("fence", '{', '~', '}', parsed.chars).detect();
+            new ZoneDetector(parsed.chars).detect();
             System.err.printf("Missing exception for %n\"%s\"%n", code);
             return 1;
         } catch (CompileException expected) {
@@ -150,9 +158,9 @@ public class ZoneDetectorTest {
     private int exclusionZone(String code) {
         var parsed = parse(code);
         
-        int[][] zones;
+        Zone[][] zones;
         try {
-            zones = new ZoneDetector("fence", '{', '~', '}', parsed.chars).detect();
+            zones = new ZoneDetector(parsed.chars).detect();
         } catch (CompileException ex) {
             System.err.printf("Unexpected %s: %s for %n%s%n",
                 ex.getClass().getSimpleName(), ex.getMessage(), code);
@@ -167,23 +175,21 @@ public class ZoneDetectorTest {
         var rows = lines.length;
         var cols = Arrays.stream(lines).mapToInt(String::length).max().orElse(0);
         
-        var chars = new char[rows+2][cols+2];
-        var expected = new char[rows+2][cols+2];
-        Arrays.fill(chars[0], ' ');
-        Arrays.fill(expected[0], ' ');
-        Arrays.fill(chars[rows+1], ' ');
-        Arrays.fill(expected[rows+1], ' ');
+        var chars = new char[rows][cols];
+        var expected = new Zone[rows][cols];
         for (var y = 0; y < rows; y++) {
             var line = lines[y];
-            var row = chars[y+1];
-            Arrays.fill(row, ' ');
-            Arrays.fill(expected[y+1], ' ');
+            Arrays.fill(chars[y], ' ');
+            Arrays.fill(expected[y], Zone.NONE);
             for (var x = 0; x < line.length(); x++) {
                 var ch = line.charAt(x);
                 if ('a' <= ch && ch <= 'z') {
-                    expected[y+1][x+1] = ch;
+                    expected[y][x] = Zone.EXCLUSION;
+                } else if ('A' <= ch && ch <= 'Z') {
+                    expected[y][x] = Zone.METROPOLIS;
                 } else {
-                    row[x+1] = ch;
+                    expected[y][x] = Zone.NONE;
+                    chars[y][x] = ch;
                 }
             }
         }
@@ -196,31 +202,14 @@ public class ZoneDetectorTest {
         int rows,
         int cols,
         char[][] chars,
-        char[][] expected) {
+        Zone[][] expected) {
         
-        int check(int[][] zones) {
-            var map = new int['z'-'a'+1];
-            for (var y = 0; y < rows+2; y++) {
-                for (var x = 0; x < cols+2; x++) {
-                    var expect = expected[y][x];
-                    if (expect == ' ') {
-                        if (zones[y][x] != 0) {
-                            System.err.printf("should not be a zone at [%d,%d]: %d%n", x, y, zones[y][x]);
+        int check(Zone[][] zones) {
+            for (var y = 0; y < rows; y++) {
+                for (var x = 0; x < cols; x++) {
+                    if (zones[y][x] != expected[y][x]) {
+                            System.err.printf("expected %s at [%d,%d]: %s%n", expected[y][x], x, y, zones[y][x]);
                             return 1;
-                        }
-                    } else {
-                        if (zones[y][x] == 0) {
-                            System.err.printf("should be a zone at [%d,%d]: %d%n", x, y, zones[y][x]);
-                            return 1;
-                        }
-                        var i = expect - 'a';
-                        if (map[i] == 0) {
-                            map[i] = zones[y][x];
-                        } else {
-                            if (zones[y][x] != map[i]) {
-                                System.err.printf("zone missmatch at [%d,%d] %d != %d(%c)%n", x, y, zones[y][x], map[i], expect);
-                            }
-                        }
                     }
                 }
             }

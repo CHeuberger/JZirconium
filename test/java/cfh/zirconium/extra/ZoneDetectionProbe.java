@@ -372,6 +372,7 @@ public class ZoneDetectionProbe extends JPanel {
         } else {
             beep();
         }
+        algorithm = null;
         repaint();
     }
     

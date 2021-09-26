@@ -3,8 +3,10 @@ package cfh.zirconium.extra;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Point;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 public class Flood2Algorithm implements Algorithm {
@@ -25,6 +27,7 @@ public class Flood2Algorithm implements Algorithm {
     private final Queue<Point> open = new LinkedList<>(); // TODO delete
     private final Deque<Point> stack = new LinkedList<>();
     private final Queue<Point> zone = new LinkedList<>();
+    private final List<Point> errors = new ArrayList<>();
     private Type actual = Type.NEW;
 
     public Flood2Algorithm(char[][] code) {
@@ -78,9 +81,9 @@ public class Flood2Algorithm implements Algorithm {
                 push(x-1, y);
             } else {
                 if (code[y][x-1] == '[') {
-                    actual(Type.METROPOLIS);
+                    actual(x-1, y, Type.METROPOLIS);
                 } else if (code[y][x-1] == '{') {
-                    actual(Type.EXCLUSION);
+                    actual(x-1, y, Type.EXCLUSION);
                 }
             }
         }
@@ -96,9 +99,9 @@ public class Flood2Algorithm implements Algorithm {
                 push(x+1, y);
             } else {
                 if (code[y][x+1] == ']') {
-                    actual(Type.METROPOLIS);
+                    actual(x+1, y, Type.METROPOLIS);
                 } else if (code[y][x+1] == '}') {
-                    actual(Type.EXCLUSION);
+                    actual(x+1, y, Type.EXCLUSION);
                 }
             }
         }
@@ -106,13 +109,14 @@ public class Flood2Algorithm implements Algorithm {
         return true;
     }
     
-    private void actual(Type type) {
+    void actual(int x, int y, Type type) {
         if (type == actual) {
             return;
         } else if (actual == Type.NEW) {
             actual = type;
         } else {
-            throw new AssertionError(actual + " != " + type); 
+            errors.add(new Point(x,y));
+            System.err.printf("(%d,%d) %s != %s%n", x, y, actual, type); 
         }
     }
 
@@ -157,6 +161,9 @@ public class Flood2Algorithm implements Algorithm {
         }
         for (var point : zone) {
             paintString(gg, size, point.x, point.y, "X");
+        }
+        for (var point : errors) {
+            paintCell(gg, size, point.x, point.y, Color.RED);
         }
     }
 

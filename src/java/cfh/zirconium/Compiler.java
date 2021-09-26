@@ -63,7 +63,13 @@ public class Compiler {
     public static final char MP_R = ']';
     public static final String FORTS = "" + MP_L + MP_H + MP_R;
     
+    public static final String BOUNDARY = FENCES + FORTS;
     public static final String NOT_STATION = " \t" + TUNNELS + APERTURES + FENCES + FORTS;
+
+    /** Zone Types. */
+    enum Zone {
+        NONE, EXCLUSION, METROPOLIS;
+    }
 
     /** Directions. */
     enum Dir {
@@ -125,11 +131,9 @@ public class Compiler {
         
         Map<Character, Definition> definitions = bubblesLenses(chars);
         
-        // TODO boolean[][]
-        int[][] exclusion = new ZoneDetector("fence", EZ_L, EZ_H, EZ_R, chars).detect();
-        int[][] metropolis = new ZoneDetector("fort", MP_L, MP_H, MP_R, chars).detect();
+        Zone[][] zones = new ZoneDetector(chars).detect();
         
-        Map<Pos, Single> singles = scanStations(chars, exclusion, metropolis, definitions);
+        Map<Pos, Single> singles = scanStations(chars, zones, definitions);
         
         List<Station> stations = bound(chars, singles);
         
@@ -219,13 +223,8 @@ public class Compiler {
         return definitions;
     }
     
-    /** Find exclusion zones. */
-    int[][] zones(String name, char left, char horiz, char right, char[][] chars) throws CompileException {
-        return new ZoneDetector(name, left, horiz, right, chars).detect();
-    }
-    
     /** Scans the character matrix for stations. */
-    private Map<Pos, Single> scanStations(char[][] chars, int[][] exclusion, int[][] metropolis, Map<Character, Definition> definitions) throws CompileException {
+    private Map<Pos, Single> scanStations(char[][] chars, Zone[][] zones, Map<Character, Definition> definitions) throws CompileException {
         var map = new HashMap<Pos, Single>();
         for (var y = 1; y < chars.length; y++) {
             var row = chars[y];
@@ -233,42 +232,47 @@ public class Compiler {
                 var ch = row[x];
                 if (NOT_STATION.indexOf(ch) == -1) {
                     Single station;
-                    var excl = exclusion[y][x] != 0;
-                    var metro = metropolis[y][x] != 0;
-                    if (!excl && !metro) {
-                        station = pureStation(ch, x, y);
-                        if (station == null) {
-                            if (DEFECT_STATIONS.indexOf(ch) != -1) {
-                                throw new CompileException(new Pos(x, y), "'" + ch + "' station only valid in Exclusion Zone");
-                            } else {
-                                throw new CompileException(new Pos(x, y), "unrecognized station  '" + ch + "'");
-                            }
-                        }
-                    } else if (excl && !metro) {
-                        station = switch (ch) {
-                            case BYTE_IN -> new ByteInStation(x, y, environment);
-                            case BYTE_OUT -> new ByteOutStation(x, y, environment);
-                            case BYTE_ERR -> new ByteErrStation(x, y, environment);
-                            case NUM_IN -> new NumInStation(x, y, environment);
-                            case NUM_OUT -> new NumOutStation(x, y, environment);
-                            case PAUSE -> new PauseStation(x, y, environment);
-                            case HALT -> new HaltStation(x, y, environment);
-                            case NOP, CREATE, DOT, DUP, DEC, SPLIT
-                                 -> pureStation(ch, x, y);
-                            default -> throw new CompileException(new Pos(x, y), "unrecognized station  '" + ch + "'");
-                        };
-                    } else if (!excl && metro) {
-                        var def = definitions.get(ch);
-                        if (def != null) {
-                            station =  new SyntheticStation(x, y, environment, def);
-                        } else {
+                    switch (zones[y][x]) {
+                        case NONE: {
                             station = pureStation(ch, x, y);
                             if (station == null) {
-                                throw new CompileException(new Pos(x, y), "unrecognized station  '" + ch + "'");
+                                if (DEFECT_STATIONS.indexOf(ch) != -1) {
+                                    throw new CompileException(new Pos(x, y), "'" + ch + "' station only valid in Exclusion Zone");
+                                } else {
+                                    throw new CompileException(new Pos(x, y), "unrecognized station  '" + ch + "'");
+                                }
                             }
+                            break;
                         }
-                    } else {
-                        throw new CompileException(new Pos(x, y), "mixed zones");
+                        case EXCLUSION: {
+                            station = switch (ch) {
+                                case BYTE_IN -> new ByteInStation(x, y, environment);
+                                case BYTE_OUT -> new ByteOutStation(x, y, environment);
+                                case BYTE_ERR -> new ByteErrStation(x, y, environment);
+                                case NUM_IN -> new NumInStation(x, y, environment);
+                                case NUM_OUT -> new NumOutStation(x, y, environment);
+                                case PAUSE -> new PauseStation(x, y, environment);
+                                case HALT -> new HaltStation(x, y, environment);
+                                case NOP, CREATE, DOT, DUP, DEC, SPLIT
+                                -> pureStation(ch, x, y);
+                                default -> throw new CompileException(new Pos(x, y), "unrecognized station  '" + ch + "'");
+                            };
+                            break;
+                        }
+                        case METROPOLIS: {
+                            var def = definitions.get(ch);
+                            if (def != null) {
+                                station =  new SyntheticStation(x, y, environment, def);
+                            } else {
+                                station = pureStation(ch, x, y);
+                                if (station == null) {
+                                    throw new CompileException(new Pos(x, y), "unrecognized station  '" + ch + "'");
+                                }
+                            }
+                            break;
+                        }
+                        default: 
+                            throw new CompileException(new Pos(x, y), "unhandled Zone: " + zones[y][x]);
                     }
                     map.put(station.pos(), station);
                 }
