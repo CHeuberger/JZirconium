@@ -118,7 +118,7 @@ public class IDE {
     
     private final JButton stepButton;
 
-    private final Environment env;
+    private final Environment environment;
     
     private String name = null;
     private Program program = null;
@@ -340,7 +340,7 @@ public class IDE {
                 errorPane.append(str);
             }
         };
-        env = new Environment(this::print, input, output, error);
+        environment = new Environment(this::print, input, output, error);
             
         frame = new JFrame();
         frame.addWindowListener(new WindowAdapter() {
@@ -440,12 +440,12 @@ public class IDE {
             if (showConfirmDialog(frame, "File already exists, overwrite?", "Confirm Save", OK_CANCEL_OPTION) != OK_OPTION) {
                 return;
             }
-            var name = file.getName();
-            var index = name.lastIndexOf('.');
+            var filename = file.getName();
+            var index = filename.lastIndexOf('.');
             if (index != -1) {
-                name = name.substring(0, index);
+                filename = filename.substring(0, index);
             }
-            var bak = new File(file.getParentFile(), name + ".bak");
+            var bak = new File(file.getParentFile(), filename + ".bak");
             if (bak.exists()) {
                 bak.delete();
             }
@@ -480,7 +480,7 @@ public class IDE {
     private void doCompile(ActionEvent ev) {
         // thread
         try {
-            setProgram(new Compiler(env).compile(name, codePane.getText()));
+            setProgram(new Compiler(environment).compile(name, codePane.getText()));
         } catch (CompileException ex) {
             setProgram(null);
             if (ex.pos != null) {
@@ -553,7 +553,7 @@ public class IDE {
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
-                while (running && !env.halted()) {
+                while (running && !environment.halted()) {
                    if (program.step()) {
                        if (running) {
                            stepButton.setForeground(Color.ORANGE.darker());
@@ -571,7 +571,7 @@ public class IDE {
             protected void process(java.util.List<Void> chunks) {
                 statusRun.setText(STATUS.get(0));
                 Collections.rotate(STATUS, 1);
-            };
+            }
             @Override
             protected void done() {
                 running = false;
@@ -583,7 +583,7 @@ public class IDE {
                 } catch (ExecutionException ex) {
                     error(ex.getCause(), "running");
                 }
-            };
+            }
         }.execute();
     }
     
@@ -610,7 +610,7 @@ public class IDE {
     /** Sets a new program and updates GUI (actions). */
     private void setProgram(Program program) {
         this.program = program;
-        env.reset();
+        environment.reset();
         singleTableModel.program(program);
         stepButton.setForeground(Color.BLACK);
         update();
@@ -626,7 +626,7 @@ public class IDE {
     
     /** Updates GUI (actions). */
     private void update() {
-        boolean runable = program != null && !env.halted();
+        boolean runable = program != null && !environment.halted();
         runAction.setEnabled(runable && !running);
         stepAction.setEnabled(runable);
         graphAction.setEnabled(program != null);

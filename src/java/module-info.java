@@ -1,4 +1,4 @@
-module zirconium {
-    requires java.desktop;
-    requires java.prefs;
-}
+//module zirconium {
+//    requires java.desktop;
+//    requires java.prefs;
+//}

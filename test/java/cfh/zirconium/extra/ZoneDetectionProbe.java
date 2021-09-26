@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.concurrent.ExecutionException;
+import java.util.prefs.Preferences;
 import java.util.stream.Collectors;
 
 import javax.swing.AbstractAction;
@@ -49,22 +50,26 @@ public class ZoneDetectionProbe extends JPanel {
     
     private static final int UNDO_SIZE = 20;
     
-//    private static final String EMPTY = " ";
-//    private static final String PURE = ".o0OQ@";
-//    private static final String TUNNEL = "-/|\\+X*";
-//    private static final String APERTURE = ">^<v#";
-//    private static final String COMMENT = "()";
-    private static final String FENCE = "{~}";
-    private static final String FORT = "[=]";
-    private static final String VALID_ZONE = FENCE + FORT;
-//    private static final String VALID_CODE = EMPTY + PURE + TUNNEL + APERTURE + COMMENT + FENCE + FORT;
+    public static final String EMPTY = " ";
+    public static final String PURE = ".o0OQ@";
+    public static final String TUNNEL = "-/|\\+X*";
+    public static final String APERTURE = ">^<v#";
+    public static final String COMMENT = "()";
+    public static final String FENCE = "{~}";
+    public static final String FORT = "[=]";
+    public static final String VALID_ZONE = FENCE + FORT;
+    public static final String VALID_CODE = EMPTY + PURE + TUNNEL + APERTURE + COMMENT + FENCE + FORT;
     
     public static void main(String[] args) {
         SwingUtilities.invokeLater(ZoneDetectionProbe::new);
     }
     
+    private final Preferences preferences = Preferences.userNodeForPackage(getClass());
+    private static final String PREF_CODE = "test.code";
+    
     private final JButton clearButton;
-    private final JButton floodButton;
+    private final JButton flood1Button;
+    private final JButton flood2Button;
     private final JButton stepButton;
     private final JButton slowButton;
     private final JButton runButton;
@@ -81,6 +86,10 @@ public class ZoneDetectionProbe extends JPanel {
     
     private ZoneDetectionProbe() {
         clear();
+        var text = preferences.get(PREF_CODE, null);
+        if (text != null) {
+            codeFromString(0, 0, text);
+        }
         
         addKeyListener(new KeyAdapter() {
             @Override
@@ -110,9 +119,11 @@ public class ZoneDetectionProbe extends JPanel {
         setKeystrokeAction("paste", KeyStroke.getKeyStroke("control pressed V"), this::doPaste);
         setKeystrokeAction("shiftPaste", KeyStroke.getKeyStroke("control shift pressed V"), this::doPaste);
         setKeystrokeAction("undo", KeyStroke.getKeyStroke("control pressed Z"), this::doUndo);
+        setKeystrokeAction("delete", KeyStroke.getKeyStroke("pressed DELETE"), this::doDel);
         
         clearButton = newButton("Clear", this::doClear, "Clear all fields");
-        floodButton = newButton("FLOOD", this::doFlood, "Start FLOOD algorithm");
+        flood1Button = newButton("FLOOD-1", this::doFlood1, "Start FLOOD-1 algorithm");
+        flood2Button = newButton("FLOOD-2", this::doFlood2, "Start FLOOD-2 algorithm");
         stepButton = newButton("Step", this::doStep, "Do one step on started algorithm");
         slowButton = newButton("Slow", this::doSlow, "Slow run the started algorithm up to the end");
         runButton = newButton("Run", this::doRun, "Run the started algorithm up to the end");
@@ -123,7 +134,8 @@ public class ZoneDetectionProbe extends JPanel {
         menubar.add(Box.createHorizontalStrut(5));
         menubar.add(clearButton);
         menubar.add(Box.createHorizontalGlue());
-        menubar.add(floodButton);
+        menubar.add(flood1Button);
+        menubar.add(flood2Button);
         menubar.add(Box.createHorizontalGlue());
         menubar.add(stepButton);
         menubar.add(slowButton);
@@ -159,13 +171,20 @@ public class ZoneDetectionProbe extends JPanel {
             pushCode();
         }
         clear();
+        preferences.put(PREF_CODE, codeToString());
         algorithm = null;
         runStatus(false);
         repaint();
     }
     
-    private void doFlood(ActionEvent ev) {
-        algorithm = new FloodAlgorithm(code);
+    private void doFlood1(ActionEvent ev) {
+        algorithm = new Flood1Algorithm(code);
+        runStatus(true);
+        repaint();
+    }
+    
+    private void doFlood2(ActionEvent ev) {
+        algorithm = new Flood2Algorithm(code);
         runStatus(true);
         repaint();
     }
@@ -177,6 +196,7 @@ public class ZoneDetectionProbe extends JPanel {
             } else if (algorithm.step()) {
                 repaint();
             } else {
+                repaint();
                 runStatus(false);
             }
         } else {
@@ -192,6 +212,7 @@ public class ZoneDetectionProbe extends JPanel {
                 protected Void doInBackground() throws Exception {
                     while (running && alg == algorithm) {
                         if (!alg.step()) {
+                            repaint();
                             break;
                         }
                         repaint();
@@ -222,6 +243,7 @@ public class ZoneDetectionProbe extends JPanel {
         if (alg != null) {
             while (alg == algorithm) {
                 if (!alg.step()) {
+                    repaint();
                     break;
                 }
                 repaint();
@@ -231,12 +253,13 @@ public class ZoneDetectionProbe extends JPanel {
     
     private void doHelp(ActionEvent ev) {
         var text = """
-               H E L P
+              H E L P
             
             left-click:  select cell
             left-drag:  select cell region
             shift-left-click:  extend cell region
             
+            DEL:  delete selected region
             ctrl-C:  copy selected region or whole code if no region selected
             ctrl-V:  clears all and paste code from clipboard
             shift-ctrl-V:  paste clipboard starting at selected cell
@@ -285,7 +308,8 @@ public class ZoneDetectionProbe extends JPanel {
             var y1 = Math.max(mark.y, markEnd.y) + 1;
             source = Arrays.stream(code, y0, y1).map(a -> new String(a, x0, x1-x0)).collect(Collectors.joining("\n"));
         } else {
-            source = Arrays.stream(code).map(String::new).collect(Collectors.joining("\n"));
+            String text = codeToString();
+            source = text;
         }
         var content = new StringSelection(source);
         var clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -312,19 +336,29 @@ public class ZoneDetectionProbe extends JPanel {
                         x = 0;
                         y = 0;
                     }
-                    var source = text.split("\n");
-                    for (var i = 0; y+i < COUNT && i < source.length; i++) {
-                        for (var j = 0; x+j < COUNT && j < source[i].length(); j++) {
-                            var ch = source[i].charAt(j);
-                            if (ch == ' ' || VALID_ZONE.indexOf(ch) != -1) {
-                                code[y+i][x+j] = ch;
-                            }
-                        }
-                    }
+                    codeFromString(x, y, text);
+                    preferences.put(PREF_CODE, text);
+                    algorithm = null;
                     repaint();
                 }
             } catch (UnsupportedFlavorException | IOException ex) {
                 ex.printStackTrace();
+            }
+        }
+    }
+    
+    private String codeToString() {
+        return Arrays.stream(code).map(String::new).collect(Collectors.joining("\n"));
+    }
+
+    private void codeFromString(int x, int y, String text) {
+        var source = text.split("\n");
+        for (var i = 0; y+i < COUNT && i < source.length; i++) {
+            for (var j = 0; x+j < COUNT && j < source[i].length(); j++) {
+                var ch = source[i].charAt(j);
+                if (ch == ' ' || VALID_ZONE.indexOf(ch) != -1) {
+                    code[y+i][x+j] = ch;
+                }
             }
         }
     }
@@ -337,6 +371,25 @@ public class ZoneDetectionProbe extends JPanel {
             }
         } else {
             beep();
+        }
+        repaint();
+    }
+    
+    private void doDel(ActionEvent ev) {
+        if (mark != null) {
+            pushCode();
+            if (markEnd != null) {
+                var x0 = Math.min(mark.x, markEnd.x);
+                var x1 = Math.max(mark.x, markEnd.x);
+                var y0 = Math.min(mark.y, markEnd.y);
+                var y1 = Math.max(mark.y, markEnd.y);
+                for (var x = x0; x <= x1; x++) {
+                    for (var y = y0; y <= y1; y++) {
+                        code[y][x] = ' ';
+                    }
+                }
+            }
+            code[mark.y][mark.x] = ' ';
         }
         repaint();
     }
@@ -396,6 +449,7 @@ public class ZoneDetectionProbe extends JPanel {
             if (ch != code[y][x]) {
                 pushCode();
                 code[y][x] = ch;
+                preferences.put(PREF_CODE, codeToString());
             }
             if ("[]{}".indexOf(ch) != -1) {
                 if (++y >= COUNT) {

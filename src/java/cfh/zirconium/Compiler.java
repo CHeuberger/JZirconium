@@ -109,17 +109,17 @@ public class Compiler {
     
     //----------------------------------------------------------------------------------------------
     
-    private final Environment env;
+    private final Environment environment;
     
     /** Creates a compiler. */
     public Compiler(Environment env) {
-        this.env = Objects.requireNonNull(env);
+        this.environment = Objects.requireNonNull(env);
     }
     
     // TODO compile as much as possible, accumulate errors
     /** Compiles the given code and creates a program with givne name. */
     public Program compile(String name, String code) throws CompileException {
-        env.print("%n");
+        environment.print("%n");
         
         char[][] chars = parse(code);
         
@@ -136,7 +136,7 @@ public class Compiler {
         link(chars, singles);
         // TODO check unconnected tunnels
         
-        return new Program(name, stations, env);
+        return new Program(name, stations, environment);
     }
     
     /** 
@@ -146,10 +146,10 @@ public class Compiler {
     private char[][] parse(String code) {
         var lines = code.split("\n");
         var rows = lines.length;
-        env.print("%d rows%n", rows);
+        environment.print("%d rows%n", rows);
         
         var cols = Arrays.stream(lines).mapToInt(String::length).max().orElse(0);
-        env.print("%d columns%n", cols);
+        environment.print("%d columns%n", cols);
         
         var chars = new char[rows+2][cols+2];
         Arrays.fill(chars[0], EMPTY);
@@ -236,7 +236,7 @@ public class Compiler {
                     var excl = exclusion[y][x] != 0;
                     var metro = metropolis[y][x] != 0;
                     if (!excl && !metro) {
-                        station = pureStation(ch, x, y, env);
+                        station = pureStation(ch, x, y);
                         if (station == null) {
                             if (DEFECT_STATIONS.indexOf(ch) != -1) {
                                 throw new CompileException(new Pos(x, y), "'" + ch + "' station only valid in Exclusion Zone");
@@ -246,23 +246,23 @@ public class Compiler {
                         }
                     } else if (excl && !metro) {
                         station = switch (ch) {
-                            case BYTE_IN -> new ByteInStation(x, y, env);
-                            case BYTE_OUT -> new ByteOutStation(x, y, env);
-                            case BYTE_ERR -> new ByteErrStation(x, y, env);
-                            case NUM_IN -> new NumInStation(x, y, env);
-                            case NUM_OUT -> new NumOutStation(x, y, env);
-                            case PAUSE -> new PauseStation(x, y, env);
-                            case HALT -> new HaltStation(x, y, env);
+                            case BYTE_IN -> new ByteInStation(x, y, environment);
+                            case BYTE_OUT -> new ByteOutStation(x, y, environment);
+                            case BYTE_ERR -> new ByteErrStation(x, y, environment);
+                            case NUM_IN -> new NumInStation(x, y, environment);
+                            case NUM_OUT -> new NumOutStation(x, y, environment);
+                            case PAUSE -> new PauseStation(x, y, environment);
+                            case HALT -> new HaltStation(x, y, environment);
                             case NOP, CREATE, DOT, DUP, DEC, SPLIT
-                                 -> pureStation(ch, x, y, env);
+                                 -> pureStation(ch, x, y);
                             default -> throw new CompileException(new Pos(x, y), "unrecognized station  '" + ch + "'");
                         };
                     } else if (!excl && metro) {
                         var def = definitions.get(ch);
                         if (def != null) {
-                            station =  new SyntheticStation(x, y, env, def);
+                            station =  new SyntheticStation(x, y, environment, def);
                         } else {
-                            station = pureStation(ch, x, y, env);
+                            station = pureStation(ch, x, y);
                             if (station == null) {
                                 throw new CompileException(new Pos(x, y), "unrecognized station  '" + ch + "'");
                             }
@@ -274,18 +274,18 @@ public class Compiler {
                 }
             }
         }
-        env.print("scaned %d stations%n", map.size());
+        environment.print("scaned %d stations%n", map.size());
         return map;
     }
     
-    private Single pureStation(char ch, int x, int y, Environment env) {
+    private Single pureStation(char ch, int x, int y) {
         return switch (ch) {
-            case NOP -> new NopStation(x, y, env);
-            case CREATE -> new CreateStation(x, y, env);
-            case DOT -> new DotStation(x, y, env);
-            case DUP -> new DupStation(x, y, env);
-            case DEC -> new DecStation(x, y, env);
-            case SPLIT -> new SplitStation(x, y, env);
+            case NOP -> new NopStation(x, y, environment);
+            case CREATE -> new CreateStation(x, y, environment);
+            case DOT -> new DotStation(x, y, environment);
+            case DUP -> new DupStation(x, y, environment);
+            case DEC -> new DecStation(x, y, environment);
+            case SPLIT -> new SplitStation(x, y, environment);
             default -> null;
         };
     }
@@ -307,7 +307,7 @@ public class Compiler {
                             stations.remove(s);
                             var id = "" + (char)('A' + boundID / 10) + (boundID % 10);
                             boundID += 1;
-                            bound = new Bound(id, env, s, station);
+                            bound = new Bound(id, environment, s, station);
                             stations.add(bound);
                             count += 1;
                         } else if (n instanceof Bound b) {
@@ -335,7 +335,7 @@ public class Compiler {
                 stations.add(station);
             }
         }
-        env.print("%d bound stations%n", count);
+        environment.print("%d bound stations%n", count);
         return stations;
     }
     
@@ -379,7 +379,7 @@ public class Compiler {
                 }
             }
         }
-        env.print("%d links created%n", count);
+        environment.print("%d links created%n", count);
     }
     
     //==============================================================================================

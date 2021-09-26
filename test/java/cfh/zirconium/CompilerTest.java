@@ -175,18 +175,18 @@ public class CompilerTest {
         public int readByte() {
             // TODO Auto-generated method stub
             return 0;
-        };
+        }
         @Override
         public int readInteger() {
             // TODO Auto-generated method stub
             return 0;
-        };
+        }
     };
     private static final Output output = new Output() {
         @Override
         public void reset() {
             //
-        };
+        }
         @Override
         public void write(String text) {
             //

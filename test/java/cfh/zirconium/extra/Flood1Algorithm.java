@@ -6,7 +6,7 @@ import java.awt.Point;
 import java.util.Deque;
 import java.util.LinkedList;
 
-public class FloodAlgorithm implements Algorithm {
+public class Flood1Algorithm implements Algorithm {
 
     private final char[][] code;
     
@@ -17,7 +17,7 @@ public class FloodAlgorithm implements Algorithm {
     private final Deque<Point> stack = new LinkedList<>();
     
     
-    public FloodAlgorithm(char[][] code) {
+    public Flood1Algorithm(char[][] code) {
         this.code = code;
         zones = new int[code.length][code[0].length];
     }
