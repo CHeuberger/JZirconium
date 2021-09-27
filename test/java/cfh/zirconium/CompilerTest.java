@@ -63,7 +63,7 @@ public class CompilerTest {
     
     private int valid(String code) {
         try {
-            compiler.compile(first(code), code);
+            compiler.compile(first(code), code, "");
             System.out.println(first(code));
             return 0;
         } catch (Exception ex) {
@@ -75,7 +75,7 @@ public class CompilerTest {
     
     private int invalid(String code) {
         try {
-            compiler.compile(first(code), code);
+            compiler.compile(first(code), code, "");
             System.err.printf("Missing Exception for %n%s%n", code);
             return 1;
         } catch (CompileException ex) {

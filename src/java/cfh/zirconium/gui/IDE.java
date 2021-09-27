@@ -79,6 +79,7 @@ public class IDE {
     
     private static final String PREF_NAME = "zirconium.name";
     private static final String PREF_CODE = "zirconium.code";
+    private static final String PREF_HEAD = "zirconium.header";
     private static final String PREF_FILE = "zirconium.file";
     // TODO save window position, split location
     
@@ -94,6 +95,7 @@ public class IDE {
     
     private final JFrame frame;
     private final JTextArea codePane;
+    private final JTextArea headerPane;
     private final JTextArea logPane;
     private final JTextArea inputPane;
     private final JTextArea outputPane;
@@ -173,6 +175,24 @@ public class IDE {
         menubar.add(Box.createHorizontalStrut(10));
         menubar.add(stepButton);
 
+        DocumentListener changedListener = new DocumentListener() {
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                changed = true;
+                setProgram(null);
+            }
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                changed = true;
+                setProgram(null);
+            }
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                changed = true;
+                setProgram(null);
+            }
+        };
+        
         codePane = newTextArea(false);
         codePane.setFont(settings.codeFont());
         codePane.setText(PREFS.get(PREF_CODE, ""));
@@ -191,24 +211,18 @@ public class IDE {
                 
             }
         });
-        codePane.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                changed = true;
-                setProgram(null);
-            }
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                changed = true;
-                setProgram(null);
-            }
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                changed = true;
-                setProgram(null);
-            }
-        });
+        codePane.getDocument().addDocumentListener(changedListener);
+
+        headerPane = newTextArea(false);
+        headerPane.setForeground(Color.BLUE);
+        headerPane.setFont(settings.codeFont());
+        headerPane.setText(PREFS.get(PREF_HEAD, ""));
+        headerPane.getDocument().addDocumentListener(changedListener);
         
+        var mainPane = new JTabbedPane();
+        mainPane.addTab("code", codePane);
+        mainPane.addTab("header", headerPane);
+
         singleTableModel = new SingleModel();
         var singleStationTable = new JTable(singleTableModel);
         singleStationTable.setAutoResizeMode(singleStationTable.AUTO_RESIZE_OFF);
@@ -234,7 +248,7 @@ public class IDE {
         detailPane.addTab("Stations", newScrollPane(singleStationTable));
         
         var centerSplit = newSplitPane(false);
-        centerSplit.setLeftComponent(codePane);
+        centerSplit.setLeftComponent(mainPane);
         centerSplit.setRightComponent(detailPane);
         centerSplit.setDividerLocation(850);
         
@@ -347,6 +361,7 @@ public class IDE {
             @Override
             public void windowClosed(WindowEvent e) {
                 PREFS.put(PREF_CODE, codePane.getText());
+                PREFS.put(PREF_HEAD, headerPane.getText());
             }
         });
         frame.setDefaultCloseOperation(frame.DO_NOTHING_ON_CLOSE);
@@ -405,15 +420,28 @@ public class IDE {
         }
         file = chooser.getSelectedFile();
         PREFS.put(PREF_FILE, file.getAbsolutePath());
+        var filename = file.getName();
+        var extension = filename.lastIndexOf('.');
+        if (extension != -1) {
+            filename = filename.substring(0, extension);
+        }
+        var headerFile = new File(file.getParent(), filename + ".zch");
         try {
             var code = Files.lines(file.toPath()).collect(Collectors.joining("\n"));
             codePane.setText(code);
+            if (headerFile.exists()) {
+                var header = Files.lines(headerFile.toPath()).collect(Collectors.joining("\n"));
+                headerPane.setText(header);
+            } else {
+                headerPane.setText(null);
+            }
         } catch (IOException ex) {
             error(ex, "opening \"%s\"", file);
             return;
         }
         changed = false;
         setName(file.getName());
+        // TODO set tab names (code/header)
         setProgram(null);
         print("%nLoaded %s%n", file.getAbsolutePath());
         frame.repaint();
@@ -432,27 +460,44 @@ public class IDE {
             return;
         }
         file = chooser.getSelectedFile();
-        if (file.getName().indexOf('.') == -1) {
-            file = new File(file.getParentFile(), file.getName() + ".zc");
+        var filename = file.getName();
+        if (filename.indexOf('.') == -1) {
+            file = new File(file.getParentFile(), filename + ".zc");
+            filename = file.getName();
         }
+        filename = filename.replaceFirst("\\.[^./]*$", "");
+        var headerFile = new File(file.getParentFile(), filename + ".zch");
+        
         PREFS.put(PREF_FILE, file.getAbsolutePath());
         if (file.exists()) {
             if (showConfirmDialog(frame, "File already exists, overwrite?", "Confirm Save", OK_CANCEL_OPTION) != OK_OPTION) {
                 return;
             }
-            var filename = file.getName();
-            var index = filename.lastIndexOf('.');
-            if (index != -1) {
-                filename = filename.substring(0, index);
-            }
+            
             var bak = new File(file.getParentFile(), filename + ".bak");
             if (bak.exists()) {
                 bak.delete();
             }
             file.renameTo(bak);
         }
+        
+        boolean headerExists;
+        if (headerFile.exists()) {
+            var bak = new File(headerFile.getParentFile(), filename + ".zch.bak");
+            if (bak.exists()) {
+                bak.delete();
+            }
+            headerFile.renameTo(bak);
+            headerExists = true;
+        } else {
+            headerExists = false;
+        }
+        
         try {
             Files.writeString(file.toPath(), codePane.getText(), StandardOpenOption.CREATE_NEW);
+            if (headerExists || !headerPane.getText().isBlank()) {
+                Files.writeString(headerFile.toPath(), headerPane.getText(), StandardOpenOption.CREATE_NEW);
+            }
         } catch (IOException ex) {
             error(ex, "saving \"%s\"", file);
             return;
@@ -480,7 +525,7 @@ public class IDE {
     private void doCompile(ActionEvent ev) {
         // thread
         try {
-            setProgram(new Compiler(environment).compile(name, codePane.getText()));
+            setProgram(new Compiler(environment).compile(name, codePane.getText(), headerPane.getText()));
         } catch (CompileException ex) {
             setProgram(null);
             if (ex.pos != null) {

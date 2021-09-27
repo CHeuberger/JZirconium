@@ -126,12 +126,14 @@ public class Compiler {
     
     // TODO compile as much as possible, accumulate errors
     /** Compiles the given code and creates a program with givne name. */
-    public Program compile(String name, String code) throws CompileException {
+    public Program compile(String name, String code, String header) throws CompileException {
         environment.print("%n");
         
         char[][] chars = parse(code);
         
-        Map<Character, Definition> definitions = bubblesLenses(chars);
+        Map<Character, Definition> definitions = parseHeaderFile(header);
+        
+        definitions.putAll(bubblesLenses(chars));
         
         Zone[][] zones = new ZoneDetector(chars).detect();
         
@@ -167,6 +169,24 @@ public class Compiler {
             }
         }
         return chars;
+    }
+    
+    /** Extract definitions from header file. */
+    private Map<Character, Definition> parseHeaderFile(String header) throws CompileException {
+        var definitions = new HashMap<Character, Definition>();
+        var count = 0;
+        for (var line : header.split("\n")) {
+            if (!line.isBlank()) {
+                var pos = new Pos(-1, count);
+                var def = Definition.parse(pos, header);
+                if (definitions.containsKey(def.symbol)) {
+                    throw new CompileException(pos, "duplicated definition");
+                }
+                definitions.put(def.symbol, def);
+            }
+            count += 1;
+        }
+        return definitions;
     }
     
     /** Removes bubles {@code (...)} and extract definitions from lenses {@code ((...))}. */

@@ -8,6 +8,10 @@ https://esolangs.org/wiki/Zirconium
 
 ## Changes
 
+#### v0.10
+
+* header files reading, saving, compiling and showing - #1
+
 #### v0.09
 
 * new zone detection (zone inference, mixed zones) - #4, #5, #6
