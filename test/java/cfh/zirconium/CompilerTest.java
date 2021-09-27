@@ -38,7 +38,7 @@ public class CompilerTest {
             + "((A=1))\n"
             + "==========\n"
             + "@ (( ))\n"
-            + "\n")
+            )
             .split("(?m)^ *===+ *\n"))
         {
             errors += valid(code);
@@ -54,8 +54,7 @@ public class CompilerTest {
             + "O (\n"
             + "==========\n"
             + "0 (TEST\n"
-            + "==========\n"
-            + "@  (())\n")
+            )
             .split("\n *===+ *\n"))
         {
             errors += invalid(code);

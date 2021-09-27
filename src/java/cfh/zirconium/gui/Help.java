@@ -45,6 +45,7 @@ public class Help {
         final String STATIONS = String.format(HEADER
             + "                                      STATIONS\n"
             + "                                     ==========\n"
+            + "\n"
             + "At the beginning of the tick, all stations count the number of drones occupying them,\n" 
             + "and then consume all those drones. Afterwards, the stations execute the following:\n" 
             + "\n"                                 
@@ -61,7 +62,7 @@ public class Help {
         final String TUNNELS = String.format(HEADER
             + "                                      TUNNELS\n"
             + "                                     =========\n"
-            + "                                \n"
+            + "\n"
             + "-   horizontal.\n"
             + "|   vertical.\n"
             + "/\\  diagonals.\n"
@@ -72,7 +73,7 @@ public class Help {
         final String APERTURES = String.format(HEADER
             + "                                     APERTURES\n"
             + "                                    ===========\n"
-            + "                \n"
+            + "\n"
             + "^  north.\n"
             + ">  east.\n"
             + "v  south.\n"
@@ -115,16 +116,16 @@ public class Help {
             + "                                    ============\n"
             + "\n"
             + "An area of the program may be enclosed with forts to make it a metropolis:\n"
-
+            + "\n"
             + "     [==]\n"
             + "    [    ]\n"
             + "     [    ======]\n"
             + "    [            ]\n"
             + "    [     ==     ]\n"
             + "     [===]  [===]\n"
-
+            + "\n"
             + "Like the fences of an exclusion zone, the forts of a metropolis behave as * tunnels.\n"
-
+            + "\n"
             + "A metropolis may contain special synthetic stations.\n"
             );
         final String SYNTHETIC = String.format(HEADER
@@ -141,15 +142,15 @@ public class Help {
             + "The expression can be in terms of integer literals, as well as special \n"
             + "variables N and K, which represent the number of drones currently occupying \n"
             + "the station and the number of linked station.\n"
-
+            + "\n"
             + "For instance,\n"
             + "    Z = N 1 +\n"
             + "The Z station here is defined to dispatch N + 1 drones to each linked station.\n"
-
+            + "\n"
             + "Expressions may contain the following operators: +, -, *, /, =, corresponding \n"
             + "to addition, subtraction, multiplication, floor division (zero if divisor is 0) \n"
             + "and equality (1 if equal, 0 otherwise).\n"
-
+            + "\n"
             + "The following is a complete grammar for synthetic station definitions.\n"
             + "    definition := symbol sp* \"=\" sp* expr\n"
             + "    symbol := [^\\s]\n"
@@ -158,7 +159,7 @@ public class Help {
             + "    integer := [\"0\"-\"9\"]+\n"
             + "    operator := \"+\" | \"-\" | \"*\" | \"/\" | \"=\" \n"
             + "    sp := \" \" | \"\\t\"\n"
-            
+            + "\n"
             + "A synthetic station may be defined inside a lens. A lens is parsed at compile time:\n"
             + "    ((r = N K / 1 +))\n"
             );

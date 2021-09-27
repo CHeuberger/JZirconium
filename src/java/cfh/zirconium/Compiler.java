@@ -183,7 +183,7 @@ public class Compiler {
                     def = Definition.parse(pos, header);
                 } catch (CompileException ex) {
                     throw (CompileException) new CompileException(ex.pos, true, ex.getMessage()).initCause(ex);
-                } 
+                }
                 if (definitions.containsKey(def.symbol)) {
                     throw new CompileException(pos, true, "duplicated definition");
                 }
@@ -389,6 +389,9 @@ public class Compiler {
             for (Dir dir : Dir.values()) {
                 int x = station.x() + dir.dx;
                 int y = station.y() + dir.dy;
+                if (!valid(x, y, chars)) {
+                    continue;
+                }
                 char ch = chars[y][x];
                 if (dir.isTunnel(ch) || dir.isOut(ch) && !dir.isIn(ch)) {
                     boolean direct = false;
