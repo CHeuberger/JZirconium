@@ -1,13 +1,15 @@
 package cfh.zirconium;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
+
 import cfh.zirconium.Compiler.CompileException;
 import cfh.zirconium.Compiler.Zone;
 
 public class ZoneDetectorTest {
 
     public static void main(String[] args) {
-        var test = new ZoneDetectorTest(args == null);
+        ZoneDetectorTest test = new ZoneDetectorTest(args == null);
         test.testW();
         test.test();
         
@@ -26,49 +28,49 @@ public class ZoneDetectorTest {
     }
     
     private void testW() {
-        for (var code : """
-            A]{b
-            =======
-              ~
-             {a}
-              ~
-            =======
-                 ~
-             ~  {a}
-            {b}  ~
-             ~
-            =======
-             ~
-            {a}  ~
-            {a} {b}
-             ~   ~
-            =======
-             ~~ 
-            {aa}
-             ~~
-            =======
-                {~~~~~~~~~~~~~}
-             ~  {aaaaaaaaaaaaa}
-            {a} {a}~~~~~~~~~{a}
-            {a} {a}         {a}
-            {a} {a}  ~~~~~  {a}
-            {a} {a} {aaaaa} {a}
-            {a} {a} {a~~~a} {a}
-            {a} {a} {a} {a} {a}
-            {a} {a}  ~  {a} {a}
-            {a} {a}     {a} {a}
-            {a} {a}~~~~~{a} {a}
-            {a} {aaaaaaaaa} {a}
-            {a}  ~~~~~~~~~  {a}
-            {a}             {a}
-            {a~~~~~~~~~~~~~~~a}
-            {aaaaaaaaaaaaaaaaa}
-            {~~~~~~~~~~~~~~~~~}
-            """.split("\n$|\n *===+ *\n"))
+        for (String code : (""
+            + "A]{b\n"
+            + "=======\n" 
+            + "  ~ \n"
+            + " {a}\n"
+            + "  ~ \n"
+            + "=======\n"
+            + "     ~ \n"
+            + " ~  {a}\n"
+            + "{b}  ~ \n"
+            + " ~     \n"
+            + "=======\n"
+            + " ~     \n"
+            + "{a}  ~ \n"
+            + "{a} {b}\n"
+            + " ~   ~ \n"
+            + "=======\n"
+            + " ~~ \n"
+            + "{aa}\n"
+            + " ~~ \n"
+            + "=======\n"
+            + "    {~~~~~~~~~~~~~}\n"
+            + " ~  {aaaaaaaaaaaaa}\n"
+            + "{a} {a}~~~~~~~~~{a}\n"
+            + "{a} {a}         {a}\n"
+            + "{a} {a}  ~~~~~  {a}\n"
+            + "{a} {a} {aaaaa} {a}\n"
+            + "{a} {a} {a~~~a} {a}\n"
+            + "{a} {a} {a} {a} {a}\n"
+            + "{a} {a}  ~  {a} {a}\n"
+            + "{a} {a}     {a} {a}\n"
+            + "{a} {a}~~~~~{a} {a}\n"
+            + "{a} {aaaaaaaaa} {a}\n"
+            + "{a}  ~~~~~~~~~  {a}\n"
+            + "{a}             {a}\n"
+            + "{a~~~~~~~~~~~~~~~a}\n"
+            + "{aaaaaaaaaaaaaaaaa}\n"
+            + "{~~~~~~~~~~~~~~~~~}\n"
+            ).split("\n$|\n *===+ *\n"))
         {
-            var parsed = parse(code);
+            Parsed parsed = parse(code);
             try {
-                var zones = new ZoneDetector(parsed.chars).detect();
+                Zone[][] zones = new ZoneDetector(parsed.chars).detect();
                 errors += parsed.check(zones);
             } catch (CompileException ex) {
                 ex.printStackTrace();
@@ -79,69 +81,69 @@ public class ZoneDetectorTest {
     
     private void test() {
         // expect Exception
-        for (var code : """
-             ~~
-            {aa]
-             ~~
-            =======
-             ~~
-            [aa}
-             ~~
-            """.split("\n$|\n *===+ *\n"))
+        for (String code : (""
+            + " ~~\n"
+            + "{aa]\n"
+            + " ~~\n"
+            + "=======\n"
+            + " ~~\n"
+            + "[aa}\n"
+            + " ~~\n"
+            ).split("\n$|\n *===+ *\n"))
         {
             errors += invalid(code);
         }
         
         // no Exception expected
-        for (var code : """
-               ~~
-             {~xx}
-            {xxx}
-            {~~~}
-            =======
-             ~~
-            {aa}
-             {}
-            ===============
-               ~~~
-              {bbb}
-               ~~~
-            ===============
-             ~~   ~~   ~~
-            {aa} {bb} {cc}
-            {aa}  {b} {c}
-             ~~    ~   ~
-            ===============
-             ~     ~
-            {a}   {b}
-            {aa} {bb}
-             ~~   ~~
-            ====================
-             ~                  
-            {a}
-            {a}    ~
-            {a}   {a}
-            {a}   {a}
-            {aa~ ~aa}
-            {aaa~aaa}
-            {aaaaaa}
-            {aaaaaa}
-             ~~~~~~
-            ====================
-             {~~}
-            {xxxx}
-             {xxxx~~~~~~}
-            {xxxxxxxxxxxx}
-            {xxxxx~~xxxxx}
-             {~~~}  {~~~}
-            """.split("\n$|\n *===+ *\n"))
+        for (String code : (""
+            + "   ~~\n"
+            + " {~xx}\n"
+            + "{xxx}\n"
+            + "{~~~}\n"
+            + "=======\n"
+            + " ~~\n"
+            + "{aa}\n"
+            + " {}\n"
+            + "===============\n"
+            + "   ~~~\n"
+            + "  {bbb}\n"
+            + "   ~~~\n"
+            + "===============\n"
+            + " ~~   ~~   ~~\n"
+            + "{aa} {bb} {cc}\n"
+            + "{aa}  {b} {c}\n"
+            + " ~~    ~   ~\n"
+            + "===============\n"
+            + " ~     ~\n"
+            + "{a}   {b}\n"
+            + "{aa} {bb}\n"
+            + " ~~   ~~\n"
+            + "====================\n"
+            + " ~                  \n"
+            + "{a}\n"
+            + "{a}    ~\n"
+            + "{a}   {a}\n"
+            + "{a}   {a}\n"
+            + "{aa~ ~aa}\n"
+            + "{aaa~aaa}\n"
+            + "{aaaaaa}\n"
+            + "{aaaaaa}\n"
+            + " ~~~~~~\n"
+            + "====================\n"
+            + " {~~}\n"
+            + "{xxxx}\n"
+            + " {xxxx~~~~~~}\n"
+            + "{xxxxxxxxxxxx}\n"
+            + "{xxxxx~~xxxxx}\n"
+            + " {~~~}  {~~~}\n"
+            ).split("\n$|\n *===+ *\n"))
       {
           errors += exclusionZone(code);
       }
     }
     
     private int invalid(String code) {
-        var parsed = parse(code);
+        Parsed parsed = parse(code);
         
         try {
             new ZoneDetector(parsed.chars).detect();
@@ -156,7 +158,7 @@ public class ZoneDetectorTest {
     }
     
     private int exclusionZone(String code) {
-        var parsed = parse(code);
+        Parsed parsed = parse(code);
         
         Zone[][] zones;
         try {
@@ -170,18 +172,18 @@ public class ZoneDetectorTest {
     }
     
     private Parsed parse(String code) {
-        var lines = code.split("\n");
-        var rows = lines.length;
-        var cols = Arrays.stream(lines).mapToInt(String::length).max().orElse(0);
+        String[] lines = code.split("\n");
+        int rows = lines.length;
+        int cols = Arrays.stream(lines).mapToInt(String::length).max().orElse(0);
         
-        var chars = new char[rows][cols];
-        var expected = new Zone[rows][cols];
-        for (var y = 0; y < rows; y++) {
-            var line = lines[y];
+        char[][] chars = new char[rows][cols];
+        Zone[][] expected = new Zone[rows][cols];
+        for (int y = 0; y < rows; y++) {
+            String line = lines[y];
             Arrays.fill(chars[y], ' ');
             Arrays.fill(expected[y], Zone.NONE);
-            for (var x = 0; x < line.length(); x++) {
-                var ch = line.charAt(x);
+            for (int x = 0; x < line.length(); x++) {
+                char ch = line.charAt(x);
                 if ('a' <= ch && ch <= 'z') {
                     expected[y][x] = Zone.EXCLUSION;
                 } else if ('A' <= ch && ch <= 'Z') {
@@ -197,15 +199,22 @@ public class ZoneDetectorTest {
     
     //----------------------------------------------------------------------------------------------
     
-    record Parsed(
-        int rows,
-        int cols,
-        char[][] chars,
-        Zone[][] expected) {
+    class Parsed {
+        private final int rows;
+        private final int cols;
+        private final char[][] chars;
+        private final Zone[][] expected;
+        
+        Parsed(int rows, int cols, char[][] chars, Zone[][] expected) {
+            this.rows = rows;
+            this.cols = cols;
+            this.chars = chars;
+            this.expected = expected;
+        }
         
         int check(Zone[][] zones) {
-            for (var y = 0; y < rows; y++) {
-                for (var x = 0; x < cols; x++) {
+            for (int y = 0; y < rows; y++) {
+                for (int x = 0; x < cols; x++) {
                     if (zones[y][x] != expected[y][x]) {
                             System.err.printf("expected %s at [%d,%d]: %s%n", expected[y][x], x, y, zones[y][x]);
                             return 1;

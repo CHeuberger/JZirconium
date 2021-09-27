@@ -5,10 +5,12 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -30,8 +32,10 @@ import java.util.stream.Collectors;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
@@ -88,7 +92,7 @@ public class ZoneDetectionProbe extends JPanel {
     
     private ZoneDetectionProbe() {
         clear();
-        var text = preferences.get(PREF_CODE, null);
+        String text = preferences.get(PREF_CODE, null);
         if (text != null) {
             codeFromString(0, 0, text);
         }
@@ -137,7 +141,7 @@ public class ZoneDetectionProbe extends JPanel {
         helpButton =newButton("Help", this::doHelp, "Show help");
         runStatus(false);
         
-        var menubar = new JMenuBar();
+        JMenuBar menubar = new JMenuBar();
         menubar.add(Box.createHorizontalStrut(5));
         menubar.add(clearButton);
         menubar.add(Box.createHorizontalGlue());
@@ -151,11 +155,11 @@ public class ZoneDetectionProbe extends JPanel {
         menubar.add(helpButton);
         menubar.add(Box.createHorizontalStrut(5));
         
-        var center = new JPanel();
+        JPanel center = new JPanel();
         center.add(this);
         center.setBorder(BorderFactory.createEmptyBorder(GAP, GAP, GAP, GAP));
         
-        var frame = new JFrame();
+        JFrame frame = new JFrame();
         frame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosed(WindowEvent ev) {
@@ -172,15 +176,15 @@ public class ZoneDetectionProbe extends JPanel {
     
     private void markCell(Graphics2D gg, Color color, int x, int y) {
         gg.setColor(color);
-        var xx = x * SIZE;
-        var yy = y * SIZE;
-        for (var i = 1; i <= 2; i++) {
+        int xx = x * SIZE;
+        int yy = y * SIZE;
+        for (int i = 1; i <= 2; i++) {
             gg.drawRect(xx+i, yy+i, SIZE-i-i, SIZE-i-i);
         }
     }
 
     private void doClear(ActionEvent ev) {
-        if (!Arrays.stream(code).map(String::new).allMatch(String::isBlank)) {
+        if (!Arrays.stream(code).map(String::new).map(String::trim).allMatch(String::isEmpty)) {
             pushCode();
         }
         clear();
@@ -218,9 +222,9 @@ public class ZoneDetectionProbe extends JPanel {
     }
     
     private void doSlow(ActionEvent ev) {
-        var alg = algorithm;
+        Algorithm alg = algorithm;
         if (alg != null) {
-            var worker = new SwingWorker<Void, Void>() {
+            SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
                 @Override
                 protected Void doInBackground() throws Exception {
                     while (running && alg == algorithm) {
@@ -251,7 +255,7 @@ public class ZoneDetectionProbe extends JPanel {
     }
     
     private void doRun(ActionEvent ev) {
-        var alg = algorithm;
+        Algorithm alg = algorithm;
         runStatus(false);
         if (alg != null) {
             while (alg == algorithm) {
@@ -265,26 +269,26 @@ public class ZoneDetectionProbe extends JPanel {
     }
     
     private void doHelp(ActionEvent ev) {
-        var text = """
-              H E L P
-            
-            left-click:  select cell
-            left-drag:  select cell region
-            shift-left-click:  extend cell region
-            
-            DEL:  delete selected region
-            BACKSPACE:  move selection left and delete, or delete selected region
-            ctrl-C:  copy selected region or whole code if no region selected
-            ctrl-V:  clears all and paste code from clipboard
-            shift-ctrl-V:  paste clipboard starting at selected cell
-            ctrl-Z:  undo
-            
-            arrows:  move selected cell
-            shift arrows:  move end of selected region
-            [=]{~}:  enter type character into selected cell
-            space:  clear selected cell
-            """;
-        var area = new JTextArea(text);
+        String text = ""
+            + "  H E L P\n"
+            + "\n"
+            + "left-click:  select cell\n"
+            + "left-drag:  select cell region\n"
+            + "shift-left-click:  extend cell region\n"
+            + "\n"
+            + "DEL:  delete selected region\n"
+            + "BACKSPACE:  move selection left and delete, or delete selected region\n"
+            + "ctrl-C:  copy selected region or whole code if no region selected\n"
+            + "ctrl-V:  clears all and paste code from clipboard\n"
+            + "shift-ctrl-V:  paste clipboard starting at selected cell\n"
+            + "ctrl-Z:  undo\n"
+            + "\n"
+            + "arrows:  move selected cell\n"
+            + "shift arrows:  move end of selected region\n"
+            + "[=]{~}:  enter type character into selected cell\n"
+            + "space:  clear selected cell\n"
+            ;
+        JTextArea area = new JTextArea(text);
         area.setBorder(BorderFactory.createEmptyBorder(8, 4, 8, 4));
         area.setEditable(false);
         JOptionPane.showMessageDialog(this, new JScrollPane(area));
@@ -373,25 +377,25 @@ public class ZoneDetectionProbe extends JPanel {
     private void doCopy(ActionEvent ev) {
         String source;
         if (mark != null && markEnd != null) {
-            var x0 = Math.min(mark.x, markEnd.x);
-            var x1 = Math.max(mark.x, markEnd.x) + 1;
-            var y0 = Math.min(mark.y, markEnd.y);
-            var y1 = Math.max(mark.y, markEnd.y) + 1;
+            int x0 = Math.min(mark.x, markEnd.x);
+            int x1 = Math.max(mark.x, markEnd.x) + 1;
+            int y0 = Math.min(mark.y, markEnd.y);
+            int y1 = Math.max(mark.y, markEnd.y) + 1;
             source = Arrays.stream(code, y0, y1).map(a -> new String(a, x0, x1-x0)).collect(Collectors.joining("\n"));
         } else {
             String text = codeToString();
             source = text;
         }
-        var content = new StringSelection(source);
-        var clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        StringSelection content = new StringSelection(source);
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
         clipboard.setContents(content, content);
     }
     
     private void doPaste(ActionEvent ev) {
-        var clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
         if (clipboard.isDataFlavorAvailable(DataFlavor.stringFlavor)) {
             try {
-                var text = (String) clipboard.getData(DataFlavor.stringFlavor);
+                String text = (String) clipboard.getData(DataFlavor.stringFlavor);
                 if (text != null) {
                     pushCode();
                     int x;
@@ -423,10 +427,10 @@ public class ZoneDetectionProbe extends JPanel {
     }
 
     private void codeFromString(int x, int y, String text) {
-        var source = text.split("\n");
-        for (var i = 0; y+i < COUNT && i < source.length; i++) {
-            for (var j = 0; x+j < COUNT && j < source[i].length(); j++) {
-                var ch = source[i].charAt(j);
+        String[] source = text.split("\n");
+        for (int i = 0; y+i < COUNT && i < source.length; i++) {
+            for (int j = 0; x+j < COUNT && j < source[i].length(); j++) {
+                char ch = source[i].charAt(j);
                 if (ch == ' ' || VALID_ZONE.indexOf(ch) != -1) {
                     code[y+i][x+j] = ch;
                 }
@@ -435,9 +439,9 @@ public class ZoneDetectionProbe extends JPanel {
     }
     
     private void doUndo(ActionEvent ev) {
-        var clone = undo.poll();
+        char[][] clone = undo.poll();
         if (clone != null) {
-            for (var i = 0 ; i < COUNT && i < clone.length; i++) {
+            for (int i = 0 ; i < COUNT && i < clone.length; i++) {
                 System.arraycopy(clone[i], 0, code[i], 0, COUNT);
             }
             preferences.put(PREF_CODE, codeToString());
@@ -452,12 +456,12 @@ public class ZoneDetectionProbe extends JPanel {
         if (mark != null) {
             pushCode();
             if (markEnd != null) {
-                var x0 = Math.min(mark.x, markEnd.x);
-                var x1 = Math.max(mark.x, markEnd.x);
-                var y0 = Math.min(mark.y, markEnd.y);
-                var y1 = Math.max(mark.y, markEnd.y);
-                for (var x = x0; x <= x1; x++) {
-                    for (var y = y0; y <= y1; y++) {
+                int x0 = Math.min(mark.x, markEnd.x);
+                int x1 = Math.max(mark.x, markEnd.x);
+                int y0 = Math.min(mark.y, markEnd.y);
+                int y1 = Math.max(mark.y, markEnd.y);
+                for (int x = x0; x <= x1; x++) {
+                    for (int y = y0; y <= y1; y++) {
                         code[y][x] = ' ';
                     }
                 }
@@ -472,12 +476,12 @@ public class ZoneDetectionProbe extends JPanel {
         if (mark != null) {
             pushCode();
             if (markEnd != null) {
-                var x0 = Math.min(mark.x, markEnd.x);
-                var x1 = Math.max(mark.x, markEnd.x);
-                var y0 = Math.min(mark.y, markEnd.y);
-                var y1 = Math.max(mark.y, markEnd.y);
-                for (var x = x0; x <= x1; x++) {
-                    for (var y = y0; y <= y1; y++) {
+                int x0 = Math.min(mark.x, markEnd.x);
+                int x1 = Math.max(mark.x, markEnd.x);
+                int y0 = Math.min(mark.y, markEnd.y);
+                int y1 = Math.max(mark.y, markEnd.y);
+                for (int x = x0; x <= x1; x++) {
+                    for (int y = y0; y <= y1; y++) {
                         code[y][x] = ' ';
                     }
                 }
@@ -498,8 +502,8 @@ public class ZoneDetectionProbe extends JPanel {
     private void doMousePressed(MouseEvent ev) {
         if (SwingUtilities.isLeftMouseButton(ev)) {
             requestFocus();
-            var x = ev.getX() / SIZE;
-            var y = ev.getY() / SIZE;
+            int x = ev.getX() / SIZE;
+            int y = ev.getY() / SIZE;
             if (noModifier(ev)) {
                 markEnd = null;
                 select(x, y);
@@ -512,14 +516,14 @@ public class ZoneDetectionProbe extends JPanel {
     private void doMouseDragged(MouseEvent ev) {
         if (SwingUtilities.isLeftMouseButton(ev)) {
             requestFocus();
-            var x = ev.getX() / SIZE;
-            var y = ev.getY() / SIZE;
+            int x = ev.getX() / SIZE;
+            int y = ev.getY() / SIZE;
             selectEnd(x, y);
         }
     }
     
     private void doKeyTyped(KeyEvent ev) {
-        var ch = ev.getKeyChar();
+        char ch = ev.getKeyChar();
         if (ch == ' ' || VALID_ZONE.indexOf(ch) != -1) {
             insertCode(ch);
         }
@@ -545,8 +549,8 @@ public class ZoneDetectionProbe extends JPanel {
     
     private void insertCode(char ch) {
         if (mark != null) {
-            var x = mark.x;
-            var y = mark.y;
+            int x = mark.x;
+            int y = mark.y;
             if (ch != code[y][x]) {
                 pushCode();
                 code[y][x] = ch;
@@ -573,7 +577,7 @@ public class ZoneDetectionProbe extends JPanel {
     }
 
     private void clear() {
-        for (var i = 0; i < COUNT; i++) {
+        for (int i = 0; i < COUNT; i++) {
             Arrays.fill(code[i], ' ');
         }
     }
@@ -597,7 +601,7 @@ public class ZoneDetectionProbe extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         
-        var gg = (Graphics2D) g.create();
+        Graphics2D gg = (Graphics2D) g.create();
         try {
             paintGtrid(gg);
             paintMark(gg);
@@ -610,24 +614,24 @@ public class ZoneDetectionProbe extends JPanel {
 
     private void paintGtrid(Graphics2D gg) {
         gg.setColor(Color.LIGHT_GRAY);
-        var total = COUNT * SIZE;
+        int total = COUNT * SIZE;
         
-        for (var y = 0; y <= total; y += SIZE) {
+        for (int y = 0; y <= total; y += SIZE) {
             gg.drawLine(0, y, total, y);
         }
-        for (var x = 0 ; x <= total ; x += SIZE) {
+        for (int x = 0 ; x <= total ; x += SIZE) {
             gg.drawLine(x, 0, x, total);
         }
     }
     
     private void paintMark(Graphics2D gg) {
         if (markEnd != null) {
-            var x0 = Math.min(mark.x, markEnd.x);
-            var x1 = Math.max(mark.x, markEnd.x);
-            var y0 = Math.min(mark.y, markEnd.y);
-            var y1 = Math.max(mark.y, markEnd.y);
-            for (var x = x0; x <= x1; x++) {
-                for (var y = y0; y <= y1; y++) {
+            int x0 = Math.min(mark.x, markEnd.x);
+            int x1 = Math.max(mark.x, markEnd.x);
+            int y0 = Math.min(mark.y, markEnd.y);
+            int y1 = Math.max(mark.y, markEnd.y);
+            for (int x = x0; x <= x1; x++) {
+                for (int y = y0; y <= y1; y++) {
                     markCell(gg, Color.CYAN.darker(), x, y);
                 }
             }
@@ -639,7 +643,7 @@ public class ZoneDetectionProbe extends JPanel {
     
     private void paintAlgorithm(Graphics2D gg) {
         if (algorithm != null) {
-            var g2 = (Graphics2D) gg.create();
+            Graphics2D g2 = (Graphics2D) gg.create();
             try {
                 g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.5F));
                 algorithm.paint(g2, SIZE);
@@ -650,13 +654,13 @@ public class ZoneDetectionProbe extends JPanel {
     }
     
     private void paintCode(Graphics2D gg) {
-        var fm = gg.getFontMetrics();
-        var dx = 0;
-        var dy = SIZE - fm.getDescent() - (SIZE-fm.getAscent()-fm.getDescent())/2;
+        FontMetrics fm = gg.getFontMetrics();
+        int dx = 0;
+        int dy = SIZE - fm.getDescent() - (SIZE-fm.getAscent()-fm.getDescent())/2;
         gg.setColor(Color.BLACK);
-        for (var y = 0; y < COUNT; y++) {
-            for (var x = 0; x < COUNT; x++) {
-                var ch = code[y][x];
+        for (int y = 0; y < COUNT; y++) {
+            for (int x = 0; x < COUNT; x++) {
+                char ch = code[y][x];
                 if (ch != ' ') {
                     dx = (SIZE - fm.charWidth(ch)) / 2;
                     gg.drawString(Character.toString(ch), x*SIZE+dx, y*SIZE+dy);
@@ -666,7 +670,7 @@ public class ZoneDetectionProbe extends JPanel {
     }
     
     private JButton newButton(String name, ActionListener listener, String tooltip) {
-        var button = new JButton(name);
+        JButton button = new JButton(name);
         button.addActionListener(listener);
         button.setToolTipText(tooltip);
         button.setFocusable(false);
@@ -683,8 +687,8 @@ public class ZoneDetectionProbe extends JPanel {
     }
     
     private void setKeystrokeAction(String name, KeyStroke key, ActionListener listener) {
-        var actions = getActionMap();
-        var inputs = getInputMap();
+        ActionMap actions = getActionMap();
+        InputMap inputs = getInputMap();
 
         actions.put(name, newAction(name, listener));
         inputs.put(key, name);

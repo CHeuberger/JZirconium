@@ -19,7 +19,7 @@ public final class DupStation extends Single {
 
     @Override
     protected void tick0() {
-        var drones = total();
+        int drones = total();
         if (drones > 0) {
             send(drones);
         }

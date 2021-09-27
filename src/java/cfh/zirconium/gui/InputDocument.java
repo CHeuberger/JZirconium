@@ -50,7 +50,7 @@ public class InputDocument extends PlainDocument {
     }
     
     synchronized boolean hasInteger() {
-        var tmp = cursor;
+        int tmp = cursor;
         while (hasByte()) {
             int b;
             try {
@@ -73,7 +73,7 @@ public class InputDocument extends PlainDocument {
     
     synchronized int nextInteger() throws BadLocationException {
         while (hasByte()) {
-            var b = nextByte();
+            int b = nextByte();
             if (Character.isDigit((char)b)) {
                 break;
             }
@@ -81,7 +81,7 @@ public class InputDocument extends PlainDocument {
                 throw new BadLocationException("no integer available", cursor-1);
             }
         }
-        var offset = cursor-1;
+        int offset = cursor-1;
         while (hasByte()) {
             if (!Character.isDigit((char)nextByte())) {
                 cursor -= 1;

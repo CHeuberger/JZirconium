@@ -1,6 +1,7 @@
 package cfh.zirconium.extra;
 
 import java.awt.Color;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
 import java.awt.Point;
 import java.util.ArrayList;
@@ -41,10 +42,10 @@ public class Flood2Algorithm implements Algorithm {
     public boolean step() {
         if (types == null) {
             types = new Type[code.length][];
-            for (var i = 0; i < code.length; i++) {
+            for (int i = 0; i < code.length; i++) {
                 types[i] = new Type[code[i].length];
-                for (var j = 0; j < code[i].length; j++) {
-                    var ch = code[i][j];
+                for (int j = 0; j < code[i].length; j++) {
+                    char ch = code[i][j];
                     if (ZoneDetectionProbe.FENCE.indexOf(ch) != -1) {
                         types[i][j] = Type.FENCE;
                     } else if (ZoneDetectionProbe.FORT.indexOf(ch) != -1) {
@@ -57,7 +58,7 @@ public class Flood2Algorithm implements Algorithm {
             }
         }
         
-        var point = stack.poll();
+        Point point = stack.poll();
         if (point == null) {
             closeZone();
             
@@ -70,11 +71,11 @@ public class Flood2Algorithm implements Algorithm {
         }
         
         zone.add(point);
-        var x = point.x;
-        var y = point.y;
+        int x = point.x;
+        int y = point.y;
 
         if (y > 0) {
-            var type = types[y-1][x];
+            Type type = types[y-1][x];
             if (type == Type.NEW) {
                 push(x, y-1);
             } else if (type == Type.FENCE || type == Type.FORT) {
@@ -84,7 +85,7 @@ public class Flood2Algorithm implements Algorithm {
             }
         }
         if (x > 0) {
-            var type = types[y][x-1];
+            Type type = types[y][x-1];
             if (type == Type.NEW) {
                 push(x-1, y);
             } else if (type == Type.FENCE || type == Type.FORT) {
@@ -99,7 +100,7 @@ public class Flood2Algorithm implements Algorithm {
             }
         }
         if (y+1 < types[y].length) {
-            var type = types[y+1][x];
+            Type type = types[y+1][x];
             if (type == Type.NEW) {
                 push(x, y+1);
             } else if (type == Type.FENCE || type == Type.FORT) {
@@ -109,7 +110,7 @@ public class Flood2Algorithm implements Algorithm {
             }
         }
         if (x+1 < types[y].length) {
-            var type = types[y][x+1];
+            Type type = types[y][x+1];
             if (type == Type.NEW) {
                 push(x+1, y);
             } else if (type == Type.FENCE || type == Type.FORT) {
@@ -147,7 +148,9 @@ public class Flood2Algorithm implements Algorithm {
     }
 
     private void closeZone() {
-        for (var point : zone) {
+//        assert actual != Type.NEW : actual;
+        
+        for (Point point : zone) {
             types[point.y][point.x] = actual;
         }
         zone.clear();
@@ -168,7 +171,7 @@ public class Flood2Algorithm implements Algorithm {
     }
     
     private void push(int x, int y) {
-        var point = new Point(x, y);
+        Point point = new Point(x, y);
         if (open.remove(point)) {
             stack.remove(point);
             assert !zone.contains(point) : point;
@@ -179,9 +182,9 @@ public class Flood2Algorithm implements Algorithm {
     @Override
     public void paint(Graphics2D gg, int size) {
         if (types != null) {
-            for (var y = 0; y < types.length; y++) {
-                for (var x = 0; x < types[y].length; x++) {
-                    var color = types[y][x].color();
+            for (int y = 0; y < types.length; y++) {
+                for (int x = 0; x < types[y].length; x++) {
+                    Color color = types[y][x].color();
                     if (color != null) {
                         paintCell(gg, size, x, y, color);
                     }
@@ -190,20 +193,20 @@ public class Flood2Algorithm implements Algorithm {
         }
         
         gg.setColor(Color.BLACK);
-        for (var point : open) {
+        for (Point point : open) {
             paintString(gg, size, point.x, point.y, "O");
         }
-        for (var point : stack) {
+        for (Point point : stack) {
             paintString(gg, size, point.x, point.y, "?");
         }
-        for (var point : zone) {
+        for (Point point : zone) {
             paintString(gg, size, point.x, point.y, "X");
         }
         gg.setColor(Color.YELLOW);
-        for (var point : border) {
+        for (Point point : border) {
             paintString(gg, size, point.x, point.y, "> <");
         }
-        for (var point : errors) {
+        for (Point point : errors) {
             paintCell(gg, size, point.x, point.y, Color.RED);
         }
     }
@@ -214,9 +217,9 @@ public class Flood2Algorithm implements Algorithm {
     }
     
     private void paintString(Graphics2D gg, int size, int x, int y, String text) {
-        var fm = gg.getFontMetrics();
-        var dx = (size - fm.stringWidth(text)) / 2;
-        var dy = size - fm.getDescent() - (size-fm.getAscent()-fm.getDescent())/2;
+        FontMetrics fm = gg.getFontMetrics();
+        int dx = (size - fm.stringWidth(text)) / 2;
+        int dy = size - fm.getDescent() - (size-fm.getAscent()-fm.getDescent())/2;
         gg.drawString(text, x*size+dx, y*size+dy);
     }
 }

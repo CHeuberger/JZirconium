@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import cfh.zirconium.Environment;
@@ -74,7 +75,7 @@ public final class Bound extends Station {
 
     @Override
     protected Collection<Single> linked() {
-        return childs.stream().map(Single::linked).flatMap(Collection::stream).toList();
+        return childs.stream().map(Single::linked).flatMap(Collection::stream).collect(Collectors.toList());
     }
     
     @Override

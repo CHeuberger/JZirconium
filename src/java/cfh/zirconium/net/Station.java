@@ -8,8 +8,7 @@ import cfh.zirconium.Environment;
 import cfh.zirconium.Settings;
 
 /** A station, single or bound. */
-public sealed abstract class Station 
-permits Single, Bound {
+public abstract class Station {
 
     protected final Settings settings = Settings.instance();
     

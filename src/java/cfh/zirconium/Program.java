@@ -46,7 +46,7 @@ public class Program {
     /** Creates DOT graph. */
     public void graph(Writer wr) {
         @SuppressWarnings("resource")
-        var out = new Formatter(wr);
+        Formatter out = new Formatter(wr);
         out.format("digraph \"%s\" {%n", name);
         out.format("  fontname = \"%s\";%n", settings.codeFont().getName());
         out.format("  node [fontname = \"%s\"]%n", settings.codeFont().getName());
@@ -54,10 +54,12 @@ public class Program {
         out.format("  concentrate = true;%n");
         out.format("  splines = true;%n");
         
-        for (var station : stations) {
-            if (station instanceof Single s) {
+        for (Station station : stations) {
+            if (station instanceof Single) {
+                Single s = (Single) station; 
                 out.format(NODE, "  ", s, num(s.drones()));
-            } else if (station instanceof Bound b) {
+            } else if (station instanceof Bound) {
+                Bound b = (Bound) station;
                 out.format("  subgraph \"cluster_%s\" {%n", b);
                 out.format("    label = \"%s %s\";%n", b, num(b.drones()));
                 b.stations().forEach(s -> out.format(NODE, "    ", s, num(s.drones())));
@@ -65,7 +67,7 @@ public class Program {
             }
         }
         out.format("%n");
-        for (var station : stations) {
+        for (Station station : stations) {
             station.stations().forEach(src -> {
                 src.linked().forEach(dst -> out.format("  \"%s\" -> \"%s\";%n", src, dst));
             });

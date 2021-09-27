@@ -19,7 +19,7 @@ public final class DecStation extends Single {
 
     @Override
     protected void tick0() {
-        var drones = total() - 1;
+        int drones = total() - 1;
         if (drones > 0) {
             send(drones);
         }

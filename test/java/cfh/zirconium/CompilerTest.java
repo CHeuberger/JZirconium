@@ -6,7 +6,7 @@ import cfh.zirconium.Environment.*;
 public class CompilerTest {
     
     public static void main(String[] args) {
-        var test = new CompilerTest(args == null);
+        CompilerTest test = new CompilerTest(args == null);
         test.validationTest();
     }
 
@@ -19,26 +19,27 @@ public class CompilerTest {
     }
     
     private void validationTest() {
-        var errors = 0;
-        for (var code : """
-            0 @ .o Q O   
-            ==========
-            0-0 0>0<0
-            0->0<-0
-            ==========
-            0 0 0 0 0
-            | v ^ | ^
-            0 0 0 v |
-                  0 0
-            ==========
-              ()
-            ==========
-              (TEST)
-            ==========
-            ((A=1))
-            ==========
-            @  (())
-            """.split("(?m)^ *===+ *\n"))
+        int errors = 0;
+        for (String code : (""
+            + "0 @ .o Q O   \n"
+            + "==========\n"
+            + "0-0 0>0<0\n"
+            + "0->0<-0\n"
+            + "==========\n"
+            + "0 0 0 0 0\n"
+            + "| v ^ | ^\n"
+            + "0 0 0 v |\n"
+            + "      0 0\n"
+            + "==========\n"
+            + "  ()\n"
+            + "==========\n"
+            + "  (TEST)\n"
+            + "==========\n"
+            + "((A=1))\n"
+            + "==========\n"
+            + "@ (( ))\n"
+            + "\n")
+            .split("(?m)^ *===+ *\n"))
         {
             errors += valid(code);
         }
@@ -46,13 +47,16 @@ public class CompilerTest {
         if (!silent) {
             System.out.println();
         }
-        for (var code : """
-            Y   
-            ==========
-            O (
-            ==========
-            0 (TEST
-            """.split("\n *===+ *\n"))
+
+        for (String code : (""
+            + "Y   \n"
+            + "==========\n"
+            + "O (\n"
+            + "==========\n"
+            + "0 (TEST\n"
+            + "==========\n"
+            + "@  (())\n")
+            .split("\n *===+ *\n"))
         {
             errors += invalid(code);
         }
@@ -93,7 +97,7 @@ public class CompilerTest {
     }
     
     private static String first(String code) {
-        var i = code.indexOf('\n');
+        int i = code.indexOf('\n');
         return i==-1 ? code : code.substring(0, i);
     }
     

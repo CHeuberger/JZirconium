@@ -12,11 +12,7 @@ import java.util.stream.Stream;
 import cfh.zirconium.Environment;
 
 /** Single station. */
-public abstract sealed class Single extends Station
-permits NopStation, CreateStation, DotStation, DupStation, DecStation, SplitStation,
-        ByteInStation, ByteOutStation, ByteErrStation, NumOutStation, NumInStation, PauseStation, HaltStation,
-        SyntheticStation
-{
+public abstract class Single extends Station {
 
     private final Pos pos;
     
@@ -174,7 +170,7 @@ permits NopStation, CreateStation, DotStation, DupStation, DecStation, SplitStat
     public boolean equals(Object obj) {
         if (obj == this) return true;
         if (obj == null || obj.getClass() != this.getClass()) return false;
-        var other = (Single) obj;
+        Single other = (Single) obj;
         return Objects.equals(other.pos, this.pos);
     }
     

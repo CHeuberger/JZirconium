@@ -19,7 +19,7 @@ public class StationTest {
     private static final boolean strictZone = false;
 
     public static void main(String[] args) {
-        var test = new StationTest(args == null);
+        StationTest test = new StationTest(args == null);
         test.pureStations();
         test.tunnel();
         test.tunnelCrossing();
@@ -59,10 +59,10 @@ public class StationTest {
     private void pureStations() {
         // . If this is occupied by any amount of drones, dispatch one drone to each linked station.
         try {
-            var program = compiler.compile("test.pure.dot", "0<.>0", "");
-            var nop1 = (NopStation) get(0, 0, program);
-            var dot = (DotStation) get(2, 0, program);
-            var nop2 = (NopStation) get(4, 0, program);
+            Program program = compiler.compile("test.pure.dot", "0<.>0", "");
+            NopStation nop1 = (NopStation) get(0, 0, program);
+            DotStation dot = (DotStation) get(2, 0, program);
+            NopStation nop2 = (NopStation) get(4, 0, program);
             
             program.reset();
             assertEquals(0, dot.drones(), program.name() + ": . - after reset");
@@ -88,10 +88,10 @@ public class StationTest {
         
         // o Dispatch the number of drones occupying this station to each linked station.
         try {
-            var program = compiler.compile("test.pure.o", "0<o>0", "");
-            var nop1 = (NopStation) get(0, 0, program);
-            var dup = (DupStation) get(2, 0, program);
-            var nop2 = (NopStation) get(4, 0, program);
+            Program program = compiler.compile("test.pure.o", "0<o>0", "");
+            NopStation nop1 = (NopStation) get(0, 0, program);
+            DupStation dup = (DupStation) get(2, 0, program);
+            NopStation nop2 = (NopStation) get(4, 0, program);
             
             program.reset();
             assertEquals(0, dup.drones(), program.name() + ": o - after reset");
@@ -117,10 +117,10 @@ public class StationTest {
         
         // 0 Do not dispatch any drones.
         try {
-            var program = compiler.compile("test.pure.0", "0<0>0", "");
-            var nop1 = (NopStation) get(0, 0, program);
-            var nop = (NopStation) get(2, 0, program);
-            var nop2 = (NopStation) get(4, 0, program);
+            Program program = compiler.compile("test.pure.0", "0<0>0", "");
+            NopStation nop1 = (NopStation) get(0, 0, program);
+            NopStation nop = (NopStation) get(2, 0, program);
+            NopStation nop2 = (NopStation) get(4, 0, program);
             
             program.reset();
             assertEquals(0, nop.drones(), program.name() + ": 0 - after reset");
@@ -143,10 +143,10 @@ public class StationTest {
         // O Dispatch N // K drones to each linked station, where N is the number of drones occupying 
         //   this station, K is the number of linked stations, and // is the floor division operation.
         try {
-            var program = compiler.compile("test.pure.O", "0<O>0", "");
-            var nop1 = (NopStation) get(0, 0, program);
-            var split = (SplitStation) get(2, 0, program);
-            var nop2 = (NopStation) get(4, 0, program);
+            Program program = compiler.compile("test.pure.O", "0<O>0", "");
+            NopStation nop1 = (NopStation) get(0, 0, program);
+            SplitStation split = (SplitStation) get(2, 0, program);
+            NopStation nop2 = (NopStation) get(4, 0, program);
             
             program.reset();
             assertEquals(0, split.drones(), program.name() + ": O - after reset");
@@ -172,10 +172,10 @@ public class StationTest {
         
         // Q If this station is occupied by N drones, dispatch N - 1 drones to linked stations.
         try {
-            var program = compiler.compile("test.pure.Q", "0<Q>0", "");
-            var nop1 = (NopStation) get(0, 0, program);
-            var dec = (DecStation) get(2, 0, program);
-            var nop2 = (NopStation) get(4, 0, program);
+            Program program = compiler.compile("test.pure.Q", "0<Q>0", "");
+            NopStation nop1 = (NopStation) get(0, 0, program);
+            DecStation dec = (DecStation) get(2, 0, program);
+            NopStation nop2 = (NopStation) get(4, 0, program);
             
             program.reset();
             assertEquals(0, dec.drones(), program.name() + ": Q - after reset");
@@ -201,10 +201,10 @@ public class StationTest {
         
         // @  If this station is not occupied, dispatch one drone to each linked station.
         try {
-            var program = compiler.compile("test.pure.@", "0<@>0", "");
-            var nop1 = (NopStation) get(0, 0, program);
-            var create = (CreateStation) get(2, 0, program);
-            var nop2 = (NopStation) get(4, 0, program);
+            Program program = compiler.compile("test.pure.@", "0<@>0", "");
+            NopStation nop1 = (NopStation) get(0, 0, program);
+            CreateStation create = (CreateStation) get(2, 0, program);
+            NopStation nop2 = (NopStation) get(4, 0, program);
             
             program.reset();
             assertEquals(0, create.drones(), program.name() + ": @ - after reset");
@@ -233,10 +233,10 @@ public class StationTest {
     private void tunnel() {
         // A tunnel may be horizontal, vertical or diagonal, using -, |, /, or \ symbols
         try {
-            var code = "@---0";
-            var program = compiler.compile("test.tunnel.horizontal", code, "");
-            var create = (CreateStation) get(0, 0, program);
-            var nop = (NopStation) get(4, 0, program);
+            String code = "@---0";
+            Program program = compiler.compile("test.tunnel.horizontal", code, "");
+            CreateStation create = (CreateStation) get(0, 0, program);
+            NopStation nop = (NopStation) get(4, 0, program);
             
             program.reset();
             assertEquals(0, create.drones(), program.name() + ": @ - after reset");
@@ -257,15 +257,15 @@ public class StationTest {
         }
 
         try {
-            var code = """
-                @
-                |
-                |
-                0
-                """;
-            var program = compiler.compile("test.tunnel.vertical", code, "");
-            var create = (CreateStation) get(0, 0, program);
-            var nop = (NopStation) get(0, 3, program);
+            String code = ""
+                + "@\n"
+                + "|\n"
+                + "|\n"
+                + "0\n"
+                ;
+            Program program = compiler.compile("test.tunnel.vertical", code, "");
+            CreateStation create = (CreateStation) get(0, 0, program);
+            NopStation nop = (NopStation) get(0, 3, program);
             
             program.reset();
             assertEquals(0, create.drones(), program.name() + ": @ - after reset");
@@ -286,16 +286,16 @@ public class StationTest {
         }
         
         try {
-            var code = """
-                   @
-                  / \\
-                 /   \\
-                0     0
-                """;
-            var program = compiler.compile("test.tunnel.diagonal", code, "");
-            var create = (CreateStation) get(3, 0, program);
-            var nop1 = (NopStation) get(0, 3, program);
-            var nop2 = (NopStation) get(6, 3, program);
+            String code = ""
+                + "   @\n"
+                + "  / \\\n"
+                + " /   \\\n"
+                + "0     0\n"
+                ;
+            Program program = compiler.compile("test.tunnel.diagonal", code, "");
+            CreateStation create = (CreateStation) get(3, 0, program);
+            NopStation nop1 = (NopStation) get(0, 3, program);
+            NopStation nop2 = (NopStation) get(6, 3, program);
             
             program.reset();
             assertEquals(0, create.drones(), program.name() + ": @ - after reset");
@@ -323,18 +323,18 @@ public class StationTest {
     private void tunnelCrossing() {
         // A + behaves as both a horizontal and a vertical tunnel, ...
         try {
-            var code = """
-                   @
-                   |
-                @--+--0
-                   |
-                   0
-                """;
-            var program = compiler.compile("test.tunnel.+", code, "");
-            var create1 = (CreateStation) get(3, 0, program);
-            var create2 = (CreateStation) get(0, 2, program);
-            var nop1 = (NopStation) get(3, 4, program);
-            var nop2 = (NopStation) get(6, 2, program);
+            String code = ""
+                + "   @\n"
+                + "   |\n"
+                + "@--+--0\n"
+                + "   |\n"
+                + "   0\n"
+                ;
+            Program program = compiler.compile("test.tunnel.+", code, "");
+            CreateStation create1 = (CreateStation) get(3, 0, program);
+            CreateStation create2 = (CreateStation) get(0, 2, program);
+            NopStation nop1 = (NopStation) get(3, 4, program);
+            NopStation nop2 = (NopStation) get(6, 2, program);
             
             program.reset();
             assertEquals(0, create1.drones(), program.name() + ": @1 - after reset");
@@ -369,18 +369,18 @@ public class StationTest {
         }
         // ... a X behaves as both diagonal tunnels, ...
         try {
-            var code = """
-                @   0
-                 \\ /
-                  X
-                 / \\
-                @   0
-                """;
-            var program = compiler.compile("test.tunnel.X", code, "");
-            var create1 = (CreateStation) get(0, 0, program);
-            var create2 = (CreateStation) get(0, 4, program);
-            var nop1 = (NopStation) get(4, 4, program);
-            var nop2 = (NopStation) get(4, 0, program);
+            String code = ""
+                + "@   0\n"
+                + " \\ /\n"
+                + "  X\n"
+                + " / \\\n"
+                + "@   0\n"
+                ;
+            Program program = compiler.compile("test.tunnel.X", code, "");
+            CreateStation create1 = (CreateStation) get(0, 0, program);
+            CreateStation create2 = (CreateStation) get(0, 4, program);
+            NopStation nop1 = (NopStation) get(4, 4, program);
+            NopStation nop2 = (NopStation) get(4, 0, program);
             
             program.reset();
             assertEquals(0, create1.drones(), program.name() + ": @1 - after reset");
@@ -415,22 +415,22 @@ public class StationTest {
         }
         // ... and * behaves as any tunnel.
         try {
-            var code = """
-                @ 0 @
-                 \\|/
-                0-*-@
-                 /|\\
-                0 @ 0
-                """;
-            var program = compiler.compile("test.tunnel.*", code, "");
-            var create1 = (CreateStation) get(0, 0, program);
-            var create2 = (CreateStation) get(4, 0, program);
-            var create3 = (CreateStation) get(4, 2, program);
-            var create4 = (CreateStation) get(2, 4, program);
-            var nop1 = (NopStation) get(4, 4, program);
-            var nop2 = (NopStation) get(0, 4, program);
-            var nop3 = (NopStation) get(0, 2, program);
-            var nop4 = (NopStation) get(2, 0, program);
+            String code = ""
+                + "@ 0 @\n"
+                + " \\|/\n"
+                + "0-*-@\n"
+                + " /|\\\n"
+                + "0 @ 0\n"
+                ;
+            Program program = compiler.compile("test.tunnel.*", code, "");
+            CreateStation create1 = (CreateStation) get(0, 0, program);
+            CreateStation create2 = (CreateStation) get(4, 0, program);
+            CreateStation create3 = (CreateStation) get(4, 2, program);
+            CreateStation create4 = (CreateStation) get(2, 4, program);
+            NopStation nop1 = (NopStation) get(4, 4, program);
+            NopStation nop2 = (NopStation) get(0, 4, program);
+            NopStation nop3 = (NopStation) get(0, 2, program);
+            NopStation nop4 = (NopStation) get(2, 0, program);
             
             program.reset();
             assertEquals(0, create1.drones(), program.name() + ": @1 - after reset");
@@ -508,11 +508,11 @@ public class StationTest {
     private void aperture() {
         // Horizontal and vertical apertures are marked with >, ...
         try {
-            var code = "0-->@-->0";
-            var program = compiler.compile("test.aperture.>", code, "");
-            var nop1 = (NopStation) get(0, 0, program);
-            var create1 = (CreateStation) get(4, 0, program);
-            var nop2 = (NopStation) get(8, 0, program);
+            String code = "0-->@-->0";
+            Program program = compiler.compile("test.aperture.>", code, "");
+            NopStation nop1 = (NopStation) get(0, 0, program);
+            CreateStation create1 = (CreateStation) get(4, 0, program);
+            NopStation nop2 = (NopStation) get(8, 0, program);
             
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
@@ -532,19 +532,19 @@ public class StationTest {
         }
         // ... ^, ...
         try {
-            var code = """
-                0
-                ^
-                |
-                @
-                ^
-                |
-                0
-                """;
-            var program = compiler.compile("test.aperture.^", code, "");
-            var nop1 = (NopStation) get(0, 0, program);
-            var create1 = (CreateStation) get(0, 3, program);
-            var nop2 = (NopStation) get(0, 6, program);
+            String code = ""
+                + "0\n"
+                + "^\n"
+                + "|\n"
+                + "@\n"
+                + "^\n"
+                + "|\n"
+                + "0\n"
+                ;
+            Program program = compiler.compile("test.aperture.^", code, "");
+            NopStation nop1 = (NopStation) get(0, 0, program);
+            CreateStation create1 = (CreateStation) get(0, 3, program);
+            NopStation nop2 = (NopStation) get(0, 6, program);
             
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
@@ -564,11 +564,11 @@ public class StationTest {
         }
         // ... <, ...
         try {
-            var code = "0<--@<--0";
-            var program = compiler.compile("test.aperture.<", code, "");
-            var nop1 = (NopStation) get(0, 0, program);
-            var create1 = (CreateStation) get(4, 0, program);
-            var nop2 = (NopStation) get(8, 0, program);
+            String code = "0<--@<--0";
+            Program program = compiler.compile("test.aperture.<", code, "");
+            NopStation nop1 = (NopStation) get(0, 0, program);
+            CreateStation create1 = (CreateStation) get(4, 0, program);
+            NopStation nop2 = (NopStation) get(8, 0, program);
             
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
@@ -588,19 +588,19 @@ public class StationTest {
         }
         // ... or v
         try {
-            var code = """
-                0
-                |
-                v
-                @
-                |
-                v
-                0
-                """;
-            var program = compiler.compile("test.aperture.v", code, "");
-            var nop1 = (NopStation) get(0, 0, program);
-            var create1 = (CreateStation) get(0, 3, program);
-            var nop2 = (NopStation) get(0, 6, program);
+            String code = ""
+                + "0\n"
+                + "|\n"
+                + "v\n"
+                + "@\n"
+                + "|\n"
+                + "v\n"
+                + "0\n"
+                ;
+            Program program = compiler.compile("test.aperture.v", code, "");
+            NopStation nop1 = (NopStation) get(0, 0, program);
+            CreateStation create1 = (CreateStation) get(0, 3, program);
+            NopStation nop2 = (NopStation) get(0, 6, program);
             
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
@@ -620,16 +620,16 @@ public class StationTest {
         }
         // Diagonal apertures are all marked with #
         try {
-            var code = """
-                   @
-                  / #
-                 #   \\
-                0     0
-                """;
-            var program = compiler.compile("test.aperture.v", code, "");
-            var nop1 = (NopStation) get(0, 3, program);
-            var create1 = (CreateStation) get(3, 0, program);
-            var nop2 = (NopStation) get(6, 3, program);
+            String code = ""
+                + "   @\n"
+                + "  / #\n"
+                + " #   \\\n"
+                + "0     0\n"
+                ;
+            Program program = compiler.compile("test.aperture.v", code, "");
+            NopStation nop1 = (NopStation) get(0, 3, program);
+            CreateStation create1 = (CreateStation) get(3, 0, program);
+            NopStation nop2 = (NopStation) get(6, 3, program);
             
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
@@ -652,9 +652,9 @@ public class StationTest {
     private void boundStation() {
         // A bound station executes the behavior of all its child stations each tick, ...
         try {
-            var code = "@@@->0";
-            var program = compiler.compile("test.bound.all1", code, "");
-            var nop1 = (NopStation) get(5, 0, program);
+            String code = "@@@->0";
+            Program program = compiler.compile("test.bound.all1", code, "");
+            NopStation nop1 = (NopStation) get(5, 0, program);
             
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
@@ -666,9 +666,9 @@ public class StationTest {
         }
 
         try {
-            var code = "@@@->o@->0";
-            var program = compiler.compile("test.bound.all2", code, "");
-            var nop1 = (NopStation) get(9, 0, program);
+            String code = "@@@->o@->0";
+            Program program = compiler.compile("test.bound.all2", code, "");
+            NopStation nop1 = (NopStation) get(9, 0, program);
             
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
@@ -682,10 +682,10 @@ public class StationTest {
         }
         // ...and is linked to each station its child stations are linked to
         try {
-            var code = "0<-0@@@0->0";
-            var program = compiler.compile("test.bound.link", code, "");
-            var nop1 = (NopStation) get(0, 0, program);
-            var nop2 = (NopStation) get(10, 0, program);
+            String code = "0<-0@@@0->0";
+            Program program = compiler.compile("test.bound.link", code, "");
+            NopStation nop1 = (NopStation) get(0, 0, program);
+            NopStation nop2 = (NopStation) get(10, 0, program);
             
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
@@ -698,10 +698,10 @@ public class StationTest {
             ex.printStackTrace();
         }
         try {
-            var code = "0<-[-0©0-]->0";
-            var program = compiler.compile("test.bound.link.synthetic", code, "©=K2*");
-            var nop1 = (NopStation) get(0, 0, program);
-            var nop2 = (NopStation) get(12, 0, program);
+            String code = "0<-[-0©0-]->0";
+            Program program = compiler.compile("test.bound.link.synthetic", code, "©=K2*");
+            NopStation nop1 = (NopStation) get(0, 0, program);
+            NopStation nop2 = (NopStation) get(12, 0, program);
             
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
@@ -714,19 +714,19 @@ public class StationTest {
             ex.printStackTrace();
         }
         try {
-            var code = """
-                   o
-                   v
-                0<0O0>0
-                   v
-                   0
-                """;
-            var program = compiler.compile("test.bound.link.O", code, "");
-            var dup1 = (DupStation) get(3, 0, program);
-            var split1 = (SplitStation) get(3, 2, program);
-            var nop1 = (NopStation) get(0, 2, program);
-            var nop2 = (NopStation) get(6, 2, program);
-            var nop3 = (NopStation) get(3, 4, program);
+            String code = ""
+                + "   o\n"
+                + "   v\n"
+                + "0<0O0>0\n"
+                + "   v\n"
+                + "   0\n"
+                ;
+            Program program = compiler.compile("test.bound.link.O", code, "");
+            DupStation dup1 = (DupStation) get(3, 0, program);
+            SplitStation split1 = (SplitStation) get(3, 2, program);
+            NopStation nop1 = (NopStation) get(0, 2, program);
+            NopStation nop2 = (NopStation) get(6, 2, program);
+            NopStation nop3 = (NopStation) get(3, 4, program);
             
             program.reset();
             assertEquals(0, dup1.drones(), program.name() + ": dup1 - after reset");
@@ -759,12 +759,12 @@ public class StationTest {
         }
         // A bound station may be linked to itself in certain configurations.
         try {
-            var code = """
-                0<-@>0
-                    0
-                """;
-            var program = compiler.compile("test.bound.recursive", code, "");
-            var nop1 = (NopStation) get(0, 0, program);
+            String code = ""
+                + "0<-@>0\n"
+                + "    0\n"
+                ;
+            Program program = compiler.compile("test.bound.recursive", code, "");
+            NopStation nop1 = (NopStation) get(0, 0, program);
             
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
@@ -783,8 +783,8 @@ public class StationTest {
     private void syntax() {
         // Anything contained between inside parentheses () is a bubble and is ignored.
         try {
-            var code = "( 0 )";
-            var program = compiler.compile("test.syntax.bubble", code, "");
+            String code = "( 0 )";
+            Program program = compiler.compile("test.syntax.bubble", code, "");
             
             assertEquals(0, program.stations().size(), "no stations");
         } catch (Exception ex) {
@@ -793,13 +793,13 @@ public class StationTest {
         }
         // Anything contained inside double parentheses (()) is a lens, used for synthetic station definitions.
         try {
-            var code = """
-                0<-[-©]
-                   [==]
-                ((©=7))
-                """;
-            var program = compiler.compile("test.syntax.lens", code, "");
-            var nop1 = (NopStation) get(0, 0, program);
+            String code = ""
+                + "0<-[-©]\n"
+                + "   [==]\n"
+                + "((©=7))\n"
+                ;
+            Program program = compiler.compile("test.syntax.lens", code, "");
+            NopStation nop1 = (NopStation) get(0, 0, program);
             
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
@@ -815,12 +815,12 @@ public class StationTest {
         if (strictZone) {
             // A position must be fully enclosed by fences for it to be considered "inside" the exclusion zone.
             try {
-                var code = """
-                    {~~~}
-                    { ? }
-                    {===}
-                    """;
-                var program = compiler.compile("test.exclusion.enclosed", code, "");
+                String code = ""
+                + "    {~~~}\n"
+                + "    { ? }\n"
+                + "    {===}\n"
+                    ;
+                Program program = compiler.compile("test.exclusion.enclosed", code, "");
                 
                 errors += 1;
                 System.err.printf("%s: expected Exception - zone not fully enclosed by fences%n", program.name());
@@ -830,12 +830,12 @@ public class StationTest {
             }
             // The fences of an exclusion zone will behave as * tunnels.
             try {
-                var code = """
-                       {~~}
-                    @->{0 }
-                       {==}
-                    """;
-                var program = compiler.compile("test.exclusion.arrow-fence", code, "");
+                String code = ""
+                + "       {~~}\n"
+                + "    @->{0 }\n"
+                + "       {==}\n"
+                    ;
+                Program program = compiler.compile("test.exclusion.arrow-fence", code, "");
                 
                 errors += 1;
                 System.err.printf("%s: expected Exception - arrow before fence%n", program.name());
@@ -847,14 +847,14 @@ public class StationTest {
         
         // The fences of an exclusion zone will behave as * tunnels.
         try {
-            var code = """
-                  {~~~}
-                @-{-0 }
-                  {~~~}
-                """;
-            var program = compiler.compile("test.exclusion.*.1", code, "");
-            var create1 = (CreateStation) get(0, 1, program);
-            var nop1 = (NopStation) get(4, 1, program);
+            String code = ""
+                + "  {~~~}\n"
+                + "@-{-0 }\n"
+                + "  {~~~}\n"
+                ;
+            Program program = compiler.compile("test.exclusion.*.1", code, "");
+            CreateStation create1 = (CreateStation) get(0, 1, program);
+            NopStation nop1 = (NopStation) get(4, 1, program);
             
             program.reset();
             assertEquals(0, create1.drones(), program.name() + ": create1 - after reset");
@@ -866,16 +866,16 @@ public class StationTest {
             ex.printStackTrace();
         }
         try {
-            var code = """
-                  {~~~}
-                  {0  }
-                  {~~~}
-                 /
-                @
-                """;
-            var program = compiler.compile("test.exclusion.*.2", code, "");
-            var create1 = (CreateStation) get(0, 4, program);
-            var nop1 = (NopStation) get(3, 1, program);
+            String code = ""
+                + "  {~~~}\n"
+                + "  {0  }\n"
+                + "  {~~~}\n"
+                + " /\n"
+                + "@\n"
+                ;
+            Program program = compiler.compile("test.exclusion.*.2", code, "");
+            CreateStation create1 = (CreateStation) get(0, 4, program);
+            NopStation nop1 = (NopStation) get(3, 1, program);
             
             program.reset();
             assertEquals(0, create1.drones(), program.name() + ": create1 - after reset");
@@ -887,16 +887,16 @@ public class StationTest {
             ex.printStackTrace();
         }
         try {
-            var code = """
-                {~~~}
-                { 0 }
-                {~~~}
-                  |
-                  @
-                """;
-            var program = compiler.compile("test.exclusion.*.3", code, "");
-            var create1 = (CreateStation) get(2, 4, program);
-            var nop1 = (NopStation) get(2, 1, program);
+            String code = ""
+                + "{~~~}\n"
+                + "{ 0 }\n"
+                + "{~~~}\n"
+                + "  |\n"
+                + "  @\n"
+                ;
+            Program program = compiler.compile("test.exclusion.*.3", code, "");
+            CreateStation create1 = (CreateStation) get(2, 4, program);
+            NopStation nop1 = (NopStation) get(2, 1, program);
             
             program.reset();
             assertEquals(0, create1.drones(), program.name() + ": create1 - after reset");
@@ -909,15 +909,15 @@ public class StationTest {
         }
         // An exclusion zone in a metropolis is still an exclusion zone.
         try {
-            var code = """
-                [=====]
-                [ {~} ]
-                [ {!} ]
-                [ {~} ]
-                [     ]
-                [=====]
-                """;
-            var program = compiler.compile("test.exclusion.inside", code, "");
+            String code = ""
+                + "[=====]\n"
+                + "[ {~} ]\n"
+                + "[ {!} ]\n"
+                + "[ {~} ]\n"
+                + "[     ]\n"
+                + "[=====]\n"
+                ;
+            Program program = compiler.compile("test.exclusion.inside", code, "");
             get(HaltStation.class, 3, 2, program);
         } catch (Exception ex) {
             errors += 1;
@@ -928,14 +928,14 @@ public class StationTest {
     private void defectStation() {
         // ? If any drones occupy this, read one byte from STDIN and dispatch that many drones to linked stations. 
         try {
-            var code = """
-                {~~~}
-                {?>0}
-                {~~~}
-                """;
-            var program = compiler.compile("test.defect.?", code, "");
-            var in1 = (ByteInStation) get(1, 1, program);
-            var nop1 = (NopStation) get(3, 1, program);
+            String code = ""
+                + "{~~~}\n"
+                + "{?>0}\n"
+                + "{~~~}\n"
+                ;
+            Program program = compiler.compile("test.defect.?", code, "");
+            ByteInStation in1 = (ByteInStation) get(1, 1, program);
+            NopStation nop1 = (NopStation) get(3, 1, program);
             
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
@@ -959,13 +959,13 @@ public class StationTest {
         }
         // ! If any drones occupy this, halt the program.  
         try {
-            var code = """
-                {~~~}
-                { ! }
-                {~~~}
-                """;
-            var program = compiler.compile("test.defect.!", code, "");
-            var halt1 = (HaltStation) get(2, 1, program);
+            String code = ""
+                + "{~~~}\n"
+                + "{ ! }\n"
+                + "{~~~}\n"
+                ;
+            Program program = compiler.compile("test.defect.!", code, "");
+            HaltStation halt1 = (HaltStation) get(2, 1, program);
             
             program.reset();
             assertEquals(0, halt1.drones(), program.name() + ": halt1 - after reset");
@@ -982,13 +982,13 @@ public class StationTest {
         // % If any drones occupy this, print the number of drones occupying this station 
         //   as a byte modulo 256 to STDOUT
         try {
-            var code = """
-                {~~~}
-                { % }
-                {~~~}
-                """;
-            var program = compiler.compile("test.defect.%", code, "");
-            var out1 = (ByteOutStation) get(2, 1, program);
+            String code = ""
+                + "{~~~}\n"
+                + "{ % }\n"
+                + "{~~~}\n"
+                ;
+            Program program = compiler.compile("test.defect.%", code, "");
+            ByteOutStation out1 = (ByteOutStation) get(2, 1, program);
             
             program.reset();
             assertEquals(0, out1.drones(), program.name() + ": out1 - after reset");
@@ -1014,13 +1014,13 @@ public class StationTest {
         // & If any drones occupy this, write the number of drones occupying this 
         //   as a byte modulo 256 to STDERR.
         try {
-            var code = """
-                {~~~}
-                { & }
-                {~~~}
-                """;
-            var program = compiler.compile("test.defect.&", code, "");
-            var err1 = (ByteErrStation) get(2, 1, program);
+            String code = ""
+                + "{~~~}\n"
+                + "{ & }\n"
+                + "{~~~}\n"
+                ;
+            Program program = compiler.compile("test.defect.&", code, "");
+            ByteErrStation err1 = (ByteErrStation) get(2, 1, program);
             
             program.reset();
             assertEquals(0, err1.drones(), program.name() + ": err1 - after reset");
@@ -1046,13 +1046,13 @@ public class StationTest {
         // ` If any drones occupy this, write the number of drones occupying this station 
         //   in numeric form to STDOUT. 
         try {
-            var code = """
-                {~~~}
-                { ` }
-                {~~~}
-                """;
-            var program = compiler.compile("test.defect.`", code, "");
-            var out1 = (NumOutStation) get(2, 1, program);
+            String code = ""
+                + "{~~~}\n"
+                + "{ ` }\n"
+                + "{~~~}\n"
+                ;
+            Program program = compiler.compile("test.defect.`", code, "");
+            NumOutStation out1 = (NumOutStation) get(2, 1, program);
             
             program.reset();
             assertEquals(0, out1.drones(), program.name() + ": out1 - after reset");
@@ -1077,14 +1077,14 @@ public class StationTest {
         }
         // _ If any drones occupy this, read a numeric value from STDIN and dispatch that many drones to linked stations. 
         try {
-            var code = """
-                {~~~}
-                {_>0}
-                {~~~}
-                """;
-            var program = compiler.compile("test.defect._", code, "");
-            var in1 = (NumInStation) get(1, 1, program);
-            var nop1 = (NopStation) get(3, 1, program);
+            String code = ""
+                + "{~~~}\n"
+                + "{_>0}\n"
+                + "{~~~}\n"
+                ;
+            Program program = compiler.compile("test.defect._", code, "");
+            NumInStation in1 = (NumInStation) get(1, 1, program);
+            NopStation nop1 = (NopStation) get(3, 1, program);
             
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
@@ -1108,24 +1108,24 @@ public class StationTest {
         }
         // ; Pause execution for a duration equal to the number of drones occupying this station in milliseconds. 
         try {
-            var code = """
-                {~~~}
-                { ; }
-                {~~~}
-                """;
-            var program = compiler.compile("test.defect.;", code, "");
-            var pause1 = (PauseStation) get(2, 1, program);
+            String code = ""
+                + "{~~~}\n"
+                + "{ ; }\n"
+                + "{~~~}\n"
+                ;
+            Program program = compiler.compile("test.defect.;", code, "");
+            PauseStation pause1 = (PauseStation) get(2, 1, program);
             
             program.reset();
             program.step();
             program.step();
-            var start = System.currentTimeMillis();
+            long start = System.currentTimeMillis();
             program.step();
-            var delta = System.currentTimeMillis() - start;
+            long delta = System.currentTimeMillis() - start;
             pause1.receive(500);
             start = System.currentTimeMillis();
             program.step();
-            var delay = System.currentTimeMillis() - start - delta;
+            long delay = System.currentTimeMillis() - start - delta;
             assertEquals(true, 400 < delay && delay < 600, "delay: " + delay);
         } catch (Exception ex) {
             errors += 1;
@@ -1139,12 +1139,12 @@ public class StationTest {
         if (strictZone) {
             // A position must be fully enclosed by fences for it to be considered "inside" the exclusion zone.
             try {
-                var code = """
-                    [~~~]
-                    [ © ]
-                    [===]
-                    """;
-                var program = compiler.compile("test.metropolis.enclosed", code, "©=1");
+                String code = ""
+                + "    [~~~]\n"
+                + "    [ © ]\n"
+                + "    [===]\n"
+                    ;
+                Program program = compiler.compile("test.metropolis.enclosed", code, "©=1");
                 
                 errors += 1;
                 System.err.printf("%s: expected Exception - zone not fully enclosed by forts%n", program.name());
@@ -1154,12 +1154,12 @@ public class StationTest {
             }
             // The fences of an exclusion zone will behave as * tunnels.
             try {
-                var code = """
-                       [==]
-                    @->[0 ]
-                       [==]
-                    """;
-                var program = compiler.compile("test.metropolis.arrow-fence", code, "");
+                String code = ""
+                + "       [==]\n"
+                + "    @->[0 ]\n"
+                + "       [==]\n"
+                    ;
+                Program program = compiler.compile("test.metropolis.arrow-fence", code, "");
                 
                 errors += 1;
                 System.err.printf("%s: expected Exception - arrow before fort%n", program.name());
@@ -1171,14 +1171,14 @@ public class StationTest {
         
         // The fences of an exclusion zone will behave as * tunnels.
         try {
-            var code = """
-                  [===]
-                @-[-0 ]
-                  [===]
-                """;
-            var program = compiler.compile("test.metropolis.*.1", code, "");
-            var create1 = (CreateStation) get(0, 1, program);
-            var nop1 = (NopStation) get(4, 1, program);
+            String code = ""
+                + "  [===]\n"
+                + "@-[-0 ]\n"
+                + "  [===]\n"
+                ;
+            Program program = compiler.compile("test.metropolis.*.1", code, "");
+            CreateStation create1 = (CreateStation) get(0, 1, program);
+            NopStation nop1 = (NopStation) get(4, 1, program);
             
             program.reset();
             assertEquals(0, create1.drones(), program.name() + ": create1 - after reset");
@@ -1190,16 +1190,16 @@ public class StationTest {
             ex.printStackTrace();
         }
         try {
-            var code = """
-                  [===]
-                  [0  ]
-                  [===]
-                 /
-                @
-                """;
-            var program = compiler.compile("test.metropolis.*.2", code, "");
-            var create1 = (CreateStation) get(0, 4, program);
-            var nop1 = (NopStation) get(3, 1, program);
+            String code = ""
+                + "  [===]\n"
+                + "  [0  ]\n"
+                + "  [===]\n"
+                + " /\n"
+                + "@\n"
+                ;
+            Program program = compiler.compile("test.metropolis.*.2", code, "");
+            CreateStation create1 = (CreateStation) get(0, 4, program);
+            NopStation nop1 = (NopStation) get(3, 1, program);
             
             program.reset();
             assertEquals(0, create1.drones(), program.name() + ": create1 - after reset");
@@ -1211,16 +1211,16 @@ public class StationTest {
             ex.printStackTrace();
         }
         try {
-            var code = """
-                [===]
-                [ 0 ]
-                [===]
-                  |
-                  @
-                """;
-            var program = compiler.compile("test.metropolis.*.3", code, "");
-            var create1 = (CreateStation) get(2, 4, program);
-            var nop1 = (NopStation) get(2, 1, program);
+            String code = ""
+                + "[===]\n"
+                + "[ 0 ]\n"
+                + "[===]\n"
+                + "  |\n"
+                + "  @\n"
+                ;
+            Program program = compiler.compile("test.metropolis.*.3", code, "");
+            CreateStation create1 = (CreateStation) get(2, 4, program);
+            NopStation nop1 = (NopStation) get(2, 1, program);
             
             program.reset();
             assertEquals(0, create1.drones(), program.name() + ": create1 - after reset");
@@ -1233,15 +1233,15 @@ public class StationTest {
         }
         // An exclusion zone in a metropolis is still an exclusion zone.
         try {
-            var code = """
-                {~~~~~}
-                { [=] }
-                { [©] }
-                { [=] }
-                {     }
-                {~~~~~}
-                """;
-            var program = compiler.compile("test.metropolis.inside", code, "©=0");
+            String code = ""
+                + "{~~~~~}\n"
+                + "{ [=] }\n"
+                + "{ [©] }\n"
+                + "{ [=] }\n"
+                + "{     }\n"
+                + "{~~~~~}\n"
+                ;
+            Program program = compiler.compile("test.metropolis.inside", code, "©=0");
             get(SyntheticStation.class, 3, 2, program);
         } catch (Exception ex) {
             errors += 1;
@@ -1252,15 +1252,15 @@ public class StationTest {
     private void syntheticStation() {
         // The expression is evaluated for the station on each tick, and represents the number of drones dispatched
         try {
-            var code = """
-                [=====]
-                [ ©>0 ]
-                [=====]
-                ((©=5))
-                """;
-            var program = compiler.compile("test.synthetic.send", code, "");
-            var syn1 = (SyntheticStation) get(2, 1, program);
-            var nop1 = (NopStation) get(4, 1, program);
+            String code = ""
+                + "[=====]\n"
+                + "[ ©>0 ]\n"
+                + "[=====]\n"
+                + "((©=5))\n"
+                ;
+            Program program = compiler.compile("test.synthetic.send", code, "");
+            SyntheticStation syn1 = (SyntheticStation) get(2, 1, program);
+            NopStation nop1 = (NopStation) get(4, 1, program);
             
             program.reset();
             assertEquals(0, syn1.drones(), program.name() + ": syn1 - after reset");
@@ -1277,15 +1277,15 @@ public class StationTest {
         }
         // Negative drones are clamped to 0.
         try {
-            var code = """
-                [=====]
-                [ ©>0 ]
-                [=====]
-                ((©=0 6-))
-                """;
-            var program = compiler.compile("test.synthetic.negative", code, "");
-            var syn1 = (SyntheticStation) get(2, 1, program);
-            var nop1 = (NopStation) get(4, 1, program);
+            String code = ""
+                + "[=====]\n"
+                + "[ ©>0 ]\n"
+                + "[=====]\n"
+                + "((©=0 6-))\n"
+                ;
+            Program program = compiler.compile("test.synthetic.negative", code, "");
+            SyntheticStation syn1 = (SyntheticStation) get(2, 1, program);
+            NopStation nop1 = (NopStation) get(4, 1, program);
             
             program.reset();
             assertEquals(0, syn1.drones(), program.name() + ": syn1 - after reset");
@@ -1300,16 +1300,16 @@ public class StationTest {
         // The expression can be in terms of integer literals, as well as special variables N and K, 
         // which represent the number of drones currently occupying the station and the number of linked station.
         try {
-            var code = """
-                [=====]
-                [0-©-0]
-                [=====]
-                ((©=N 1 +))
-                """;
-            var program = compiler.compile("test.synthetic.N", code, "");
-            var nop1 = (NopStation) get(1, 1, program);
-            var syn1 = (SyntheticStation) get(3, 1, program);
-            var nop2 = (NopStation) get(5, 1, program);
+            String code = ""
+                + "[=====]\n"
+                + "[0-©-0]\n"
+                + "[=====]\n"
+                + "((©=N 1 +))\n"
+                ;
+            Program program = compiler.compile("test.synthetic.N", code, "");
+            NopStation nop1 = (NopStation) get(1, 1, program);
+            SyntheticStation syn1 = (SyntheticStation) get(3, 1, program);
+            NopStation nop2 = (NopStation) get(5, 1, program);
             
             program.reset();
             assertEquals(0, syn1.drones(), program.name() + ": syn1 - after reset");
@@ -1330,19 +1330,19 @@ public class StationTest {
             ex.printStackTrace();
         }
         try {
-            var code = """
-                [=====]
-                [0-©-0]
-                [  |  ]
-                [  0  ]
-                [=====]
-                ((©=K 2 +))
-                """;
-            var program = compiler.compile("test.synthetic.K", code, "");
-            var nop1 = (NopStation) get(1, 1, program);
-            var syn1 = (SyntheticStation) get(3, 1, program);
-            var nop2 = (NopStation) get(5, 1, program);
-            var nop3 = (NopStation) get(3, 3, program);
+            String code = ""
+                + "[=====]\n"
+                + "[0-©-0]\n"
+                + "[  |  ]\n"
+                + "[  0  ]\n"
+                + "[=====]\n"
+                + "((©=K 2 +))\n"
+                ;
+            Program program = compiler.compile("test.synthetic.K", code, "");
+            NopStation nop1 = (NopStation) get(1, 1, program);
+            SyntheticStation syn1 = (SyntheticStation) get(3, 1, program);
+            NopStation nop2 = (NopStation) get(5, 1, program);
+            NopStation nop3 = (NopStation) get(3, 3, program);
             
             program.reset();
             assertEquals(0, syn1.drones(), program.name() + ": syn1 - after reset");
@@ -1367,16 +1367,16 @@ public class StationTest {
         }
         // Symbols may be any non-whitespace character, except for symbols already defined in the Zirconium grammar
         // The only exception to this rule are station symbols. ...
-        var template = """
-            [===]
-            [ © ]
-            [===]
-            ((©=1))
-            """;
-        for (var ch : "-|/\\+X*>^<v#(){~}[=]".toCharArray()) {
-            var code = template.replace('©', ch);
+        String template = ""
+            + "[===]\n"
+            + "[ © ]\n"
+            + "[===]\n"
+            + "((©=1))\n"
+            ;
+        for (char ch : "-|/\\+X*>^<v#(){~}[=]".toCharArray()) {
+            String code = template.replace('©', ch);
             try {
-                var program = compiler.compile("test.synthetic." + ch, code, "");
+                Program program = compiler.compile("test.synthetic." + ch, code, "");
                 get(SyntheticStation.class, 2, 1, program);
 
                 errors += 1;
@@ -1391,15 +1391,15 @@ public class StationTest {
         }
         // ... These may be overridden, but the new definition will only apply to synthetic stations inside metropoleis.
         try {
-            var code = """
-                [===] @
-                [@-0] |
-                [===] 0
-                ((@=3))
-                """;
-            var program = compiler.compile("test.synthetic.override", code, "");
-            var nop1 = (NopStation) get(3, 1, program);
-            var nop2 = (NopStation) get(6, 2, program);
+            String code = ""
+                + "[===] @\n"
+                + "[@-0] |\n"
+                + "[===] 0\n"
+                + "((@=3))\n"
+                ;
+            Program program = compiler.compile("test.synthetic.override", code, "");
+            NopStation nop1 = (NopStation) get(3, 1, program);
+            NopStation nop2 = (NopStation) get(6, 2, program);
             
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
@@ -1417,15 +1417,15 @@ public class StationTest {
         // Implementations are encouraged to support unicode codepoints
         // A synthetic station may be defined inside a lens. 
         try {
-            var code = """
-                [=====]
-                [ ✈-0 ]
-                [=====]
-                ((✈=8))
-                """;
-            var program = compiler.compile("test.synthetic.utf", code, "");
-            var syn1 = (SyntheticStation) get(2, 1, program);
-            var nop1 = (NopStation) get(4, 1, program);
+            String code = ""
+                + "[=====]\n"
+                + "[ ✈-0 ]\n"
+                + "[=====]\n"
+                + "((✈=8))\n"
+                ;
+            Program program = compiler.compile("test.synthetic.utf", code, "");
+            SyntheticStation syn1 = (SyntheticStation) get(2, 1, program);
+            NopStation nop1 = (NopStation) get(4, 1, program);
             
             program.reset();
             assertEquals(0, syn1.drones(), program.name() + ": syn1 - after reset");
@@ -1442,14 +1442,14 @@ public class StationTest {
         }
         // A synthetic station may also be defined in a special header file
         try {
-            var code = """
-                [=====]
-                [ ©-0 ]
-                [=====]
-                """;
-            var program = compiler.compile("test.synthetic.header", code, "© = 9");
-            var syn1 = (SyntheticStation) get(2, 1, program);
-            var nop1 = (NopStation) get(4, 1, program);
+            String code = ""
+                + "[=====]\n"
+                + "[ ©-0 ]\n"
+                + "[=====]\n"
+                ;
+            Program program = compiler.compile("test.synthetic.header", code, "© = 9");
+            SyntheticStation syn1 = (SyntheticStation) get(2, 1, program);
+            NopStation nop1 = (NopStation) get(4, 1, program);
             
             program.reset();
             assertEquals(0, syn1.drones(), program.name() + ": syn1 - after reset");
@@ -1469,50 +1469,50 @@ public class StationTest {
     private void zoneInference() {
         // Fences or forts may be omitted in some situations. Specifically, whenever a fence or a fort stops at one of the borders of the program
         try {
-            var code = " {%";
-            var program = compiler.compile("test.inference.right", code, "");
+            String code = " {%";
+            Program program = compiler.compile("test.inference.right", code, "");
             get(ByteOutStation.class, 2, 0, program);
         } catch (Exception ex) {
             errors += 1;
             ex.printStackTrace();
         }
         try {
-            var code = "? } ";
-            var program = compiler.compile("test.inference.left", code, "");
+            String code = "? } ";
+            Program program = compiler.compile("test.inference.left", code, "");
             get(ByteInStation.class, 0, 0, program);
         } catch (Exception ex) {
             errors += 1;
             ex.printStackTrace();
         }
         try {
-            var code = """
-                © ] 
-                ==] 
-                ((©=1))
-                """;
-            var program = compiler.compile("test.inference.left-top", code, "");
+            String code = ""
+                + "© ] \n"
+                + "==] \n"
+                + "((©=1))\n"
+                ;
+            Program program = compiler.compile("test.inference.left-top", code, "");
             get(SyntheticStation.class, 0, 0, program);
         } catch (Exception ex) {
             errors += 1;
             ex.printStackTrace();
         }
         try {
-            var code = """
-                 ~~~
-                { `
-                """;
-            var program = compiler.compile("test.inference.right-bottom", code, "");
+            String code = ""
+                + " ~~~\n"
+                + "{ `\n"
+                ;
+            Program program = compiler.compile("test.inference.right-bottom", code, "");
             get(NumOutStation.class, 2, 1, program);
         } catch (Exception ex) {
             errors += 1;
             ex.printStackTrace();
         }
         try {
-            var code = """
-                {&}
-                 ~
-                """;
-            var program = compiler.compile("test.inference.top", code, "");
+            String code = ""
+                + "{&}\n"
+                + " ~\n"
+                ;
+            Program program = compiler.compile("test.inference.top", code, "");
             get(ByteErrStation.class, 1, 0, program);
         } catch (Exception ex) {
             errors += 1;

@@ -20,10 +20,10 @@ public final class SplitStation extends Single {
 
     @Override
     protected void tick0() {
-        var k = countLinked();
+        int k = countLinked();
         if (k > 0) {
-            var n = total();
-            var drones = n / k;
+            int n = total();
+            int drones = n / k;
             if (drones > 0) {
                 send(drones);
             }

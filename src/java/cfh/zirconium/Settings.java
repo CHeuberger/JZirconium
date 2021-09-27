@@ -11,7 +11,7 @@ public class Settings {
     private static final int FONT_SIZE = 12;
     private static final Font FONT;
     static {
-        var font = new Font(FONT_NAME, Font.PLAIN, FONT_SIZE);
+        Font font = new Font(FONT_NAME, Font.PLAIN, FONT_SIZE);
         if (font.getFamily().equals(FONT_NAME)) {
             FONT = font;
         } else {

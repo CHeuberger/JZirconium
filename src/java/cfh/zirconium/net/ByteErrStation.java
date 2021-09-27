@@ -20,7 +20,7 @@ public final class ByteErrStation extends Single {
 
     @Override
     protected void tick0() {
-        var drones = total();
+        int drones = total();
         if (drones > 0) {
             int value = drones % 256;
             env.error().write(value);

@@ -6,6 +6,7 @@ import static javax.swing.JOptionPane.*;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Image;
 import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -14,7 +15,12 @@ import java.awt.event.WindowEvent;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
@@ -29,9 +35,11 @@ import java.util.stream.Collectors;
 import javax.imageio.ImageIO;
 import javax.swing.AbstractAction;
 import javax.swing.Action;
+import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.ImageIcon;
+import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
@@ -66,6 +74,7 @@ import cfh.zirconium.Environment;
 import cfh.zirconium.Environment.*;
 import cfh.zirconium.Settings;
 import cfh.zirconium.net.Pos;
+import cfh.zirconium.net.Single;
 
 /** Main for GUI. */
 public class IDE {
@@ -129,12 +138,12 @@ public class IDE {
     
     /** Builds and shows GUI. */
     private IDE() {
-        var open = newAction("Open", this::doOpen, "Open a new file");
-        var save = newAction("Save", this::doSave, "Save code to file");
-        var clearLog = newAction("Clear Log", this::doClearLog, "Clear log");
-        var quit =newAction("Quit", this::doQuit, "Quits the program");
+        Action open = newAction("Open", this::doOpen, "Open a new file");
+        Action save = newAction("Save", this::doSave, "Save code to file");
+        Action clearLog = newAction("Clear Log", this::doClearLog, "Clear log");
+        Action quit =newAction("Quit", this::doQuit, "Quits the program");
         
-        var fileMenu = new JMenu("File");
+        JMenu fileMenu = new JMenu("File");
         fileMenu.add(newMenuItem(open));
         fileMenu.add(newMenuItem(save));
         fileMenu.addSeparator();
@@ -142,29 +151,29 @@ public class IDE {
         fileMenu.addSeparator();
         fileMenu.add(newMenuItem(quit));
         
-        var reset = newAction("Reset", this::doReset, "Resets program");
+        Action reset = newAction("Reset", this::doReset, "Resets program");
         runAction = newAction("Run", this::doRun, "Run the program; CTRL to not stop in case of no changes");
         stepAction = newAction("Step", this::doStep, "Execute one step is program already started; otherwise it is started but stopped at first tick");
         compileAction = newAction("Compile", this::doCompile, "Compile current code");
         
-        var runMenu = new JMenu("Run");
+        JMenu runMenu = new JMenu("Run");
         runMenu.add(newMenuItem(reset));
         runMenu.add(newMenuItem(runAction));
         runMenu.add(newMenuItem(stepAction));
         runMenu.addSeparator();
         runMenu.add(newMenuItem(compileAction));
         
-        var help = newAction("Help", this::doHelp, "Show help");
+        Action help = newAction("Help", this::doHelp, "Show help");
         graphAction = newAction("Graph", this::doGraph, "Show a DOT graph of compiled program");
         
-        var helpMenu = new JMenu("Help");
+        JMenu helpMenu = new JMenu("Help");
         helpMenu.add(newMenuItem(help));
         helpMenu.addSeparator();
         helpMenu.add(newMenuItem(graphAction));
         
         stepButton = newMenuBarButton(stepAction);
         
-        var menubar = new JMenuBar();
+        JMenuBar menubar = new JMenuBar();
         menubar.add(fileMenu);
         menubar.add(runMenu);
         menubar.add(helpMenu);
@@ -200,9 +209,9 @@ public class IDE {
             @Override
             public void caretUpdate(CaretEvent e) {
                 try {
-                    var dot = e.getDot();
-                    var line = codePane.getLineOfOffset(dot);
-                    var col = dot - codePane.getLineStartOffset(line);
+                    int dot = e.getDot();
+                    int line = codePane.getLineOfOffset(dot);
+                    int col = dot - codePane.getLineStartOffset(line);
                     statusCol.setText(Integer.toString(col+1));
                     statusRow.setText(Integer.toString(line+1));
                 } catch (BadLocationException ex) {
@@ -224,7 +233,7 @@ public class IDE {
         sourcePane.addTab("header", headerPane);
 
         singleTableModel = new SingleModel();
-        var singleStationTable = new JTable(singleTableModel);
+        JTable singleStationTable = new JTable(singleTableModel);
         singleStationTable.setAutoResizeMode(singleStationTable.AUTO_RESIZE_OFF);
         singleStationTable.setFont(settings.mainFont());
         singleStationTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -232,22 +241,22 @@ public class IDE {
             @Override
             public void valueChanged(ListSelectionEvent e) {
                 if (!e.getValueIsAdjusting()) {
-                    var row = singleStationTable.getSelectedRow();
+                    int row = singleStationTable.getSelectedRow();
                     if (row != -1) {
-                        var station = singleTableModel.station(row);
+                        Single station = singleTableModel.station(row);
                         mark(false, station.pos());
                     }
                 }
             }
         });
-        for (var i = 0; i < singleStationTable.getColumnCount(); i++) {
+        for (int i = 0; i < singleStationTable.getColumnCount(); i++) {
             singleStationTable.getColumnModel().getColumn(i).setPreferredWidth(singleTableModel.size(i));
         }
 
-        var detailPane = new JTabbedPane();
+        JTabbedPane detailPane = new JTabbedPane();
         detailPane.addTab("Stations", newScrollPane(singleStationTable));
         
-        var centerSplit = newSplitPane(false);
+        JSplitPane centerSplit = newSplitPane(false);
         centerSplit.setLeftComponent(sourcePane);
         centerSplit.setRightComponent(detailPane);
         centerSplit.setDividerLocation(850);
@@ -268,22 +277,22 @@ public class IDE {
         errorPane.setWrapStyleWord(true);
         errorPane.setForeground(Color.RED);
         
-        var out = newSplitPane(false);
+        JSplitPane out = newSplitPane(false);
         out.setLeftComponent(newScrollPane(outputPane));
         out.setRightComponent(newScrollPane(errorPane));
         
-        var io = newSplitPane(true);
+        JSplitPane io = newSplitPane(true);
         io.setTopComponent(newScrollPane(inputPane));
         io.setBottomComponent(out);
         
         logPane = newTextArea(false);
         logPane.setEditable(false);
         
-        var bottom = new JTabbedPane();
+        JTabbedPane bottom = new JTabbedPane();
         bottom.addTab("I O", io);
         bottom.addTab("LOG", newScrollPane(logPane));
         
-        var mainSplit = newSplitPane(true);
+        JSplitPane mainSplit = newSplitPane(true);
         mainSplit.setTopComponent(centerSplit);
         mainSplit.setBottomComponent(bottom);
         mainSplit.setDividerLocation(550);
@@ -293,7 +302,7 @@ public class IDE {
         statusRow = newTextField(5, "Row");
         statusCol = newTextField(5, "Column");
         
-        var statusLine = Box.createHorizontalBox();
+        Box statusLine = Box.createHorizontalBox();
         statusLine.setBorder(BorderFactory.createEmptyBorder(2, 4, 4, 4));
         statusLine.add(statusName);
         statusLine.add(Box.createHorizontalGlue());
@@ -302,7 +311,7 @@ public class IDE {
         statusLine.add(statusRow);
         statusLine.add(statusCol);
         
-        var input = new Input() {
+        Input input = new Input() {
             @Override
             public void reset() {
                 inputDocument.reset();
@@ -333,7 +342,7 @@ public class IDE {
             }
             @Override
             public void write(int b) {
-                outputPane.append(Character.toString(b & 0xFF));
+                outputPane.append(Character.toString((char) (b & 0xFF)));
             }
             @Override
             public void write(String str) {
@@ -347,7 +356,7 @@ public class IDE {
             }
             @Override
             public void write(int b) {
-                errorPane.append(Character.toString(b & 0xFF));
+                errorPane.append(Character.toString((char) (b & 0xFF)));
             }
             @Override
             public void write(String str) {
@@ -380,20 +389,20 @@ public class IDE {
         frame.validate();
         frame.setLocationRelativeTo(null);
         
-        var actions = frame.getRootPane().getActionMap();
+        ActionMap actions = frame.getRootPane().getActionMap();
         actions.put(compileAction, compileAction);
         actions.put(runAction, runAction);
         actions.put(stepAction, stepAction);
         
-        var inputs = frame.getRootPane().getInputMap(WHEN_IN_FOCUSED_WINDOW);
+        InputMap inputs = frame.getRootPane().getInputMap(WHEN_IN_FOCUSED_WINDOW);
         inputs.put(KeyStroke.getKeyStroke("pressed F9"), compileAction);
         inputs.put(KeyStroke.getKeyStroke("pressed F11"), runAction);
         inputs.put(KeyStroke.getKeyStroke("pressed F5"), stepAction);
         
         try {
-            var url = getClass().getResource(ICON);
+            URL url = getClass().getResource(ICON);
             if (url != null) {
-                var img = ImageIO.read(url);
+                Image img = ImageIO.read(url);
                 frame.setIconImage(img);
             }
         } catch (IOException ex) {
@@ -418,8 +427,8 @@ public class IDE {
         if (changed && showConfirmDialog(frame, "Code changed, overwrite?", "Confirm Open", OK_CANCEL_OPTION) != OK_OPTION) {
             return;
         }
-        var file = new File(PREFS.get(PREF_FILE, "."));
-        var chooser = new JFileChooser();
+        File file = new File(PREFS.get(PREF_FILE, "."));
+        JFileChooser chooser = new JFileChooser();
         chooser.setAcceptAllFileFilterUsed(true);
         chooser.setFileFilter(new FileNameExtensionFilter("Zirconium Source", "zc", "zch"));
         chooser.setFileSelectionMode(chooser.FILES_ONLY);
@@ -430,13 +439,13 @@ public class IDE {
         }
         file = chooser.getSelectedFile();
         PREFS.put(PREF_FILE, file.getAbsolutePath());
-        var filename = file.getName().replaceFirst("\\.[^./]*$", "");
-        var headerFile = new File(file.getParent(), filename + ".zch");
+        String filename = file.getName().replaceFirst("\\.[^./]*$", "");
+        File headerFile = new File(file.getParent(), filename + ".zch");
         try {
-            var code = Files.lines(file.toPath()).collect(Collectors.joining("\n"));
+            String code = Files.lines(file.toPath()).collect(Collectors.joining("\n"));
             codePane.setText(code);
             if (headerFile.exists()) {
-                var header = Files.lines(headerFile.toPath()).collect(Collectors.joining("\n"));
+                String header = Files.lines(headerFile.toPath()).collect(Collectors.joining("\n"));
                 headerPane.setText(header);
             } else {
                 headerPane.setText(null);
@@ -455,8 +464,8 @@ public class IDE {
     
     /** Save program to file. */
     private void doSave(ActionEvent ev) {
-        var file = new File(PREFS.get(PREF_FILE, "."));
-        var chooser = new JFileChooser();
+        File file = new File(PREFS.get(PREF_FILE, "."));
+        JFileChooser chooser = new JFileChooser();
         chooser.setAcceptAllFileFilterUsed(true);
         chooser.setFileFilter(new FileNameExtensionFilter("Zirconium Source", "zc", "zch"));
         chooser.setFileSelectionMode(chooser.FILES_ONLY);
@@ -466,21 +475,20 @@ public class IDE {
             return;
         }
         file = chooser.getSelectedFile();
-        var filename = file.getName();
+        String filename = file.getName();
         if (filename.indexOf('.') == -1) {
             file = new File(file.getParentFile(), filename + ".zc");
             filename = file.getName();
         }
         filename = filename.replaceFirst("\\.[^./]*$", "");
-        var headerFile = new File(file.getParentFile(), filename + ".zch");
+        File headerFile = new File(file.getParentFile(), filename + ".zch");
         
         PREFS.put(PREF_FILE, file.getAbsolutePath());
         if (file.exists()) {
             if (showConfirmDialog(frame, "File already exists, overwrite?", "Confirm Save", OK_CANCEL_OPTION) != OK_OPTION) {
                 return;
             }
-            
-            var bak = new File(file.getParentFile(), filename + ".bak");
+            File bak = new File(file.getParentFile(), filename + ".bak");
             if (bak.exists()) {
                 bak.delete();
             }
@@ -489,7 +497,7 @@ public class IDE {
         
         boolean headerExists;
         if (headerFile.exists()) {
-            var bak = new File(headerFile.getParentFile(), filename + ".zch.bak");
+            File bak = new File(headerFile.getParentFile(), filename + ".zch.bak");
             if (bak.exists()) {
                 bak.delete();
             }
@@ -500,9 +508,9 @@ public class IDE {
         }
         
         try {
-            Files.writeString(file.toPath(), codePane.getText(), StandardOpenOption.CREATE_NEW);
-            if (headerExists || !headerPane.getText().isBlank()) {
-                Files.writeString(headerFile.toPath(), headerPane.getText(), StandardOpenOption.CREATE_NEW);
+            Files.write(file.toPath(), codePane.getText().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE_NEW);
+            if (headerExists || !headerPane.getText().trim().isEmpty()) {
+                Files.write(headerFile.toPath(), headerPane.getText().getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE_NEW);
             }
         } catch (IOException ex) {
             error(ex, "saving \"%s\"", file);
@@ -548,14 +556,14 @@ public class IDE {
             Toolkit.getDefaultToolkit().beep();
             return;
         }
-        var dir = Paths.get(".graph");
-        var filename = name.replaceFirst("\\.[^./]*$", "");
-        if (filename.isBlank()) {
+        Path dir = Paths.get(".graph");
+        String filename = name.replaceFirst("\\.[^./]*$", "");
+        if (filename.trim().isEmpty()) {
             filename = "unnamed";
         }
-        var dotPath = dir.resolve(filename + ".dot");
-        var bakPath = dir.resolve(filename + ".bak");
-        var pngPath = dir.resolve(filename + ".png");
+        Path dotPath = dir.resolve(filename + ".dot");
+        Path bakPath = dir.resolve(filename + ".bak");
+        Path pngPath = dir.resolve(filename + ".png");
         
         try {
             Files.createDirectories(dir);
@@ -566,8 +574,8 @@ public class IDE {
             if (Files.exists(pngPath)) {
                 Files.move(pngPath, bakPath, REPLACE_EXISTING);
             }
-            try (var inp = Files.newInputStream(dotPath, READ);
-                 var out = Files.newOutputStream(pngPath);) {
+            try (InputStream inp = Files.newInputStream(dotPath, READ);
+                 OutputStream out = Files.newOutputStream(pngPath);) {
                 Dot.dot("png", inp, out);
             }
         } catch (IOException | InterruptedException ex) {
@@ -575,9 +583,9 @@ public class IDE {
             return;
         }
         
-        try (var inp = Files.newInputStream(pngPath, READ)) {
-            var img = new ImageIcon(ImageIO.read(inp));
-            var msg = newScrollPane(new JLabel(img));
+        try (InputStream inp = Files.newInputStream(pngPath, READ)) {
+            ImageIcon img = new ImageIcon(ImageIO.read(inp));
+            JScrollPane msg = newScrollPane(new JLabel(img));
             showMessageDialog(frame, msg, filename, PLAIN_MESSAGE);
         } catch (IOException ex) {
             error(ex, "reading image \"%s\"", pngPath);
@@ -598,7 +606,7 @@ public class IDE {
     
     /** Executes the program. */
     private void doRun(ActionEvent ev) {
-        var stopNoChange = (ev.getModifiers() & ev.CTRL_MASK) == 0;
+        boolean stopNoChange = (ev.getModifiers() & ev.CTRL_MASK) == 0;
         if (program == null) {
             return;
         }
@@ -691,12 +699,12 @@ public class IDE {
     /** Mark given pos (select it). 
      * @param header TODO*/
     private void mark(boolean header, Pos pos) {
-        var pane = header ? headerPane : codePane;
+        JTextArea pane = header ? headerPane : codePane;
         sourcePane.setSelectedComponent(pane);
         try {
-            var ls = pane.getLineStartOffset(pos.y());
-            var le = pane.getLineEndOffset(pos.y());
-            var index = ls + pos.x();
+            int ls = pane.getLineStartOffset(pos.y());
+            int le = pane.getLineEndOffset(pos.y());
+            int index = ls + pos.x();
             if (index >= le) {
                 index = le - 1;
             }
@@ -712,7 +720,7 @@ public class IDE {
 
     /** Creates new Action. */
     private Action newAction(String title, Consumer<ActionEvent> runable, String tooltip) {
-        var action = new AbstractAction(title) {
+        Action action = new AbstractAction(title) {
             {
                 putValue(SHORT_DESCRIPTION, tooltip);
             }
@@ -731,7 +739,7 @@ public class IDE {
     
     /** Creates a JTextArea. */
     private JTextArea newTextArea(boolean jumpEnd) {
-        var pane = new JTextArea();
+        JTextArea pane = new JTextArea();
         pane.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         pane.setFont(settings.mainFont());
         if (jumpEnd) {
@@ -756,7 +764,7 @@ public class IDE {
     
     /** Creates a JTextField */
     private JTextField newTextField(int columns, String tooltip) {
-        var field = new JTextField(columns);
+        JTextField field = new JTextField(columns);
         field.setEditable(false);
         field.setFont(settings.mainFont());
         field.setMaximumSize(field.getPreferredSize());
@@ -772,7 +780,7 @@ public class IDE {
     
     /** Creates a JSplitPane. */
     private JSplitPane newSplitPane(boolean vertical) {
-        var split = new JSplitPane();
+        JSplitPane split = new JSplitPane();
         split.setOrientation(vertical ? split.VERTICAL_SPLIT : split.HORIZONTAL_SPLIT);
         split.setOneTouchExpandable(true);
         split.setResizeWeight(1);
@@ -781,7 +789,7 @@ public class IDE {
     
     /** Creates a JButton for menu bar. */
     private JButton newMenuBarButton(Action action) {
-        var button = new JButton(action);
+        JButton button = new JButton(action);
 //        button.setBorderPainted(false);
         button.setMargin(new Insets(2, 4, 2, 4));
         return button;
@@ -789,7 +797,7 @@ public class IDE {
     
     /** Shows and prints error message, including stack trace. */
     private void error(Throwable ex, String format, Object... args) {
-        var msg = String.format(format, args);
+        String msg = String.format(format, args);
         System.err.println(msg);
         ex.printStackTrace();
         print("%n%s %s", ex.getClass().getSimpleName(), msg);
@@ -798,7 +806,7 @@ public class IDE {
     
     /** prints message to log pane. */
     private void print(String format, Object... args) {
-        var atEnd = logPane.getCaretPosition() == logPane.getText().length();
+        boolean atEnd = logPane.getCaretPosition() == logPane.getText().length();
         logPane.append(String.format(format, args));
         if (atEnd) {
             logPane.setCaretPosition(logPane.getText().length());

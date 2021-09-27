@@ -25,7 +25,7 @@ public final class PauseStation extends Single {
     
     @Override
     protected void posTick0() {
-        var total = total();
+        int total = total();
         if (total > 0) {
             try {
                 Thread.sleep(total);

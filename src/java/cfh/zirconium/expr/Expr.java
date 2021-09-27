@@ -3,7 +3,7 @@ package cfh.zirconium.expr;
 import static java.util.Objects.*;
 
 /** {@code expr := value | expr sp* expr sp* operator} */
-sealed abstract class Expr {
+abstract class Expr {
 
     /** Executes this expression using given values for N and K. */
     abstract int calculate(int n, int k);
@@ -11,7 +11,7 @@ sealed abstract class Expr {
     //==============================================================================================
     
     /** {@code value := "N" | "K" | integer} */
-    static sealed abstract class Value extends Expr {
+    static abstract class Value extends Expr {
         //
     }
 
@@ -75,16 +75,16 @@ sealed abstract class Expr {
         }
         @Override
         int calculate(int n, int k) {
-            var val1 = arg1.calculate(n, k);
-            var val2 = arg2.calculate(n, k);
-            return switch (op) {
-                case '+' -> val1 + val2;
-                case '-' -> val1 - val2;
-                case '*' -> val1 * val2;
-                case '/' -> val2==0 ? 0 : val1 / val2;
-                case '=' -> val1==val2 ? 1 : 0;
-                default -> throw new IllegalArgumentException("invalid operation '" + op + "'");
-            };
+            int val1 = arg1.calculate(n, k);
+            int val2 = arg2.calculate(n, k);
+            switch (op) {
+                case '+': return val1 + val2;
+                case '-': return val1 - val2;
+                case '*': return val1 * val2;
+                case '/': return val2==0 ? 0 : val1 / val2;
+                case '=': return val1==val2 ? 1 : 0;
+                default: throw new IllegalArgumentException("invalid operation '" + op + "'");
+            }
         }
         @Override
         public String toString() {

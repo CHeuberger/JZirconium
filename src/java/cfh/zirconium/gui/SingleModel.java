@@ -67,7 +67,7 @@ public class SingleModel extends AbstractTableModel {
 
     @Override
     public Object getValueAt(int row, int col) {
-        var single = stations.get(row);
+        Single single = stations.get(row);
         return COLUMNS[col].getter.apply(single);
     }
 

@@ -20,7 +20,7 @@ public final class NumOutStation extends Single {
 
     @Override
     protected void tick0() {
-        var total = total();
+        int total = total();
         if (total > 0) {
             env.output(Integer.toString(total) + settings.numberSeparator());
             env.print("%d", total);

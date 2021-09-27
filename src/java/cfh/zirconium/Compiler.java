@@ -152,19 +152,19 @@ public class Compiler {
      * One extra empty row/column is added to each side of boundary.
      */
     private char[][] parse(String code) {
-        var lines = code.split("\n", -1);
-        var rows = lines.length;
+        String[] lines = code.split("\n", -1);
+        int rows = lines.length;
         environment.print("%d rows%n", rows);
         
-        var cols = Arrays.stream(lines).mapToInt(String::length).max().orElse(0);
+        int cols = Arrays.stream(lines).mapToInt(String::length).max().orElse(0);
         environment.print("%d columns%n", cols);
         
-        var chars = new char[rows][cols];
-        for (var y = 0; y < rows; y++) {
-            var line = lines[y];
-            var row = chars[y];
+        char[][] chars = new char[rows][cols];
+        for (int y = 0; y < rows; y++) {
+            String line = lines[y];
+            char[] row = chars[y];
             Arrays.fill(row, EMPTY);
-            for (var x = 0; x < line.length(); x++) {
+            for (int x = 0; x < line.length(); x++) {
                 row[x] = line.charAt(x);
             }
         }
@@ -173,17 +173,17 @@ public class Compiler {
     
     /** Extract definitions from header file. */
     private Map<Character, Definition> parseHeaderFile(String header) throws CompileException {
-        var definitions = new HashMap<Character, Definition>();
-        var count = 0;
-        for (var line : header.split("\n")) {
-            if (!line.isBlank()) {
-                var pos = new Pos(0, count);
+        Map<Character, Definition> definitions = new HashMap<>();
+        int count = 0;
+        for (String line : header.split("\n")) {
+            if (!line.trim().isEmpty()) {
+                Pos pos = new Pos(0, count);
                 Definition def;
                 try {
-                    def = Definition.parse(pos, line);
+                    def = Definition.parse(pos, header);
                 } catch (CompileException ex) {
                     throw (CompileException) new CompileException(ex.pos, true, ex.getMessage()).initCause(ex);
-                }
+                } 
                 if (definitions.containsKey(def.symbol)) {
                     throw new CompileException(pos, true, "duplicated definition");
                 }
@@ -196,10 +196,10 @@ public class Compiler {
     
     /** Removes bubles {@code (...)} and extract definitions from lenses {@code ((...))}. */
     private Map<Character, Definition> bubblesLenses(char[][] chars) throws CompileException {
-        var definitions = new HashMap<Character, Definition>();
-        for (var y = 0; y < chars.length; y++) {
-            var row = chars[y];
-            for (var x = 0; x < row.length; x++) {
+        Map<Character, Definition> definitions = new HashMap<>();
+        for (int y = 0; y < chars.length; y++) {
+            char[] row = chars[y];
+            for (int x = 0; x < row.length; x++) {
                 if (row[x] == '(') {
                     row[x] = ' ';
                     x += 1;
@@ -207,8 +207,8 @@ public class Compiler {
                     if (x < row.length && row[x] == '(') {
                         row[x] = ' ';
                         x += 1;
-                        var  start = x;
-                        var expr = "";
+                        int  start = x;
+                        String expr = "";
                         while (x < row.length) {
                             if (row[x] == ')') {
                                 row[x] = ' ';
@@ -223,9 +223,9 @@ public class Compiler {
                             throw new CompileException(new Pos(x-1, y), "lens not correctly terminated");
                         }
                         row[x] = ' ';
-                        var pos = new Pos(start, y);
-                        if (!expr.isBlank()) {
-                            var def = Definition.parse(pos, expr);
+                        Pos pos = new Pos(start, y);
+                        if (!expr.trim().isEmpty()) {
+                            Definition def = Definition.parse(pos, expr);
                             if (definitions.containsKey(def.symbol)) {
                                 throw new CompileException(pos, "duplicated definition");
                             }
@@ -252,11 +252,11 @@ public class Compiler {
     
     /** Scans the character matrix for stations. */
     private Map<Pos, Single> scanStations(char[][] chars, Zone[][] zones, Map<Character, Definition> definitions) throws CompileException {
-        var map = new HashMap<Pos, Single>();
-        for (var y = 0; y < chars.length; y++) {
-            var row = chars[y];
-            for (var x = 0; x < row.length; x++) {
-                var ch = row[x];
+        Map<Pos, Single> map = new HashMap<>();
+        for (int y = 0; y < chars.length; y++) {
+            char[] row = chars[y];
+            for (int x = 0; x < row.length; x++) {
+                char ch = row[x];
                 if (NOT_STATION.indexOf(ch) == -1) {
                     Single station;
                     switch (zones[y][x]) {
@@ -272,22 +272,29 @@ public class Compiler {
                             break;
                         }
                         case EXCLUSION: {
-                            station = switch (ch) {
-                                case BYTE_IN -> new ByteInStation(x, y, environment);
-                                case BYTE_OUT -> new ByteOutStation(x, y, environment);
-                                case BYTE_ERR -> new ByteErrStation(x, y, environment);
-                                case NUM_IN -> new NumInStation(x, y, environment);
-                                case NUM_OUT -> new NumOutStation(x, y, environment);
-                                case PAUSE -> new PauseStation(x, y, environment);
-                                case HALT -> new HaltStation(x, y, environment);
-                                case NOP, CREATE, DOT, DUP, DEC, SPLIT
-                                -> pureStation(ch, x, y);
-                                default -> throw new CompileException(new Pos(x, y), "unrecognized station  '" + ch + "'");
-                            };
+                            switch (ch) {
+                                case BYTE_IN: station = new ByteInStation(x, y, environment); break;
+                                case BYTE_OUT: station = new ByteOutStation(x, y, environment); break;
+                                case BYTE_ERR: station = new ByteErrStation(x, y, environment); break;
+                                case NUM_IN: station = new NumInStation(x, y, environment); break;
+                                case NUM_OUT: station = new NumOutStation(x, y, environment); break;
+                                case PAUSE: station = new PauseStation(x, y, environment); break;
+                                case HALT: station = new HaltStation(x, y, environment); break;
+                                case NOP:
+                                case CREATE:
+                                case DOT:
+                                case DUP:
+                                case DEC:
+                                case SPLIT: 
+                                    station = pureStation(ch, x, y);
+                                    break;
+                                default:
+                                    throw new CompileException(new Pos(x, y), "unrecognized station  '" + ch + "'");
+                            }
                             break;
                         }
                         case METROPOLIS: {
-                            var def = definitions.get(ch);
+                            Definition def = definitions.get(ch);
                             if (def != null) {
                                 station =  new SyntheticStation(x, y, environment, def);
                             } else {
@@ -311,15 +318,15 @@ public class Compiler {
     
     /** Create pure station for given char. */
     private Single pureStation(char ch, int x, int y) {
-        return switch (ch) {
-            case NOP -> new NopStation(x, y, environment);
-            case CREATE -> new CreateStation(x, y, environment);
-            case DOT -> new DotStation(x, y, environment);
-            case DUP -> new DupStation(x, y, environment);
-            case DEC -> new DecStation(x, y, environment);
-            case SPLIT -> new SplitStation(x, y, environment);
-            default -> null;
-        };
+        switch (ch) {
+            case NOP: return new NopStation(x, y, environment);
+            case CREATE: return new CreateStation(x, y, environment);
+            case DOT: return new DotStation(x, y, environment);
+            case DUP: return new DupStation(x, y, environment);
+            case DEC: return new DecStation(x, y, environment);
+            case SPLIT: return new SplitStation(x, y, environment);
+            default: return null;
+        }
     }
     
     /**
@@ -327,32 +334,36 @@ public class Compiler {
      * Returns a list including all bound stations and all stations that are not bounded.
      */
     private List<Station> bound(char[][] chars, Map<Pos, Single> singles) throws CompileException {
-        var stations = new ArrayList<Station>();
-        var boundID = 0;
-        var count = 0;
-        for (var station : singles.values()) {
+        List<Station> stations = new ArrayList<>();
+        int boundID = 0;
+        int count = 0;
+        for (Single station : singles.values()) {
             Bound bound = null;
-            for (var n : new ArrayList<>(stations)) {
+            for (Station n : new ArrayList<>(stations)) {
                 if (n.isNeighbour(station)) {
                     if (bound == null) {
-                        if (n instanceof Single s) {
+                        if (n instanceof Single) {
+                            Single s = (Single) n;
                             stations.remove(s);
-                            var id = "" + (char)('A' + boundID / 10) + (boundID % 10);
+                            String id = "" + (char)('A' + boundID / 10) + (boundID % 10);
                             boundID += 1;
                             bound = new Bound(id, environment, s, station);
                             stations.add(bound);
                             count += 1;
-                        } else if (n instanceof Bound b) {
+                        } else if (n instanceof Bound) {
+                            Bound b = (Bound) n;
                             bound = b;
                             bound.addChild(station);
                         } else {
                             throw new CompileException(station.pos(), "unhandled neighbour " + n.getClass().getSimpleName());
                         }
                     } else {
-                        if (n instanceof Single s) {
+                        if (n instanceof Single) {
+                            Single s = (Single) n;
                             stations.remove(s);
                             bound.addChild(s);
-                        } else if (n instanceof Bound b) {
+                        } else if (n instanceof Bound) {
+                            Bound b = (Bound) n;
                             stations.remove(b);
                             b.childs().forEach(bound::addChild);
                             bound = b;
@@ -373,17 +384,14 @@ public class Compiler {
     
     /** Links stations. */
     private void link(char[][] chars, Map<Pos, Single> singles) throws CompileException {
-        var count = 0;
-        for (var station : singles.values()) {
-            for (var dir : Dir.values()) {
-                var x = station.x() + dir.dx;
-                var y = station.y() + dir.dy;
-                if (!valid(x, y, chars)) {
-                    continue;
-                }
-                var ch = chars[y][x];
+        int count = 0;
+        for (Single station : singles.values()) {
+            for (Dir dir : Dir.values()) {
+                int x = station.x() + dir.dx;
+                int y = station.y() + dir.dy;
+                char ch = chars[y][x];
                 if (dir.isTunnel(ch) || dir.isOut(ch) && !dir.isIn(ch)) {
-                    var direct = false;
+                    boolean direct = false;
                     while (dir.isTunnel(ch)) {
                         if (dir.isDirect(ch) ) {
                             direct = true;
@@ -404,8 +412,8 @@ public class Compiler {
                             }
                         }
                     }
-                    var pos = new Pos(x, y);
-                    var dest = valid(x, y, chars) ? singles.get(pos) : null;
+                    Pos pos = new Pos(x, y);
+                    Single dest = valid(x, y, chars) ? singles.get(pos) : null;
                     if (dest != null) {
                         station.linkTo(dest);
                         count += 1;

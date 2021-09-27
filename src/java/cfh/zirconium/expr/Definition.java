@@ -4,6 +4,7 @@ import static cfh.zirconium.Compiler.*;
 
 import java.nio.BufferUnderflowException;
 import java.nio.CharBuffer;
+import java.util.Deque;
 import java.util.LinkedList;
 
 import cfh.zirconium.expr.Expr.*;
@@ -26,11 +27,11 @@ public class Definition {
     
     /** Parse given text for a Definition. */
     public static Definition parse(Pos pos, String text) throws CompileException {
-        assert !text.isBlank() : "empty expression";
-        var buf = CharBuffer.wrap(text).asReadOnlyBuffer();
+        assert !text.trim().isEmpty() : "empty expression";
+        CharBuffer buf = CharBuffer.wrap(text).asReadOnlyBuffer();
         try {
             skipSpaces(buf);
-            var symbol = buf.get();
+            char symbol = buf.get();
             if (Character.isWhitespace(symbol)) {
                 throw new CompileException(new Pos(pos.x()+buf.position()-1, pos.y()), "invalid symbol: whitespace");
             }
@@ -43,13 +44,13 @@ public class Definition {
             }
             skipSpaces(buf);
 
-            var stack = new LinkedList<Expr>();
+            Deque<Expr> stack = new LinkedList<>();
             while (buf.hasRemaining()) {
-                var ch = buf.get();
+                char ch = buf.get();
                 if (ch == 'N') stack.push(new N());
                 else if (ch == 'K') stack.push(new K());
                 else if (Character.isDigit(ch)) {
-                    var str = Character.toString(ch);
+                    String str = Character.toString(ch);
                     while (buf.hasRemaining()) {
                         buf.mark();
                         ch = buf.get();
@@ -65,8 +66,8 @@ public class Definition {
                     if (stack.size() < 2) {
                         throw new CompileException(new Pos(pos.x()+buf.position()-1, pos.y()), "not enough arguments");
                     }
-                    var arg2 = stack.pop();
-                    var arg1 = stack.pop();
+                    Expr arg2 = stack.pop();
+                    Expr arg1 = stack.pop();
                     stack.push(new Operation(arg1, arg2, ch));
                 } else {
                     throw new CompileException(new Pos(pos.x()+buf.position()-1, pos.y()), "unrecognized character: " + ch);
@@ -77,7 +78,7 @@ public class Definition {
             if (stack.isEmpty()) {
                 throw new CompileException(new Pos(pos.x()+buf.position()-1, pos.y()), "no expression");
             }
-            var expr = stack.pop();
+            Expr expr = stack.pop();
             if (!stack.isEmpty()) {
                 throw new CompileException(new Pos(pos.x()+buf.position()-1, pos.y()), "too many arguments/missing operator");
             }
@@ -92,7 +93,7 @@ public class Definition {
     private static void skipSpaces(CharBuffer buf) {
         while (buf.hasRemaining()) {
             buf.mark();
-            var ch = buf.get();
+            char ch = buf.get();
             if (SP.indexOf(ch) == -1) {
                 buf.reset();
                 break;
