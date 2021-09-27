@@ -63,6 +63,7 @@ public class Compiler {
     public static final char MP_R = ']';
     public static final String FORTS = "" + MP_L + MP_H + MP_R;
     
+    // Combinations
     public static final String BOUNDARY = FENCES + FORTS;
     public static final String NOT_STATION = " \t" + TUNNELS + APERTURES + FENCES + FORTS;
 
@@ -115,6 +116,7 @@ public class Compiler {
     
     //----------------------------------------------------------------------------------------------
     
+    /** Running environment, basic standard and error I/O. */
     private final Environment environment;
     
     /** Creates a compiler. */
@@ -148,22 +150,20 @@ public class Compiler {
      * One extra empty row/column is added to each side of boundary.
      */
     private char[][] parse(String code) {
-        var lines = code.split("\n");
+        var lines = code.split("\n", -1);
         var rows = lines.length;
         environment.print("%d rows%n", rows);
         
         var cols = Arrays.stream(lines).mapToInt(String::length).max().orElse(0);
         environment.print("%d columns%n", cols);
         
-        var chars = new char[rows+2][cols+2];
-        Arrays.fill(chars[0], EMPTY);
-        Arrays.fill(chars[rows+1], EMPTY);
+        var chars = new char[rows][cols];
         for (var y = 0; y < rows; y++) {
             var line = lines[y];
-            var row = chars[y+1];
+            var row = chars[y];
             Arrays.fill(row, EMPTY);
             for (var x = 0; x < line.length(); x++) {
-                row[x+1] = line.charAt(x);
+                row[x] = line.charAt(x);
             }
         }
         return chars;
@@ -193,7 +193,7 @@ public class Compiler {
                             row[x] = ' ';
                             x += 1;
                         }
-                        if (x == row.length || row[x+1] != ')') {
+                        if (x+1 >= row.length || row[x+1] != ')') {
                             throw new CompileException(new Pos(x, y), "lens not correctly terminated");
                         }
                         x += 1;
@@ -226,9 +226,9 @@ public class Compiler {
     /** Scans the character matrix for stations. */
     private Map<Pos, Single> scanStations(char[][] chars, Zone[][] zones, Map<Character, Definition> definitions) throws CompileException {
         var map = new HashMap<Pos, Single>();
-        for (var y = 1; y < chars.length; y++) {
+        for (var y = 0; y < chars.length; y++) {
             var row = chars[y];
-            for (var x = 1; x < row.length; x++) {
+            for (var x = 0; x < row.length; x++) {
                 var ch = row[x];
                 if (NOT_STATION.indexOf(ch) == -1) {
                     Single station;
@@ -282,6 +282,7 @@ public class Compiler {
         return map;
     }
     
+    /** Create pure station for given char. */
     private Single pureStation(char ch, int x, int y) {
         return switch (ch) {
             case NOP -> new NopStation(x, y, environment);
@@ -350,6 +351,9 @@ public class Compiler {
             for (var dir : Dir.values()) {
                 var x = station.x() + dir.dx;
                 var y = station.y() + dir.dy;
+                if (!valid(x, y, chars)) {
+                    continue;
+                }
                 var ch = chars[y][x];
                 if (dir.isTunnel(ch) || dir.isOut(ch) && !dir.isIn(ch)) {
                     var direct = false;
@@ -359,31 +363,36 @@ public class Compiler {
                         }
                         x += dir.dx;
                         y += dir.dy;
-                        ch = chars[y][x];
+                        ch = valid(x, y, chars) ? chars[y][x] : EMPTY;
                     }
                     if (dir.isOut(ch)) {
                         direct = true;
                         x += dir.dx;
                         y += dir.dy;
-                        ch = chars[y][x];
+                        ch = valid(x, y, chars) ? chars[y][x] : EMPTY;
                         if ((FENCES+FORTS).indexOf(ch) != -1) {
                             x += dir.dx;
                             y += dir.dy;
                         }
                     }
                     var pos = new Pos(x, y);
-                    var dest = singles.get(pos);
+                    var dest = valid(x, y, chars) ? singles.get(pos) : null;
                     if (dest != null) {
                         station.linkTo(dest);
                         count += 1;
-                    } else if (direct) {
+                    } else if (direct) {    // TODO need direct?
                         throw new CompileException(pos, String.format(
-                            "tunnel not ending at a stationm %s %s", dir, station));
+                            "tunnel not ending at a stationm %s of %s", dir, station));
                     }
                 }
             }
         }
         environment.print("%d links created%n", count);
+    }
+    
+    /** Return if given coordinates are valis. */
+    private boolean valid(int x, int y, char[][] chars) {
+        return 0 <= y && y < chars.length && 0 <= x && x < chars[y].length;
     }
     
     //==============================================================================================

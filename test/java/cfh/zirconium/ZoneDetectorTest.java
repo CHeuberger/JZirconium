@@ -22,6 +22,8 @@ public class ZoneDetectorTest {
     
     private void testW() {
         for (var code : """
+            A]{b
+            =======
               ~
              {a}
               ~

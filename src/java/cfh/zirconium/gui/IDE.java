@@ -69,7 +69,7 @@ import cfh.zirconium.net.Pos;
 /** Main for GUI. */
 public class IDE {
 
-    public static final String VERSION = "0.09";
+    public static final String VERSION = "0.10";
     private static final String TITLE = "JZirconium v" + VERSION;
     private static final String ICON = "icon.png";
     
@@ -498,7 +498,7 @@ public class IDE {
             return;
         }
         var dir = Paths.get(".graph");
-        var filename = name.replaceFirst("\\..*$", "");
+        var filename = name.replaceFirst("\\.[^./]*$", "");
         if (filename.isBlank()) {
             filename = "unnamed";
         }
@@ -637,9 +637,9 @@ public class IDE {
     /** Mark given pos (select it). */
     private void mark(Pos pos) {
         try {
-            var ls = codePane.getLineStartOffset(pos.y()-1);
-            var le = codePane.getLineEndOffset(pos.y()-1);
-            var index = ls + pos.x() - 1;
+            var ls = codePane.getLineStartOffset(pos.y());
+            var le = codePane.getLineEndOffset(pos.y());
+            var index = ls + pos.x();
             if (index >= le) {
                 index = le - 1;
             }
