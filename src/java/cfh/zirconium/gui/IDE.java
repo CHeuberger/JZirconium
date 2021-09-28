@@ -69,7 +69,7 @@ import cfh.zirconium.net.Pos;
 /** Main for GUI. */
 public class IDE {
 
-    public static final String VERSION = "0.10";
+    public static final String VERSION = "0.11";
     private static final String TITLE = "JZirconium v" + VERSION;
     private static final String ICON = "icon.png";
     
@@ -107,10 +107,8 @@ public class IDE {
     
     private final SingleModel singleTableModel;
     
-    // TODO Probes ?
     // TODO add/delete column
     // TODO undo
-    // TODO include files
     // TODO recognize no changes
     
     private final Action runAction;

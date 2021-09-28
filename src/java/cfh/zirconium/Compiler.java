@@ -64,7 +64,7 @@ public class Compiler {
     public static final String FORTS = "" + MP_L + MP_H + MP_R;
     
     // Combinations
-    public static final String BOUNDARY = FENCES + FORTS;
+    public static final String BORDER = FENCES + FORTS;
     public static final String NOT_STATION = " \t" + TUNNELS + APERTURES + FENCES + FORTS;
 
     /** Zone Types. */

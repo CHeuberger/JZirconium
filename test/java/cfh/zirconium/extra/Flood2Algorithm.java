@@ -5,9 +5,11 @@ import java.awt.Graphics2D;
 import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Set;
 
 public class Flood2Algorithm implements Algorithm {
 
@@ -27,6 +29,7 @@ public class Flood2Algorithm implements Algorithm {
     private final Queue<Point> open = new LinkedList<>(); // TODO delete
     private final Deque<Point> stack = new LinkedList<>();
     private final Queue<Point> zone = new LinkedList<>();
+    private final Set<Point> border = new HashSet<>();
     private final List<Point> errors = new ArrayList<>();
     private Type actual = Type.NEW;
 
@@ -61,6 +64,7 @@ public class Flood2Algorithm implements Algorithm {
             point = open.poll();
             if (point == null) {
                 closeZone();
+                checkAllBorder();
                 return false;
             }
         }
@@ -70,39 +74,53 @@ public class Flood2Algorithm implements Algorithm {
         var y = point.y;
 
         if (y > 0) {
-            if (types[y-1][x] == Type.NEW) {
+            var type = types[y-1][x];
+            if (type == Type.NEW) {
                 push(x, y-1);
+            } else if (type == Type.FENCE || type == Type.FORT) {
+                border.add(new Point(x, y-1));
             } else {
-                // TODO
+                // TODO ?
             }
         }
         if (x > 0) {
-            if (types[y][x-1] == Type.NEW) {
+            var type = types[y][x-1];
+            if (type == Type.NEW) {
                 push(x-1, y);
-            } else {
-                if (code[y][x-1] == '[') {
-                    actual(x-1, y, Type.METROPOLIS);
-                } else if (code[y][x-1] == '{') {
-                    actual(x-1, y, Type.EXCLUSION);
+            } else if (type == Type.FENCE || type == Type.FORT) {
+                border.add(new Point(x-1, y));
+                switch (code[y][x-1]) {
+                    case '[': actual(x-1, y, Type.METROPOLIS); break;
+                    case '{': actual(x-1, y, Type.EXCLUSION); break;
+                    default: break;
                 }
+            } else {
+                // TODO ?
             }
         }
         if (y+1 < types[y].length) {
-            if (types[y+1][x] == Type.NEW) {
+            var type = types[y+1][x];
+            if (type == Type.NEW) {
                 push(x, y+1);
+            } else if (type == Type.FENCE || type == Type.FORT) {
+                border.add(new Point(x, y+1));
             } else {
-                // TODO
+                // TODO ?
             }
         }
         if (x+1 < types[y].length) {
-            if (types[y][x+1] == Type.NEW) {
+            var type = types[y][x+1];
+            if (type == Type.NEW) {
                 push(x+1, y);
-            } else {
-                if (code[y][x+1] == ']') {
-                    actual(x+1, y, Type.METROPOLIS);
-                } else if (code[y][x+1] == '}') {
-                    actual(x+1, y, Type.EXCLUSION);
+            } else if (type == Type.FENCE || type == Type.FORT) {
+                border.add(new Point(x+1, y));
+                switch (code[y][x+1]) {
+                    case ']': actual(x-1, y, Type.METROPOLIS); break;
+                    case '}': actual(x-1, y, Type.EXCLUSION); break;
+                    default: break;
                 }
+            } else {
+                // TODO ?
             }
         }
 
@@ -115,19 +133,74 @@ public class Flood2Algorithm implements Algorithm {
         } else if (actual == Type.NEW) {
             actual = type;
         } else {
-            errors.add(new Point(x,y));
-            System.err.printf("(%d,%d) %s != %s%n", x, y, actual, type); 
+            error(x, y, actual + " != " + type); 
         }
+    }
+    
+    private void error(int x, int y, String message) {
+        error(new Point(x, y), message);
+    }
+    
+    private void error(Point point, String message) {
+        errors.add(point);
+        System.err.printf("(%d,%d) %s%n", point.x, point.y, message); 
     }
 
     private void closeZone() {
-//        assert actual != Type.NEW : actual;
-        
+//        if (actual != Type.NEW) {
+//            checkZoneBorder();
+//        }
         for (var point : zone) {
             types[point.y][point.x] = actual;
         }
         zone.clear();
+        border.clear();
         actual = Type.NEW;
+    }
+    
+    private void checkZoneBorder() {
+        var combined = new HashSet<Point>(zone);
+        combined.addAll(border);
+        for (var point : border) {
+            var x = point.x;
+            var y = point.y;
+            var ch = code[y][x];
+            switch (ch) {
+                case '[':
+                case '{':
+                    if (   (x > 0 && zone.contains(new Point(x-1, y))) 
+                        || (x+1 < code[y].length && !zone.contains(new Point(x+1, y))) ) {
+                        error(point, "invalid border " + ch);
+                    }
+                    break;
+                case ']':
+                case '}':
+                    if (   (x > 0 && !combined.contains(new Point(x-1, y)))
+                        || (x+1 < code[y].length && zone.contains(new Point(x+1, y))) ) {
+                        error(point, "invalid border " + ch);
+                    }
+                    break;
+                case '=':
+                case '~':
+                    if (   ( y > 0 && combined.contains(new Point(x, y-1)) )
+                        == ( y+1 < code.length && combined.contains(new Point(x, y+1)) ) ) {
+                        error(point, "invalid border " + ch);
+                    }
+                    break;
+            }
+        }
+    }
+    
+    private void checkAllBorder() {
+//        for (var y = 0; y < code.length; y++) {
+//            var row = code[y];
+//            for (var x = 0; x < row.length; x++) {
+//                var ch = row[x];
+//                switch (ch) {
+//                    
+//                }
+//            }
+//        }
     }
     
     private void push(int x, int y) {
@@ -161,6 +234,10 @@ public class Flood2Algorithm implements Algorithm {
         }
         for (var point : zone) {
             paintString(gg, size, point.x, point.y, "X");
+        }
+        gg.setColor(Color.YELLOW);
+        for (var point : border) {
+            paintString(gg, size, point.x, point.y, "> <");
         }
         for (var point : errors) {
             paintCell(gg, size, point.x, point.y, Color.RED);

@@ -1,7 +1,8 @@
 package cfh.zirconium;
 
-import java.util.LinkedList;
+import static cfh.zirconium.Compiler.*;
 
+import java.util.LinkedList;
 import cfh.zirconium.Compiler.CompileException;
 import cfh.zirconium.Compiler.Zone;
 import cfh.zirconium.net.Pos;
@@ -24,10 +25,10 @@ public class ZoneDetector {
         for (var y = 0; y < zones.length; y++) {
             for (var x = 0; x < zones[y].length; x++) {
                 if (zones[y][x] == null) {
-                    if (isNotBoundary(x, y)) {
-                        flood(x, y, zones);
-                    } else {
+                    if (isBorder(x, y)) {
                         zones[y][x] = Zone.NONE;
+                    } else {
+                        flood(x, y, zones);
                     }
                 }
             }
@@ -60,37 +61,37 @@ public class ZoneDetector {
             Zone newType = null;
             
             if (y > 0) {
-                if (zones[y-1][x] == null && isNotBoundary(x, y-1)) {
+                if (!isBorder(x, y-1) && zones[y-1][x] == null) {
                     open.push(x, y-1);
                 } else {
                     // TODO ?
                 }
             }
             if (x > 0) {
-                if (zones[y][x-1] == null && isNotBoundary(x-1, y)) {
+                if (!isBorder(x-1, y) && zones[y][x-1] == null) {
                     open.push(x-1, y);
                 } else {
-                    if (chars[y][x-1] == Compiler.MP_L) {
+                    if (chars[y][x-1] == MP_L) {
                         newType = Zone.METROPOLIS;
-                    } else if (chars[y][x-1] == Compiler.EZ_L) {
+                    } else if (chars[y][x-1] == EZ_L) {
                         newType = Zone.EXCLUSION;
                     }
                 }
             }
             if (y+1 < zones.length) {
-                if (zones[y+1][x] == null && isNotBoundary(x, y+1)) {
+                if (!isBorder(x, y+1) && zones[y+1][x] == null) {
                     open.push(x, y+1);
                 } else {
                     // TODO ?
                 }
             }
             if (x+1 < zones[y].length) {
-                if (zones[y][x+1] == null && isNotBoundary(x+1, y)) {
+                if (!isBorder(x+1, y) && zones[y][x+1] == null) {
                     open.push(x+1, y);
                 } else {
-                    if (chars[y][x+1] == Compiler.MP_R) {
+                    if (chars[y][x+1] == MP_R) {
                         newType = Zone.METROPOLIS;
-                    } else if (chars[y][x+1] == Compiler.EZ_R) {
+                    } else if (chars[y][x+1] == EZ_R) {
                         newType = Zone.EXCLUSION;
                     }
                 }
@@ -100,7 +101,7 @@ public class ZoneDetector {
                 if (type == Zone.NONE) {
                     type = newType;
                 } else {
-                    throw new Compiler.CompileException(pos, "ambigous zone: " + type + ", " + newType);
+                    throw new CompileException(pos, "ambigous zone: " + type + ", " + newType);
                 }
             }
         }
@@ -111,7 +112,7 @@ public class ZoneDetector {
         }
     }
 
-    private boolean isNotBoundary(int x, int y) {
-        return Compiler.BOUNDARY.indexOf(chars[y][x]) == -1;
+    private boolean isBorder(int x, int y) {
+        return BORDER.indexOf(chars[y][x]) != -1;
     }
 }
