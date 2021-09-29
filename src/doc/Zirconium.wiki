@@ -1,0 +1,314 @@
+{{infobox proglang
+|name=Zirconium
+|paradigms=
+|author=[[User:RocketRace]]
+|year=[[:Category:2020|2020]]
+|memsys=[[:Category:Graph-based|Graph-based]]
+|class=[[:Category:Turing complete|Turing complete]]
+|dimensions=2
+|refimpl=Unimplemented
+|majorimpl=
+|files=<code>.zc</code>, <code>.zch</code> (with extensions)
+}}
+
+'''Zirconium''' is an esoteric programming language made in September of 2020 by [[User:RocketRace]].
+
+A Zirconium program is a network of ''stations'' in two-dimensional space, linked together with ''tunnels'', akin to a graph with nodes. At each tick of time, stations will dispatch ''drones'' in order to occupy linked stations.
+
+    0
+ .--+--O
+  \ | /
+   \|/
+    o----@
+
+== Stations & Tunnels ==
+
+At the beginning of the tick, all stations count the number of drones ''occupying'' them, and then consume all those drones. They then dispatch some (possibly zero) amount of drones to all ''linked'' stations. A station X is said to ''link'' to a station Y if X is able to dispatch a drone to Y through a direct tunnel. (As shown in the Apertures section, this relationship is not necessarily bidirectional.)
+
+The following table details the behavior of six default, pure stations. These stations can be placed anywhere.
+
+{| class="wikitable"
+|-
+| <center><code>.</code></center> || If this is occupied by any amount of drones, dispatch one drone to each linked station.
+|-
+| <center><code>o</code></center> || Dispatch the number of drones occupying this station to each linked station.
+|-
+| <center><code>0</code></center> || Do not dispatch any drones.
+|-
+| <center><code>O</code></center> || Dispatch <code>N // K</code> drones to each linked station, where <code>N</code> is the number of drones occupying this station, <code>K</code> is the number of linked stations, and <code>//</code> is the floor division operation.<ref>Division by zero returns 0.</ref>
+|-
+| <center><code>Q</code></center> || If this station is occupied by <code>N</code> drones, dispatch <code>N - 1</code> drones to linked stations.
+|-
+| <center><code>@</code></center> || If this station is not occupied, dispatch one drone to each linked station.
+|}
+
+=== Tunnel semantics ===
+
+A tunnel may be horizontal, vertical or diagonal, using <code>-</code>, <code>|</code>, <code>/</code>, or <code>\</code> symbols appropriately. A tunnel can only travel in one direction, and must have at least one segment. A <code>+</code> behaves as both a horizontal and a vertical tunnel, a <code>X</code> behaves as both diagonal tunnels, and <code>*</code> behaves as any tunnel. These may be used to place overlapping but separate tunnels on the map.
+
+     .
+     |
+ .---+---@
+     |
+     @
+
+=== Apertures ===
+
+The endpoint of a tunnel may be replaced with an ''aperture'' to enforce a one-way link between stations. <ref>Tunnels with apertures pointing towards a station are not considered linked from that station’s point of view. This applies to the <code>O</code> station, as well as synthetic stations.</ref> Horizontal and vertical apertures are marked with <code>></code>, <code>^</code>, <code><</code>, or <code>v</code>, to point east, north, west, or south. Diagonal apertures are all marked with <code>#</code>.
+
+ @-->.
+ ^  /|
+ | / |
+ |#  v
+ .<--.
+
+=== Bound stations ===
+
+Stations that are adjacent are considered a single ''bound station''. A bound station executes the behavior of all its child stations each tick, and is linked to each station its child stations are linked to. <ref>A bound station may be linked to itself in certain configurations.</ref>
+
+       .
+      /
+ @->00
+  #   0--.
+   \ 0
+    o
+
+== Notes on syntax ==
+
+Anything contained between inside parentheses <code>()</code> is a ''bubble'' and is ignored. Consider it a comment. Anything contained inside double parentheses <code>(())</code> is a ''lens'', used for synthetic station definitions. Consider it a macro.
+
+Since it's a two-dimensional language, programs in Zirconium will usually require some alignment. By default, a tab should be treated as a sequence of four spaces for the sake of convenience.
+
+== Zones ==
+
+Zones are a special structure which provide access to stations that would otherwise be inaccessible or difficult to implement using the six pure stations. A zone is characterized by being a region of space clearly separated from the rest of the program. There are two kinds of zones: Exclusion zones and Metropoleis. They both behave similarly, but give access to vastly different kinds of computation.
+
+=== Exclusion zones ===
+
+An area of the program may be enclosed with ''fences'' to make it an ''exclusion zone''. A position must be fully enclosed by fences for it to be considered "inside" the exclusion zone.<ref>This only considers the innermost layer of fences. An exclusion zone in a metropolis is still an exclusion zone.</ref> The east & west fences ,<code>}</code> and <code>{</code>, must not be facing "outside" an exclusion zone, that is, cannot be inverted. (The north / south fences, <code>~</code>, are bidirectional and naturally have no such restriction.)
+
+  {~~}
+ {    }
+  {    <nowiki>~~~~~~</nowiki>}
+ {            }
+ {     ~~     }
+  <nowiki>{~~~~  ~~~~}</nowiki>
+
+The fences of an exclusion zone will behave as <code>*</code> tunnels.
+
+An exclusion zone may contain special ''defect stations'', which perform impure computation:<ref>All race conditions arising from the use of defect stations are undefined.</ref>
+{| class="wikitable"
+|-
+| <center><code>?</code></center> || If any drones occupy this, read one byte from STDIN and dispatch that many drones to linked stations.
+|-
+| <center><code>!</code></center> || If any drones occupy this, halt the program.
+|-
+| <center><code>%</code></center> || If any drones occupy this, print the number of drones occupying this station as a byte modulo 256 to STDOUT.
+|-
+| <center><code>&</code></center> || If any drones occupy this, write the number of drones occupying this as a byte modulo 256 to STDERR.
+|-
+| <center><code>`</code></center> || If any drones occupy this, write the number of drones occupying this station in numeric form to STDOUT.
+|-
+| <center><code>_</code></center> || If any drones occupy this, read a numeric value from STDIN and dispatch that many drones to linked stations.
+|-
+| <center><code>;</code></center> || Pause execution for a duration equal to the number of drones occupying this station in milliseconds.
+|}
+
+
+=== Metropoleis ===
+
+An area of the program may be enclosed with ''forts'' to make it a ''metropolis''. Similar semantics apply for metropoleis that apply to exclusion zones.
+
+  [==]
+ [    ]
+  [    ======]
+ [            ]
+ [     ==     ]
+  [====  ====]
+
+Like the fences of an exclusion zone, the forts of a metropolis behave as <code>*</code> tunnels.
+
+A metropolis may contain special ''synthetic stations''.
+
+=== Synthetic stations ===
+
+A synthetic station is a station whose behavior is defined by the user. Each tick, a synthetic station dispatches some number of drones based on the number of occupying drones and the number of linked stations using some arithmetic expression.
+
+A synthetic station must be defined using a specific grammar. The definition includes a target symbol, which is the synthetic station to be defined, and an arithmetic expression in postfix notation. The expression is evaluated for the station on each tick, and represents the number of drones dispatched<ref>Negative drones are clamped to 0.</ref>. The expression can be in terms of integer literals, as well as special variables <code>N</code> and <code>K</code>, which represent the number of drones currently occupying the station and the number of linked station.
+
+For instance, 
+ Z = N 1 +
+The <code>Z</code> station here is defined to dispatch <code>N + 1</code> drones to each linked station. Whitespace in the definition is optional, but can be used to disambiguate between integers.
+
+Expressions may contain the following operators: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>=</code>, corresponding to addition, subtraction, multiplication, floor division<ref>Division by 0 returns 0.</ref> and equality<ref><code>=</code> returns 1 if its two arguments are equal, and 0 otherwise.</ref>. Symbols may be any non-whitespace character, except for symbols already defined in the Zirconium grammar.<ref>The only exception to this rule are station symbols. These may be overridden, but the new definition will ''only'' apply to synthetic stations inside metropoleis.</ref> Implementations are encouraged to support unicode codepoints or grapheme clusters for synthetic station symbols, as the ASCII code page can be limiting for larger programs, especially since many of the symbols are reserved.
+
+The following is a complete grammar for synthetic station definitions, assuming the definition is a Unicode string:
+
+ definition := symbol sp* "=" sp* expr
+ symbol := [^\s]
+ expr := value | expr sp* expr sp* operator
+ value := "N" | "K" | integer
+ integer := ["0"-"9"]+
+ operator := "+" | "-" | "*" | "/" | "=" 
+ sp := " " | "\t"
+
+A synthetic station may be defined inside a lens. A lens is parsed at compile time:
+
+ ((r = N K / 1 +))
+
+A synthetic station may also be defined in a special header file.<ref>By convention, these should be named <code>file.zch</code>, where <code>file</code> is the name of the original file.</ref> A header file is a file provided to the program, containing newline-delimited synthetic station definitions. These are also parsed at compile time.
+
+=== Zone inference ===
+
+Fences or forts may be omitted in some situations. Specifically, whenever a fence or a fort stops at one of the borders of the program, it is ''inferred'' to extend just outside the confines of the map, "reappearing" at the closest matching fence or fort.
+
+As such, the following program is valid, and outputs the number <code>1</code> infinitely:
+
+ `}@
+
+The map is inferred to look like this:
+
+  ~
+ {`}@
+  ~
+
+Note that at least one piece of fence or fort must be present for inference to take place. A section of the program will not be inferred to have any zone. In addition, the inferred zone cannot be ambiguous
+
+== Computational class ==
+Zirconium without extensions is [[Turing complete]] from reduction to a [[Minsky machine|register machine]] with any amount of registers and the instructions <code>INC</code>, <code>DEC</code>, and <code>JZ</code>.
+
+The registers are "modules", each laid out like so:
+  0
+ Q>0<@
+ v ^ ^
+ @ | |
+ | | |
+
+The southwest tunnel is an output which dispatches 1 drone whenever the register is zero.
+The southern tunnel is an input which increments the register.
+The southeast tunnel is an input which decrements the register.
+
+Instructions are also modules laid out like so:
+{| class="wikitable"
+|-
+| <center><code>INC</code></center> || 
+    <nowiki>|
+   v
+ @>O
+  /v
+ 0 .---
+   |</nowiki> 
+|| The northern tunnel is an input which tells this module to activate.
+
+The eastern tunnel is an output which connects to one of the registers' "increment" inputs.
+
+The southern tunnel is an output which leads to the next module to activate.
+|-
+| <center><code>DEC</code></center> || 
+    <nowiki>|
+   v
+ @>O
+  /v
+ 0 .---
+   |</nowiki> 
+|| The northern tunnel is an input which tells this module to activate.
+
+The eastern tunnel is an output which connects to one of the registers' "decrement" inputs.
+
+The southern tunnel is an output which leads to the next module to activate.
+|-
+| <center><code>JZ</code></center> || 
+    <nowiki>|
+   v
+ @>O   .<---
+  /|\ /v
+ 0 | X @
+   v# #v
+ 0<O   O>0
+   |   |</nowiki> 
+    
+|| The northern tunnel is an input which tells this module to activate.
+
+The northeast tunnel is an input from one of the registers' "zero" outputs.
+
+The southwest tunnel is an output leading to the next module to activate if the register is zero.
+
+The southeast tunnel is an output leading to the next module to activate if the register is nonzero.
+|}
+
+The module to be activated at the start of the program is triggered with the following setup:
+
+ 
+ .<@
+ v ^
+ | @
+ |
+
+By piecing together these modules, one can construct a register machine capable of universal computation.
+
+== Example programs ==
+{| class="wikitable"
+|-
+| Print Fibonacci numbers || 
+ o~  o
+ {`}0>0<@<@
+  ~
+|| The rightmost station system dispatches one drone to the middle station at the start of the program, and does nothing afterwards.
+
+The middle bound station (containing <code>o</code>, <code>0</code>, and <code>0</code>) dispatches its drones to the leftmost bound station (containing <code>o</code> and <code>`</code>), as well as itself, each tick.
+
+The leftmost bound station dispatches its drones to the middle station, as well as printing the number of stations occupying it, each tick.
+
+This can be seen as equivalent to the following pseudocode:
+
+ x = 0
+ y = 1
+ while true {
+     x, y = y, x + y
+     print(x)
+ }
+
+|-
+| Echo input || 
+  <nowiki>~~~</nowiki>
+ {%<?}@
+  <nowiki>~~~</nowiki>
+|| The <code>@</code> station triggers the <code>?</code> station, reading one byte of input. The <code>&</code> station then prints that byte. Once the <code>@</code> station is no longer occupied by stations from the <code>?</code> station, it triggers again, repeating the process. Under zone inference, this is equivalent to <code>%<?}@</code>.
+|-
+| Truth machine (using \0 and \1 bytes) || 
+      . ==  ~
+     ~0[>A]{%}
+ @>@{?}[  ] ~
+     ~0[>B]>.-.
+        ==
+ ((A=N1=256*))
+ ((B=N2=))
+|| The program reads exactly one byte of input, and outputs that many drones plus one (as it is bound to <code>.</code>) to <code>A</code> and <code>B</code>.
+
+The <code>A</code> branch dispatches 256 drones to <code>%</code> if it's occupied by exactly one drone (i.e. the input was a null byte), and none otherwise. This prints a null byte.
+
+The <code>B</code> branch dispatches a drone to to one of the two <code>.</code> stations, if it's occupied by exactly two drones (i.e. the input was a \1 byte). The system of <code>.</code> stations dispatch one drone back and forth between the two stations, additionally dispatching a drone to the <code>%</code> station every other tick. This is an infinite loop that outputs \1 bytes.
+|-
+| Hello, world! || 
+     ======================================
+ @>@[H>d.>l>l>l...>,>_>r.....>l...>r>l>d>_.]
+     ======================================
+     <nowiki>| |  | | |    | | |      |    | | | |</nowiki>
+     <nowiki>~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</nowiki>
+    {% %  % % %    % % %      %    % % % %}
+     <nowiki>~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</nowiki>
+ ((H=1N0=-72*)) ((d=1N0=-100*)) ((l=1N0=-108*))
+ ((,=1N0=-44*)) ((r=1N0=-114*)) ((_=1N0=-32*))
+|| What an ugly program! The reason this is so verbose is that Zirconium has no integer literals, so they have to be defined using synthetic stations. In addition, to print a string, this sequence of drones has to be dispatched in a single order, which adds constraining logic to the program. The execution flow begins to the left. Each synthetic station dispatches drones to the next, as well as below to the <code>%</code> defect stations. They execute in sequence, thanks to the logic in the synthetic station definitions preventing them from activating all at once. The <code>1N0=-</code> in these synths evaluates to 1 when a nonzero amount of drones are occupying the station, which is then multiplied by the codepoint of each character in the output. Whenever possible, synthetic stations are reused with some additional <code>.</code> stations to increment the number of stations dispatched.
+|}
+
+== Footnotes ==
+<references/>
+
+[[Category:Languages]]
+[[Category:2020]]
+[[Category:Turing complete]]
+[[Category:Thematic]]
+[[Category:Graph-based]]
+[[Category:Two-dimensional languages]]
+

@@ -147,48 +147,12 @@ public class Flood2Algorithm implements Algorithm {
     }
 
     private void closeZone() {
-//        if (actual != Type.NEW) {
-//            checkZoneBorder();
-//        }
         for (var point : zone) {
             types[point.y][point.x] = actual;
         }
         zone.clear();
         border.clear();
         actual = Type.NEW;
-    }
-    
-    private void checkZoneBorder() {
-        var combined = new HashSet<Point>(zone);
-        combined.addAll(border);
-        for (var point : border) {
-            var x = point.x;
-            var y = point.y;
-            var ch = code[y][x];
-            switch (ch) {
-                case '[':
-                case '{':
-                    if (   (x > 0 && zone.contains(new Point(x-1, y))) 
-                        || (x+1 < code[y].length && !zone.contains(new Point(x+1, y))) ) {
-                        error(point, "invalid border " + ch);
-                    }
-                    break;
-                case ']':
-                case '}':
-                    if (   (x > 0 && !combined.contains(new Point(x-1, y)))
-                        || (x+1 < code[y].length && zone.contains(new Point(x+1, y))) ) {
-                        error(point, "invalid border " + ch);
-                    }
-                    break;
-                case '=':
-                case '~':
-                    if (   ( y > 0 && combined.contains(new Point(x, y-1)) )
-                        == ( y+1 < code.length && combined.contains(new Point(x, y+1)) ) ) {
-                        error(point, "invalid border " + ch);
-                    }
-                    break;
-            }
-        }
     }
     
     private void checkAllBorder() {
