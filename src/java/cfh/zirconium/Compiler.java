@@ -177,10 +177,15 @@ public class Compiler {
         var count = 0;
         for (var line : header.split("\n")) {
             if (!line.isBlank()) {
-                var pos = new Pos(-1, count);
-                var def = Definition.parse(pos, header);
+                var pos = new Pos(0, count);
+                Definition def;
+                try {
+                    def = Definition.parse(pos, line);
+                } catch (CompileException ex) {
+                    throw (CompileException) new CompileException(ex.pos, true, ex.getMessage()).initCause(ex);
+                }
                 if (definitions.containsKey(def.symbol)) {
-                    throw new CompileException(pos, "duplicated definition");
+                    throw new CompileException(pos, true, "duplicated definition");
                 }
                 definitions.put(def.symbol, def);
             }
@@ -424,14 +429,21 @@ public class Compiler {
     public static class CompileException extends Exception {
         /** Position of error, can be {@code null}. */
         public final Pos pos;
+        /** Was it in header file. */
+        public final boolean header;
         /** Creates new exception without position. */
         public CompileException(String message) {
-            this(null, message);
+            this(null, false, message);
         }
         /** Creates new exception. */
         public CompileException(Pos pos, String message) {
+            this(pos, false, message);
+        }
+        /** Creates new exception. */
+        public CompileException(Pos pos, boolean header, String message) {
             super(message);
             this.pos = pos;
+            this.header = header;
         }
         @Override
         public String getMessage() {

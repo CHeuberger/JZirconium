@@ -96,6 +96,7 @@ public class IDE {
     private final JFrame frame;
     private final JTextArea codePane;
     private final JTextArea headerPane;
+    private final JTabbedPane sourcePane;
     private final JTextArea logPane;
     private final JTextArea inputPane;
     private final JTextArea outputPane;
@@ -217,9 +218,9 @@ public class IDE {
         headerPane.setText(PREFS.get(PREF_HEAD, ""));
         headerPane.getDocument().addDocumentListener(changedListener);
         
-        var mainPane = new JTabbedPane();
-        mainPane.addTab("code", codePane);
-        mainPane.addTab("header", headerPane);
+        sourcePane = new JTabbedPane();
+        sourcePane.addTab("code", codePane);
+        sourcePane.addTab("header", headerPane);
 
         singleTableModel = new SingleModel();
         var singleStationTable = new JTable(singleTableModel);
@@ -233,7 +234,7 @@ public class IDE {
                     var row = singleStationTable.getSelectedRow();
                     if (row != -1) {
                         var station = singleTableModel.station(row);
-                        mark(station.pos());
+                        mark(false, station.pos());
                     }
                 }
             }
@@ -246,7 +247,7 @@ public class IDE {
         detailPane.addTab("Stations", newScrollPane(singleStationTable));
         
         var centerSplit = newSplitPane(false);
-        centerSplit.setLeftComponent(mainPane);
+        centerSplit.setLeftComponent(sourcePane);
         centerSplit.setRightComponent(detailPane);
         centerSplit.setDividerLocation(850);
         
@@ -527,7 +528,7 @@ public class IDE {
         } catch (CompileException ex) {
             setProgram(null);
             if (ex.pos != null) {
-                mark(ex.pos);
+                mark(ex.header, ex.pos);
             }
             error(ex, "at %s", ex.pos);
         }
@@ -677,22 +678,25 @@ public class IDE {
         singleTableModel.fireTableDataChanged();
     }
 
-    /** Mark given pos (select it). */
-    private void mark(Pos pos) {
+    /** Mark given pos (select it). 
+     * @param header TODO*/
+    private void mark(boolean header, Pos pos) {
+        var pane = header ? headerPane : codePane;
+        sourcePane.setSelectedComponent(pane);
         try {
-            var ls = codePane.getLineStartOffset(pos.y());
-            var le = codePane.getLineEndOffset(pos.y());
+            var ls = pane.getLineStartOffset(pos.y());
+            var le = pane.getLineEndOffset(pos.y());
             var index = ls + pos.x();
             if (index >= le) {
                 index = le - 1;
             }
-            codePane.setCaretPosition(index);
+            pane.setCaretPosition(index);
             if (index < le) {
-                codePane.select(index, index+1);
+                pane.select(index, index+1);
             }
-            codePane.requestFocusInWindow();
-        } catch (BadLocationException ex1) {
-            ex1.printStackTrace();
+            pane.requestFocusInWindow();
+        } catch (BadLocationException ex) {
+            ex.printStackTrace();
         }
     }
 
