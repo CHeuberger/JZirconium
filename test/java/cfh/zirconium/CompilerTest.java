@@ -104,12 +104,10 @@ public class CompilerTest {
         }
         @Override
         public int readByte() {
-            // TODO Auto-generated method stub
             return 0;
         }
         @Override
         public int readInteger() {
-            // TODO Auto-generated method stub
             return 0;
         }
     };
@@ -124,8 +122,7 @@ public class CompilerTest {
         }
         @Override
         public void write(int b) {
-            // TODO Auto-generated method stub
-            
+            //
         }
     };
 }

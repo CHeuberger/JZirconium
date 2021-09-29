@@ -34,6 +34,10 @@ public class Program {
         this.env = Objects.requireNonNull(env);
     }
     
+    public String name() {
+        return name;
+    }
+    
     /** All stations. */
     public Collection<Station> stations() {
         return Collections.unmodifiableCollection(stations);

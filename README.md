@@ -11,6 +11,7 @@ https://esolangs.org/wiki/Zirconium
 ### v0.11
 
 * minor code optimization
+* index out of bound error removed
 
 ### v0.10
 
