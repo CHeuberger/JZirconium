@@ -87,10 +87,6 @@ public class ZoneDetectorTest {
              ~~
             [aa}
              ~~
-            =======
-             {{
-            {aa}
-             ~~
             """.split("\n$|\n *===+ *\n"))
         {
             errors += invalid(code);

@@ -18,6 +18,8 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Deque;
@@ -112,14 +114,19 @@ public class ZoneDetectionProbe extends JPanel {
         setFont(new Font("Dialog", Font.BOLD, FONT));
         setPreferredSize(new Dimension(COUNT*SIZE+1, COUNT*SIZE+1));
         setKeystrokeAction("up", KeyStroke.getKeyStroke("pressed UP"), this::doUp);
+        setKeystrokeAction("s-up", KeyStroke.getKeyStroke("shift pressed UP"), this::doUp);
         setKeystrokeAction("down", KeyStroke.getKeyStroke("pressed DOWN"), this::doDown);
+        setKeystrokeAction("s-down", KeyStroke.getKeyStroke("shift pressed DOWN"), this::doDown);
         setKeystrokeAction("left", KeyStroke.getKeyStroke("pressed LEFT"), this::doLeft);
+        setKeystrokeAction("s-left", KeyStroke.getKeyStroke("shift pressed LEFT"), this::doLeft);
         setKeystrokeAction("right", KeyStroke.getKeyStroke("pressed RIGHT"), this::doRight);
+        setKeystrokeAction("s-right", KeyStroke.getKeyStroke("shift pressed RIGHT"), this::doRight);
         setKeystrokeAction("copy", KeyStroke.getKeyStroke("control pressed C"), this::doCopy);
         setKeystrokeAction("paste", KeyStroke.getKeyStroke("control pressed V"), this::doPaste);
         setKeystrokeAction("shiftPaste", KeyStroke.getKeyStroke("control shift pressed V"), this::doPaste);
         setKeystrokeAction("undo", KeyStroke.getKeyStroke("control pressed Z"), this::doUndo);
         setKeystrokeAction("delete", KeyStroke.getKeyStroke("pressed DELETE"), this::doDel);
+        setKeystrokeAction("backspace", KeyStroke.getKeyStroke("pressed BACK_SPACE"), this::doBack);
         
         clearButton = newButton("Clear", this::doClear, "Clear all fields");
         flood1Button = newButton("FLOOD-1", this::doFlood1, "Start FLOOD-1 algorithm");
@@ -149,6 +156,12 @@ public class ZoneDetectionProbe extends JPanel {
         center.setBorder(BorderFactory.createEmptyBorder(GAP, GAP, GAP, GAP));
         
         var frame = new JFrame();
+        frame.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent ev) {
+                preferences.put(PREF_CODE, codeToString());
+            }
+        });
         frame.setDefaultCloseOperation(frame.DISPOSE_ON_CLOSE);
         frame.setJMenuBar(menubar);
         frame.add(center, BorderLayout.CENTER);
@@ -260,12 +273,14 @@ public class ZoneDetectionProbe extends JPanel {
             shift-left-click:  extend cell region
             
             DEL:  delete selected region
+            BACKSPACE:  move selection left and delete, or delete selected region
             ctrl-C:  copy selected region or whole code if no region selected
             ctrl-V:  clears all and paste code from clipboard
             shift-ctrl-V:  paste clipboard starting at selected cell
             ctrl-Z:  undo
             
             arrows:  move selected cell
+            shift arrows:  move end of selected region
             [=]{~}:  enter type character into selected cell
             space:  clear selected cell
             """;
@@ -276,26 +291,82 @@ public class ZoneDetectionProbe extends JPanel {
     }
     
     private void doUp(ActionEvent ev) {
-        if (mark != null && mark.y > 0) {
-            select(mark.x, mark.y-1);
+        if (mark != null) {
+            if (isShift(ev)) {
+                if (markEnd == null) {
+                    if (mark.y > 0) {
+                        selectEnd(mark.x, mark.y-1);
+                    }
+                } else {
+                    if (markEnd.y > 0) {
+                        selectEnd(markEnd.x, markEnd.y-1);
+                    }
+                }
+            } else {
+                if (mark.y > 0) {
+                    select(mark.x, mark.y-1);
+                }
+            }
         }
     }
     
     private void doDown(ActionEvent ev) {
-        if (mark != null && mark.y+1 < COUNT) {
-            select(mark.x, mark.y+1);
+        if (mark != null) {
+            if (isShift(ev)) {
+                if (markEnd == null) {
+                    if (mark.y+1 < COUNT) {
+                        selectEnd(mark.x, mark.y+1);
+                    }
+                } else {
+                    if (markEnd.y+1 < COUNT) {
+                        selectEnd(markEnd.x, markEnd.y+1);
+                    }
+                }
+            } else {
+                if (mark.y+1 < COUNT) {
+                    select(mark.x, mark.y+1);
+                }
+            }
         }
     }
     
     private void doLeft(ActionEvent ev) {
-        if (mark != null && mark.x > 0) {
-            select(mark.x-1, mark.y);
+        if (mark != null) {
+            if (isShift(ev)) {
+                if (markEnd == null) {
+                    if (mark.x > 0) {
+                        selectEnd(mark.x-1, mark.y);
+                    }
+                } else {
+                    if (markEnd.x > 0) {
+                        selectEnd(markEnd.x-1, markEnd.y);
+                    }
+                }
+            } else {
+                if (mark.x > 0) {
+                    select(mark.x-1, mark.y);
+                }
+            }
         }
     }
     
     private void doRight(ActionEvent ev) {
-        if (mark != null && mark.x+1 < COUNT) {
-            select(mark.x+1, mark.y);
+        if (mark != null) {
+            if (isShift(ev)) {
+                if (markEnd == null) {
+                    if (mark.x+1 < COUNT) {
+                        selectEnd(mark.x+1, mark.y);
+                    }
+                } else {
+                    if (markEnd.x+1 < COUNT) {
+                        selectEnd(markEnd.x+1, markEnd.y);
+                    }
+                }
+            } else {
+                if (mark.x+1 < COUNT) {
+                    select(mark.x+1, mark.y);
+                }
+            }
         }
     }
     
@@ -369,6 +440,7 @@ public class ZoneDetectionProbe extends JPanel {
             for (var i = 0 ; i < COUNT && i < clone.length; i++) {
                 System.arraycopy(clone[i], 0, code[i], 0, COUNT);
             }
+            preferences.put(PREF_CODE, codeToString());
         } else {
             beep();
         }
@@ -389,10 +461,38 @@ public class ZoneDetectionProbe extends JPanel {
                         code[y][x] = ' ';
                     }
                 }
+            } else {
+                code[mark.y][mark.x] = ' ';
             }
-            code[mark.y][mark.x] = ' ';
+            repaint();
         }
-        repaint();
+    }
+
+    private void doBack(ActionEvent ev) {
+        if (mark != null) {
+            pushCode();
+            if (markEnd != null) {
+                var x0 = Math.min(mark.x, markEnd.x);
+                var x1 = Math.max(mark.x, markEnd.x);
+                var y0 = Math.min(mark.y, markEnd.y);
+                var y1 = Math.max(mark.y, markEnd.y);
+                for (var x = x0; x <= x1; x++) {
+                    for (var y = y0; y <= y1; y++) {
+                        code[y][x] = ' ';
+                    }
+                }
+                
+            } else {
+                if (--mark.x < 0) {
+                    if (--mark.y < 0) {
+                        mark.y = code.length - 1;
+                    }
+                    mark.x = code[mark.y].length - 1;
+                }
+                code[mark.y][mark.x] = ' ';
+            }
+            repaint();
+        }
     }
     
     private void doMousePressed(MouseEvent ev) {
@@ -509,7 +609,7 @@ public class ZoneDetectionProbe extends JPanel {
     }
 
     private void paintGtrid(Graphics2D gg) {
-        gg.setColor(Color.BLACK);
+        gg.setColor(Color.LIGHT_GRAY);
         var total = COUNT * SIZE;
         
         for (var y = 0; y <= total; y += SIZE) {

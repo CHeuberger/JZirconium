@@ -1,3 +1,6 @@
+Copy of https://esolangs.org/wiki/Zirconium
+2021-09-29
+
 {{infobox proglang
 |name=Zirconium
 |paradigms=

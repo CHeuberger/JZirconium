@@ -199,7 +199,7 @@ public class Compiler {
                     row[x] = ' ';
                     x += 1;
                     // lens
-                    if (row[x] == '(') {
+                    if (x < row.length && row[x] == '(') {
                         row[x] = ' ';
                         x += 1;
                         var  start = x;
@@ -213,10 +213,10 @@ public class Compiler {
                             row[x] = ' ';
                             x += 1;
                         }
-                        if (x+1 >= row.length || row[x+1] != ')') {
-                            throw new CompileException(new Pos(x, y), "lens not correctly terminated");
-                        }
                         x += 1;
+                        if (x >= row.length || row[x] != ')') {
+                            throw new CompileException(new Pos(x-1, y), "lens not correctly terminated");
+                        }
                         row[x] = ' ';
                         var pos = new Pos(start, y);
                         var def = Definition.parse(pos, expr);
@@ -233,7 +233,7 @@ public class Compiler {
                             row[x] = ' ';
                             x += 1;
                         }
-                        if (x == row.length) {
+                        if (x >= row.length) {
                             throw new CompileException(new Pos(x, y), "bubble not correctly terminated");
                         }
                     }
@@ -389,10 +389,12 @@ public class Compiler {
                         direct = true;
                         x += dir.dx;
                         y += dir.dy;
-                        ch = valid(x, y, chars) ? chars[y][x] : EMPTY;
-                        if ((FENCES+FORTS).indexOf(ch) != -1) {
-                            x += dir.dx;
-                            y += dir.dy;
+                        if (valid(x, y, chars)) {
+                            ch = chars[y][x];
+                            if (BORDER.indexOf(ch) != -1) {
+                                x += dir.dx;
+                                y += dir.dy;
+                            }
                         }
                     }
                     var pos = new Pos(x, y);
