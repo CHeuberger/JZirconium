@@ -1,10 +1,11 @@
 package cfh.zirconium.expr;
 
+import static cfh.zirconium.Compiler.*;
+
 import java.nio.BufferUnderflowException;
 import java.nio.CharBuffer;
 import java.util.LinkedList;
 
-import cfh.zirconium.Compiler.CompileException;
 import cfh.zirconium.expr.Expr.*;
 import cfh.zirconium.net.Pos;
 
@@ -25,19 +26,20 @@ public class Definition {
     
     /** Parse given text for a Definition. */
     public static Definition parse(Pos pos, String text) throws CompileException {
-        if (text.isBlank()) {
-            throw new CompileException(pos, "empty lens");
-        }
+        assert !text.isBlank() : "empty expression";
         var buf = CharBuffer.wrap(text).asReadOnlyBuffer();
         try {
             skipSpaces(buf);
             var symbol = buf.get();
             if (Character.isWhitespace(symbol)) {
-                throw new CompileException(new Pos(pos.x()+buf.position()-1, pos.y()), "invalid symbol");
+                throw new CompileException(new Pos(pos.x()+buf.position()-1, pos.y()), "invalid symbol: whitespace");
+            }
+            if (NOT_STATION.indexOf(symbol) != -1) {
+                throw new CompileException(new Pos(pos.x()+buf.position()-1, pos.y()), "invalid symbol: '" + symbol + "'");
             }
             skipSpaces(buf);
             if (buf.get() != '=') {
-                throw new CompileException(new Pos(pos.x()+buf.position()-1, pos.y()), "expcted \"=\" in defintion");
+                throw new CompileException(new Pos(pos.x()+buf.position()-1, pos.y()), "expcted '=' in defintion");
             }
             skipSpaces(buf);
 

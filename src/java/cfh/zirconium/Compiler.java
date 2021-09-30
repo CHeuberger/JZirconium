@@ -224,11 +224,13 @@ public class Compiler {
                         }
                         row[x] = ' ';
                         var pos = new Pos(start, y);
-                        var def = Definition.parse(pos, expr);
-                        if (definitions.containsKey(def.symbol)) {
-                            throw new CompileException(pos, "duplicated definition");
+                        if (!expr.isBlank()) {
+                            var def = Definition.parse(pos, expr);
+                            if (definitions.containsKey(def.symbol)) {
+                                throw new CompileException(pos, "duplicated definition");
+                            }
+                            definitions.put(def.symbol, def);
                         }
-                        definitions.put(def.symbol, def);
                     } else {
                         while (x < row.length) {
                             if (row[x] == ')') {
