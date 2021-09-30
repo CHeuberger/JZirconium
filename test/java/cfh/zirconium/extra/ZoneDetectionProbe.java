@@ -639,12 +639,12 @@ public class ZoneDetectionProbe extends JPanel {
     
     private void paintAlgorithm(Graphics2D gg) {
         if (algorithm != null) {
-            var ggg = gg.create();
+            var g2 = (Graphics2D) gg.create();
             try {
-                gg.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.5F));
-                algorithm.paint(gg, SIZE);
+                g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_ATOP, 0.5F));
+                algorithm.paint(g2, SIZE);
             } finally {
-                ggg.dispose();
+                g2.dispose();
             }
         }
     }

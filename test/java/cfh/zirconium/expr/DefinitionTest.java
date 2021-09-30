@@ -11,7 +11,6 @@ public class DefinitionTest {
     public static void main(String[] args) throws Exception {
         var errors = 0;
         for (var text : """
-            
             a = 2
             a = 12 
             a = N

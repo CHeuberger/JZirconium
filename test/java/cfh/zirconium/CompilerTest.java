@@ -34,7 +34,8 @@ public class CompilerTest {
               (TEST)
             ==========
             ((A=1))
-            
+            ==========
+            @  (())
             """.split("(?m)^ *===+ *\n"))
         {
             errors += valid(code);
@@ -47,8 +48,6 @@ public class CompilerTest {
             O (
             ==========
             0 (TEST
-            ==========
-            @  (())
             """.split("\n *===+ *\n"))
         {
             errors += invalid(code);
@@ -67,6 +66,7 @@ public class CompilerTest {
             System.out.println(first(code));
             return 0;
         } catch (Exception ex) {
+            ex.printStackTrace();
             System.err.printf("Unexpected %s: %s for %n%s%n",
                 ex.getClass().getSimpleName(), ex.getMessage(), code);
             return 1;

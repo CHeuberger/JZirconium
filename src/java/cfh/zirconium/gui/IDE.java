@@ -69,7 +69,7 @@ import cfh.zirconium.net.Pos;
 /** Main for GUI. */
 public class IDE {
 
-    public static final String VERSION = "0.11";
+    public static final String VERSION = "0.12";
     private static final String TITLE = "JZirconium v" + VERSION;
     private static final String ICON = "icon.png";
     
@@ -419,11 +419,7 @@ public class IDE {
         }
         file = chooser.getSelectedFile();
         PREFS.put(PREF_FILE, file.getAbsolutePath());
-        var filename = file.getName();
-        var extension = filename.lastIndexOf('.');
-        if (extension != -1) {
-            filename = filename.substring(0, extension);
-        }
+        var filename = file.getName().replaceFirst("\\.[^./]*$", "");
         var headerFile = new File(file.getParent(), filename + ".zch");
         try {
             var code = Files.lines(file.toPath()).collect(Collectors.joining("\n"));

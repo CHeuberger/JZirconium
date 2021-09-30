@@ -64,11 +64,6 @@ public class ZoneDetectorTest {
             var parsed = parse(code);
             try {
                 var zones = new ZoneDetector(parsed.chars).detect();
-                Arrays.stream(zones)
-                .map(Arrays::stream).map(s -> s.map(z -> z.toString().substring(0, 1)).toList())
-                .forEach(System.out::println);
-                
-                System.out.println();
                 errors += parsed.check(zones);
             } catch (CompileException ex) {
                 ex.printStackTrace();
@@ -164,7 +159,6 @@ public class ZoneDetectorTest {
                 ex.getClass().getSimpleName(), ex.getMessage(), code);
             return 1;
         }
-        System.out.println();
         return parsed.check(zones);
     }
     
