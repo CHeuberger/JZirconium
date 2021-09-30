@@ -12,6 +12,8 @@ https://esolangs.org/wiki/Zirconium
 
 * minor code optimization
 * index out of bound error removed
+* disallow syntax characters as symbols for synthetic stations - #10
+* test class
 
 ### v0.10
 
@@ -32,7 +34,7 @@ https://esolangs.org/wiki/Zirconium
 * Java: version 17 ([Open JDK](http://openjdk.java.net/))
   double-click the `jzirconium.jar` file or use the command 
   `java -jar jzirconium.jar` 
-* Graphviz: optional for graph visualization ([https://graphviz.org](https://graphviz.org/))
+* Graphviz: **optional** for graph visualization ([https://graphviz.org](https://graphviz.org/))
   The environment variable `GRAPHVIZ_HOME` should point to the **installation directory** of Graphviz.
   Alternative: the `Graph` system property can be set to point to the Graphviz `dot` **executable** (ignores `GRAPHVIZ_HOME`): 
   `java -DGraph=path-to-dot -jar jzirconium.jar`
