@@ -45,3 +45,7 @@ https://esolangs.org/wiki/Zirconium
   Alternative: the `Graph` system property can be set to point to the Graphviz `dot` **executable** (ignores `GRAPHVIZ_HOME`): 
   `java -DGraph=path-to-dot -jar jzirconium.jar`
 
+### Warning
+
+Branch `java8` is just the main branch retrofitted to Java version 8 - it is not intended for development. The branch will normally be updated by a forced push after a rebase.
+

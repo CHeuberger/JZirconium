@@ -180,7 +180,7 @@ public class Compiler {
                 Pos pos = new Pos(0, count);
                 Definition def;
                 try {
-                    def = Definition.parse(pos, header);
+                    def = Definition.parse(pos, line);
                 } catch (CompileException ex) {
                     throw (CompileException) new CompileException(ex.pos, true, ex.getMessage()).initCause(ex);
                 }
