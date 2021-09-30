@@ -8,6 +8,10 @@ https://esolangs.org/wiki/Zirconium
 
 ## Changes
 
+## v0.12
+
+* use `Monospaced` font if `DejaVu Sans Mono` is not available
+
 ### v0.11
 
 * minor code optimization
