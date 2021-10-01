@@ -8,26 +8,28 @@ https://esolangs.org/wiki/Zirconium
 
 ## Changes
 
-## v0.12
+### v0.12
 
-* use `Monospaced` font if `DejaVu Sans Mono` is not available
+* use `Monospaced` font if `DejaVu Sans Mono` is not available - #12
+* corrected count of linked stations (`K`) for bound stations - #13
+* shortcut keys for compile (`F9`), run (`F11`) and step (`F5`)
 
-### v0.11
+#### v0.11
 
 * minor code optimization
 * index out of bound error removed
 * disallow syntax characters as symbols for synthetic stations - #10
 * test class
 
-### v0.10
+#### v0.10
 
 * header files reading, saving, compiling and showing - #1
 
-### v0.09
+#### v0.09
 
 * new zone detection (zone inference, mixed zones) - #4, #5, #6
 
-### v0.08
+#### v0.08
 
 * pure stations can be placed inside exclusion zones or metropolis - #2
 
