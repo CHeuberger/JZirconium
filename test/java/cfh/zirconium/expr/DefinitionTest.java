@@ -8,7 +8,18 @@ import cfh.zirconium.net.Pos;
 public class DefinitionTest {
 
     /** Just for testing. */
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
+        var test = new DefinitionTest(args == null);
+        test.test();
+    }
+    
+    private final boolean silent;
+    
+    private DefinitionTest(boolean silent) {
+        this.silent = silent;
+    }
+    
+    private void test() {    
         var errors = 0;
         for (var text : """
             a = 2
@@ -41,7 +52,9 @@ public class DefinitionTest {
             errors += invalid(text);
         }
         
-        System.out.println();
+        if (!silent) {
+            System.out.println();
+        }
         var pattern = Pattern.compile("""
             (?x)
             ([^(]*)       # expression
@@ -88,9 +101,11 @@ public class DefinitionTest {
         }
     }
 
-    private static int valid(String expr) {
+    private int valid(String expr) {
         try {
-            System.out.println(Definition.parse(new Pos(0,0), expr));
+            if (!silent) {
+                System.out.println(Definition.parse(new Pos(0,0), expr));
+            }
             return 0;
         } catch (Exception ex) {
             System.err.printf("Unexpected for \"%s\", %s: %s%n",
@@ -99,18 +114,20 @@ public class DefinitionTest {
         }
     }
     
-    private static int invalid(String expr) {
+    private int invalid(String expr) {
         try {
             var def = Definition.parse(new Pos(0, 0), expr);
             System.err.printf("Missing Exception for \"%s\" = %s%n", expr, def);
             return 1;
         } catch (CompileException ex) {
-            System.out.println(ex.getMessage());
+            if (!silent) {
+                System.out.println(ex.getMessage());
+            }
             return 0;
         }
     }
     
-    private static int calculate(String expr, int n, int k, int expected) {
+    private int calculate(String expr, int n, int k, int expected) {
         try {
             var def = Definition.parse(new Pos(0, 0), expr);
             var result = def.calculate(n, k);

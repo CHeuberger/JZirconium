@@ -1,6 +1,5 @@
 package cfh.zirconium.net;
 
-import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Queue;
@@ -20,7 +19,7 @@ public class StationTest {
     private static final boolean strictZone = false;
 
     public static void main(String[] args) {
-        var test = new StationTest();
+        var test = new StationTest(args == null);
         test.pureStations();
         test.tunnel();
         test.tunnelCrossing();
@@ -47,7 +46,7 @@ public class StationTest {
     private final Environment environment;
     private final Compiler compiler;
     
-    private StationTest() {
+    private StationTest(boolean silent) {
         errors = 0;
         printer = new PrinterMock();
         input = new InputMock();

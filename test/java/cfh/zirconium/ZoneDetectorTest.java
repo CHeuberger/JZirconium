@@ -7,7 +7,7 @@ import cfh.zirconium.Compiler.Zone;
 public class ZoneDetectorTest {
 
     public static void main(String[] args) {
-        var test = new ZoneDetectorTest();
+        var test = new ZoneDetectorTest(args == null);
         test.testW();
         test.test();
         
@@ -18,7 +18,12 @@ public class ZoneDetectorTest {
         }
     }
 
+    private final boolean silent;
     private int errors = 0;
+
+    private ZoneDetectorTest(boolean silent) {
+        this.silent = silent;
+    }
     
     private void testW() {
         for (var code : """
@@ -143,7 +148,9 @@ public class ZoneDetectorTest {
             System.err.printf("Missing exception for %n\"%s\"%n", code);
             return 1;
         } catch (CompileException expected) {
-            System.out.println(expected);
+            if (!silent) {
+                System.out.println(expected);
+            }
             return 0;
         }
     }

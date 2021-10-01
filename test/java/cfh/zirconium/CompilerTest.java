@@ -6,13 +6,15 @@ import cfh.zirconium.Environment.*;
 public class CompilerTest {
     
     public static void main(String[] args) {
-        var test = new CompilerTest();
+        var test = new CompilerTest(args == null);
         test.validationTest();
     }
 
+    private final boolean silent;
     private final Compiler compiler;
     
-    private CompilerTest() {
+    private CompilerTest(boolean silent) {
+        this.silent = silent;
         compiler = new Compiler(new Environment(printer, input, output, output));
     }
     
@@ -41,7 +43,9 @@ public class CompilerTest {
             errors += valid(code);
         }
         
-        System.out.println();
+        if (!silent) {
+            System.out.println();
+        }
         for (var code : """
             Y   
             ==========
@@ -63,7 +67,9 @@ public class CompilerTest {
     private int valid(String code) {
         try {
             compiler.compile(first(code), code, "");
-            System.out.println(first(code));
+            if (!silent) {
+                System.out.println(first(code));
+            }
             return 0;
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -79,7 +85,9 @@ public class CompilerTest {
             System.err.printf("Missing Exception for %n%s%n", code);
             return 1;
         } catch (CompileException ex) {
-            System.out.println(first(code));
+            if (!silent) {
+                System.out.println(first(code));
+            }
             return 0;
         }
     }
