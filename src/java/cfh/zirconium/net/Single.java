@@ -104,7 +104,11 @@ permits NopStation, CreateStation, DotStation, DupStation, DecStation, SplitStat
         return Collections.unmodifiableCollection(linked);
     }
     
-    /** Sends a number of drones to aeach linked station. */
+    protected int countLinked() {
+        return parent==null ? linked.size() : parent.linked().size();
+    }
+    
+    /** Sends a number of drones to each linked station. */
     protected final void send(int number) {
         assert ticking : "not ticking " + this;
         if (number < 0) {

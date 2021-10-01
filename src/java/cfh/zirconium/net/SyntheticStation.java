@@ -26,7 +26,7 @@ public final class SyntheticStation extends Single {
 
     @Override
     protected void tick0() {
-        var k = linked().size();
+        var k = countLinked();
         var n = total();
         var drones = definition.calculate(n, k);
         if (drones > 0) {

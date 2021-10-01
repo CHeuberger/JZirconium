@@ -1,9 +1,11 @@
 package cfh.zirconium.net;
 
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import cfh.zirconium.Compiler;
 import cfh.zirconium.Compiler.CompileException;
@@ -67,7 +69,7 @@ public class StationTest {
             assertEquals(0, dot.drones(), program.name() + ": . - after reset");
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(0, dot.drones(), program.name() + ": dot- after first step");
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after first step");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after first step");
@@ -96,7 +98,7 @@ public class StationTest {
             assertEquals(0, dup.drones(), program.name() + ": o - after reset");
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(0, dup.drones(), program.name() + ": o - after first step");
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after first step");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after first step");
@@ -125,7 +127,7 @@ public class StationTest {
             assertEquals(0, nop.drones(), program.name() + ": 0 - after reset");
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(0, nop.drones(), program.name() + ": 0 - after first step");
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after first step");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after first step");
@@ -151,7 +153,7 @@ public class StationTest {
             assertEquals(0, split.drones(), program.name() + ": O - after reset");
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(0, split.drones(), program.name() + ": O - after first step");
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after first step");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after first step");
@@ -180,7 +182,7 @@ public class StationTest {
             assertEquals(0, dec.drones(), program.name() + ": Q - after reset");
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(0, dec.drones(), program.name() + ": Q - after first step");
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after first step");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after first step");
@@ -209,7 +211,7 @@ public class StationTest {
             assertEquals(0, create.drones(), program.name() + ": @ - after reset");
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(0, create.drones(), program.name() + ": @ - after first step");
             assertEquals(1, nop1.drones(), program.name() + ": nop1 - after first step");
             assertEquals(1, nop2.drones(), program.name() + ": nop2 - after first step");
@@ -240,7 +242,7 @@ public class StationTest {
             program.reset();
             assertEquals(0, create.drones(), program.name() + ": @ - after reset");
             assertEquals(0, nop.drones(), program.name() + ": nop - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(0, create.drones(), program.name() + ": @ - after first step");
             assertEquals(1, nop.drones(), program.name() + ": nop - after first step");
             program.step();
@@ -269,7 +271,7 @@ public class StationTest {
             program.reset();
             assertEquals(0, create.drones(), program.name() + ": @ - after reset");
             assertEquals(0, nop.drones(), program.name() + ": nop - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(0, create.drones(), program.name() + ": @ - after first step");
             assertEquals(1, nop.drones(), program.name() + ": nop - after first step");
             program.step();
@@ -300,7 +302,7 @@ public class StationTest {
             assertEquals(0, create.drones(), program.name() + ": @ - after reset");
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(0, create.drones(), program.name() + ": @ - after first step");
             assertEquals(1, nop1.drones(), program.name() + ": nop1 - after first step");
             assertEquals(1, nop2.drones(), program.name() + ": nop2 - after first step");
@@ -340,7 +342,7 @@ public class StationTest {
             assertEquals(0, create2.drones(), program.name() + ": @2 - after reset");
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(0, create1.drones(), program.name() + ": @1 - after first step");
             assertEquals(0, create2.drones(), program.name() + ": @2 - after reset");
             assertEquals(1, nop1.drones(), program.name() + ": nop1 - after first step");
@@ -386,7 +388,7 @@ public class StationTest {
             assertEquals(0, create2.drones(), program.name() + ": @2 - after reset");
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(0, create1.drones(), program.name() + ": @1 - after first step");
             assertEquals(0, create2.drones(), program.name() + ": @2 - after first step");
             assertEquals(1, nop1.drones(), program.name() + ": nop1 - after first step");
@@ -440,7 +442,7 @@ public class StationTest {
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after reset");
             assertEquals(0, nop3.drones(), program.name() + ": nop3 - after reset");
             assertEquals(0, nop4.drones(), program.name() + ": nop4 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(0, create1.drones(), program.name() + ": @1 - after first step");
             assertEquals(0, create2.drones(), program.name() + ": @2 - after first step");
             assertEquals(0, create3.drones(), program.name() + ": @3 - after first step");
@@ -517,7 +519,7 @@ public class StationTest {
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
             assertEquals(0, create1.drones(), program.name() + ": @1 - after reset");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after first step");
             assertEquals(0, create1.drones(), program.name() + ": @1 - after first step");
             assertEquals(1, nop2.drones(), program.name() + ": nop2 - after first step");
@@ -549,7 +551,7 @@ public class StationTest {
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
             assertEquals(0, create1.drones(), program.name() + ": @1 - after reset");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(1, nop1.drones(), program.name() + ": nop1 - after first step");
             assertEquals(0, create1.drones(), program.name() + ": @1 - after first step");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after first step");
@@ -573,7 +575,7 @@ public class StationTest {
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
             assertEquals(0, create1.drones(), program.name() + ": @1 - after reset");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(1, nop1.drones(), program.name() + ": nop1 - after first step");
             assertEquals(0, create1.drones(), program.name() + ": @1 - after first step");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after first step");
@@ -605,7 +607,7 @@ public class StationTest {
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
             assertEquals(0, create1.drones(), program.name() + ": @1 - after reset");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after first step");
             assertEquals(0, create1.drones(), program.name() + ": @1 - after first step");
             assertEquals(1, nop2.drones(), program.name() + ": nop2 - after first step");
@@ -634,7 +636,7 @@ public class StationTest {
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
             assertEquals(0, create1.drones(), program.name() + ": @1 - after reset");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(1, nop1.drones(), program.name() + ": nop1 - after first step");
             assertEquals(0, create1.drones(), program.name() + ": @1 - after first step");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after first step");
@@ -657,7 +659,7 @@ public class StationTest {
             
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(3, nop1.drones(), program.name() + ": nop1 - after step");
         } catch (Exception ex) {
             errors += 1;
@@ -671,7 +673,7 @@ public class StationTest {
             
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(1, nop1.drones(), program.name() + ": nop1 - after first step");
             program.step();
             assertEquals(3, nop1.drones(), program.name() + ": nop1 - after second step");
@@ -689,9 +691,69 @@ public class StationTest {
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
             assertEquals(0, nop2.drones(), program.name() + ": nop2 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(3, nop1.drones(), program.name() + ": nop1 - after step");
             assertEquals(3, nop2.drones(), program.name() + ": nop2 - after step");
+        } catch (Exception ex) {
+            errors += 1;
+            ex.printStackTrace();
+        }
+        try {
+            var code = "0<-[-0©0-]->0";
+            var program = compiler.compile("test.bound.link.synthetic", code, "©=K2*");
+            var nop1 = (NopStation) get(0, 0, program);
+            var nop2 = (NopStation) get(12, 0, program);
+            
+            program.reset();
+            assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
+            assertEquals(0, nop2.drones(), program.name() + ": nop2 - after reset");
+            program.step();  // init
+            assertEquals(4, nop1.drones(), program.name() + ": nop1 - after step");
+            assertEquals(4, nop2.drones(), program.name() + ": nop2 - after step");
+        } catch (Exception ex) {
+            errors += 1;
+            ex.printStackTrace();
+        }
+        try {
+            var code = """
+                   o
+                   v
+                0<0O0>0
+                   v
+                   0
+                """;
+            var program = compiler.compile("test.bound.link.O", code, "");
+            var dup1 = (DupStation) get(3, 0, program);
+            var split1 = (SplitStation) get(3, 2, program);
+            var nop1 = (NopStation) get(0, 2, program);
+            var nop2 = (NopStation) get(6, 2, program);
+            var nop3 = (NopStation) get(3, 4, program);
+            
+            program.reset();
+            assertEquals(0, dup1.drones(), program.name() + ": dup1 - after reset");
+            assertEquals(0, split1.drones(), program.name() + ": split1 - after reset");
+            assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
+            assertEquals(0, nop2.drones(), program.name() + ": nop2 - after reset");
+            assertEquals(0, nop3.drones(), program.name() + ": nop3 - after reset");
+            program.step();  // init
+            assertEquals(0, dup1.drones(), program.name() + ": dup1 - after first step");
+            assertEquals(0, split1.drones(), program.name() + ": split1 - after first step");
+            assertEquals(0, nop1.drones(), program.name() + ": nop1 - after first step");
+            assertEquals(0, nop2.drones(), program.name() + ": nop2 - after first step");
+            assertEquals(0, nop3.drones(), program.name() + ": nop3 - after first step");
+            dup1.receive(15);
+            program.step();
+            assertEquals(0, dup1.drones(), program.name() + ": dup1 - after second step");
+            assertEquals(15, split1.drones(), program.name() + ": split1 - after second step");
+            assertEquals(0, nop1.drones(), program.name() + ": nop1 - after second step");
+            assertEquals(0, nop2.drones(), program.name() + ": nop2 - after second step");
+            assertEquals(0, nop3.drones(), program.name() + ": nop3 - after second step");
+            program.step();
+            assertEquals(0, dup1.drones(), program.name() + ": dup1 - after third step");
+            assertEquals(0, split1.drones(), program.name() + ": split1 - after third step");
+            assertEquals(5, nop1.drones(), program.name() + ": nop1 - after third step");
+            assertEquals(5, nop2.drones(), program.name() + ": nop2 - after third step");
+            assertEquals(5, nop3.drones(), program.name() + ": nop3 - after third step");
         } catch (Exception ex) {
             errors += 1;
             ex.printStackTrace();
@@ -707,7 +769,7 @@ public class StationTest {
             
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(1, nop1.drones(), program.name() + ": nop1 - after first step");
             program.step();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after second step");
@@ -742,7 +804,7 @@ public class StationTest {
             
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(7, nop1.drones(), program.name() + ": nop1 - after step");
         } catch (Exception ex) {
             errors += 1;
@@ -798,7 +860,7 @@ public class StationTest {
             program.reset();
             assertEquals(0, create1.drones(), program.name() + ": create1 - after reset");
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(1, nop1.drones(), program.name() + ": nop1 - after step");
         } catch (Exception ex) {
             errors += 1;
@@ -819,7 +881,7 @@ public class StationTest {
             program.reset();
             assertEquals(0, create1.drones(), program.name() + ": create1 - after reset");
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(1, nop1.drones(), program.name() + ": nop1 - after step");
         } catch (Exception ex) {
             errors += 1;
@@ -840,7 +902,7 @@ public class StationTest {
             program.reset();
             assertEquals(0, create1.drones(), program.name() + ": create1 - after reset");
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(1, nop1.drones(), program.name() + ": nop1 - after step");
         } catch (Exception ex) {
             errors += 1;
@@ -879,7 +941,7 @@ public class StationTest {
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
             in1.receive(1);
-            program.step();
+            program.step();  // init
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after first step");
             input.expectByte(3);
             in1.receive(1);
@@ -908,7 +970,7 @@ public class StationTest {
             
             program.reset();
             assertEquals(0, halt1.drones(), program.name() + ": halt1 - after reset");
-            program.step();
+            program.step();  // init
             assertEquals(0, halt1.drones(), program.name() + ": halt1 - after first step");
             assertEquals(false, environment.halted(), "halted");
             halt1.receive(1);
@@ -932,7 +994,7 @@ public class StationTest {
             program.reset();
             assertEquals(0, out1.drones(), program.name() + ": out1 - after reset");
             assertEquals(true, output.isEmpty(), program.name() + ": output empty after reset");
-            program.step();
+            program.step();  // init
             assertEquals(0, out1.drones(), program.name() + ": out1 - after first step");
             assertEquals(true, output.isEmpty(), program.name() + ": output empty after first step");
             out1.receive(123);
@@ -964,7 +1026,7 @@ public class StationTest {
             program.reset();
             assertEquals(0, err1.drones(), program.name() + ": err1 - after reset");
             assertEquals(true, error.isEmpty(), program.name() + ": error empty after reset");
-            program.step();
+            program.step();  // init
             assertEquals(0, err1.drones(), program.name() + ": err1 - after first step");
             assertEquals(true, error.isEmpty(), program.name() + ": error empty after first step");
             err1.receive(45);
@@ -996,7 +1058,7 @@ public class StationTest {
             program.reset();
             assertEquals(0, out1.drones(), program.name() + ": out1 - after reset");
             assertEquals(true, output.isEmpty(), program.name() + ": output empty after reset");
-            program.step();
+            program.step();  // init
             assertEquals(0, out1.drones(), program.name() + ": out1 - after first step");
             assertEquals(true, output.isEmpty(), program.name() + ": output empty after first step");
             out1.receive(123);
@@ -1027,8 +1089,8 @@ public class StationTest {
             
             program.reset();
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
-            in1.receive(1);
-            program.step();
+//            in1.receive(1);
+            program.step();  // init
             assertEquals(0, nop1.drones(), program.name() + ": nop1 - after first step");
             input.expectInt(123);
             in1.receive(1);
@@ -1468,8 +1530,14 @@ public class StationTest {
     private <T extends Single> T get(Class<T> type, int x, int y, Program program) {
         Predicate<Single> posFilter = s -> s.pos().x() == x && s.pos().y() == y;
         return 
-            program.stations()
-            .stream()
+            Stream.concat(
+                program.stations().stream()
+                ,
+                program.stations().stream()
+                .filter(Bound.class::isInstance)
+                .map(Bound.class::cast)
+                .flatMap(Bound::stations)
+            )
             .filter(type::isInstance)
             .map(type::cast)
             .filter(posFilter)
