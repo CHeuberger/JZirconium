@@ -46,6 +46,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -379,6 +380,16 @@ public class IDE {
         frame.validate();
         frame.setLocationRelativeTo(null);
         
+        var actions = frame.getRootPane().getActionMap();
+        actions.put(compileAction, compileAction);
+        actions.put(runAction, runAction);
+        actions.put(stepAction, stepAction);
+        
+        var inputs = frame.getRootPane().getInputMap(WHEN_IN_FOCUSED_WINDOW);
+        inputs.put(KeyStroke.getKeyStroke("pressed F9"), compileAction);
+        inputs.put(KeyStroke.getKeyStroke("pressed F11"), runAction);
+        inputs.put(KeyStroke.getKeyStroke("pressed F5"), stepAction);
+        
         try {
             var url = getClass().getResource(ICON);
             if (url != null) {
@@ -392,8 +403,8 @@ public class IDE {
         codePane.setCaretPosition(0);
         setName(PREFS.get(PREF_NAME, "unnamed"));
         update();
-        frame.setVisible(true);
 
+        frame.setVisible(true);
         io.setDividerLocation(0.5);
     }
     
@@ -588,12 +599,15 @@ public class IDE {
     /** Executes the program. */
     private void doRun(ActionEvent ev) {
         var stopNoChange = (ev.getModifiers() & ev.CTRL_MASK) == 0;
+        if (program == null) {
+            return;
+        }
         running = true;
         update();
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
-                while (running && !environment.halted()) {
+                while (running && !environment.halted() && program != null) {
                    if (program.step()) {
                        if (running) {
                            stepButton.setForeground(Color.ORANGE.darker());
