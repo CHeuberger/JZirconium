@@ -757,6 +757,50 @@ public class StationTest {
             errors += 1;
             ex.printStackTrace();
         }
+        // ( multi-linked to bound station )
+        try {
+            var code = """
+                @>0
+                v 0
+                00 
+                """;
+            var program = compiler.compile("test.bound.multi.to", code, "");
+            var bound = bound(2, 0, program);
+            
+            program.reset();
+            assertEquals(0, bound.drones(), program.name() + ": bound - after reset");
+            program.step();  // init
+            assertEquals(2, bound.drones(), program.name() + ": bound - after first step");
+            program.step();
+            assertEquals(2, bound.drones(), program.name() + ": bound - after second step");
+        } catch (Exception ex) {
+            errors += 1;
+            ex.printStackTrace();
+        }
+        // ( multi-linked from bound station )
+        try {
+            var code = """
+                @>o00
+                  0 v
+                  0>0
+                """;
+            var program = compiler.compile("test.bound.multi.from", code, "");
+            var bound = bound(2, 0, program);
+            var nop1 = (NopStation) get(4, 2, program);
+            
+            program.reset();
+            assertEquals(0, bound.drones(), program.name() + ": bound - after reset");
+            assertEquals(0, nop1.drones(), program.name() + ": nop1 - after reset");
+            program.step();  // init
+            assertEquals(1, bound.drones(), program.name() + ": bound - after first step");
+            assertEquals(0, nop1.drones(), program.name() + ": nop1 - after first step");
+            program.step();
+            assertEquals(1, bound.drones(), program.name() + ": bound - after second step");
+            assertEquals(2, nop1.drones(), program.name() + ": nop1 - after second step");
+        } catch (Exception ex) {
+            errors += 1;
+            ex.printStackTrace();
+        }
         // A bound station may be linked to itself in certain configurations.
         try {
             var code = """
@@ -1522,12 +1566,25 @@ public class StationTest {
     
 
     
+    private Predicate<Single> posFilter(int x, int y) {
+        return s -> s.pos().x() == x && s.pos().y() == y;
+    }
+
     private Single get(int x, int y, Program program) {
         return get(Single.class, x, y, program);
     }
     
+    private Bound bound(int x, int y, Program program) {
+        return 
+            program.stations().stream()
+            .filter(Bound.class::isInstance)
+            .map(Bound.class::cast)
+            .filter(b -> b.stations().anyMatch(posFilter(x, y)))
+            .findFirst()
+            .get();
+    }
+    
     private <T extends Single> T get(Class<T> type, int x, int y, Program program) {
-        Predicate<Single> posFilter = s -> s.pos().x() == x && s.pos().y() == y;
         return 
             Stream.concat(
                 program.stations().stream()
@@ -1539,7 +1596,7 @@ public class StationTest {
             )
             .filter(type::isInstance)
             .map(type::cast)
-            .filter(posFilter)
+            .filter(posFilter(x, y))
             .findFirst()
             .get();
     }

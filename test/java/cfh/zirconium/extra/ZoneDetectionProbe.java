@@ -34,11 +34,11 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JFrame;
-import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
@@ -48,9 +48,9 @@ public class ZoneDetectionProbe extends JPanel {
     private static final int GAP = 10;
     private static final int SIZE = 25;
     private static final int COUNT = 20;
-    private static final int FONT = 20;
+    private static final int FONT = 18;
     
-    private static final int UNDO_SIZE = 20;
+    private static final int UNDO_SIZE = 50;
     
     public static final String EMPTY = " ";
     public static final String PURE = ".o0OQ@";
@@ -72,10 +72,12 @@ public class ZoneDetectionProbe extends JPanel {
     private final JButton clearButton;
     private final JButton flood1Button;
     private final JButton flood2Button;
+    private final JButton flood3Button;
     private final JButton stepButton;
     private final JButton slowButton;
     private final JButton runButton;
     private final JButton helpButton;
+    private final JTextField statusField;
     
     private Point mark = null;
     private Point markEnd = null;
@@ -86,7 +88,7 @@ public class ZoneDetectionProbe extends JPanel {
     private final Deque<char[][]> undo = new LinkedList<>();
     
     
-    private ZoneDetectionProbe() {
+    public ZoneDetectionProbe() {
         clear();
         var text = preferences.get(PREF_CODE, null);
         if (text != null) {
@@ -131,29 +133,42 @@ public class ZoneDetectionProbe extends JPanel {
         clearButton = newButton("Clear", this::doClear, "Clear all fields");
         flood1Button = newButton("FLOOD-1", this::doFlood1, "Start FLOOD-1 algorithm");
         flood2Button = newButton("FLOOD-2", this::doFlood2, "Start FLOOD-2 algorithm");
+        flood3Button = newButton("FLOOD-3", this::doFlood3, "Start FLOOD-3 algorithm");
         stepButton = newButton("Step", this::doStep, "Do one step on started algorithm");
         slowButton = newButton("Slow", this::doSlow, "Slow run the started algorithm up to the end");
         runButton = newButton("Run", this::doRun, "Run the started algorithm up to the end");
         helpButton =newButton("Help", this::doHelp, "Show help");
         runStatus(false);
         
-        var menubar = new JMenuBar();
-        menubar.add(Box.createHorizontalStrut(5));
-        menubar.add(clearButton);
-        menubar.add(Box.createHorizontalGlue());
-        menubar.add(flood1Button);
-        menubar.add(flood2Button);
-        menubar.add(Box.createHorizontalGlue());
-        menubar.add(stepButton);
-        menubar.add(slowButton);
-        menubar.add(runButton);
-        menubar.add(Box.createHorizontalGlue());
-        menubar.add(helpButton);
-        menubar.add(Box.createHorizontalStrut(5));
+        var upperButtons = Box.createHorizontalBox();
+        upperButtons.add(Box.createHorizontalStrut(5));
+        upperButtons.add(flood1Button);
+        upperButtons.add(flood2Button);
+        upperButtons.add(flood3Button);
+        upperButtons.add(Box.createHorizontalStrut(5));
+        
+        var lowerButtons = Box.createHorizontalBox();
+        lowerButtons.add(Box.createHorizontalStrut(5));
+        lowerButtons.add(clearButton);
+        lowerButtons.add(Box.createHorizontalGlue());
+        lowerButtons.add(stepButton);
+        lowerButtons.add(slowButton);
+        lowerButtons.add(runButton);
+        lowerButtons.add(Box.createHorizontalGlue());
+        lowerButtons.add(helpButton);
+        lowerButtons.add(Box.createHorizontalStrut(5));
+        
+        var buttons = Box.createVerticalBox();
+        buttons.add(upperButtons);
+        buttons.add(lowerButtons);
         
         var center = new JPanel();
         center.add(this);
         center.setBorder(BorderFactory.createEmptyBorder(GAP, GAP, GAP, GAP));
+        
+        statusField = new JTextField();
+        statusField.setEditable(false);
+        statusField.setFont(new Font("Monospaced" , Font.BOLD, statusField.getFont().getSize()));
         
         var frame = new JFrame();
         frame.addWindowListener(new WindowAdapter() {
@@ -163,8 +178,9 @@ public class ZoneDetectionProbe extends JPanel {
             }
         });
         frame.setDefaultCloseOperation(frame.DISPOSE_ON_CLOSE);
-        frame.setJMenuBar(menubar);
+        frame.add(buttons, BorderLayout.PAGE_START);
         frame.add(center, BorderLayout.CENTER);
+        frame.add(statusField, BorderLayout.PAGE_END);
         frame.pack();
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
@@ -198,6 +214,12 @@ public class ZoneDetectionProbe extends JPanel {
     
     private void doFlood2(ActionEvent ev) {
         algorithm = new Flood2Algorithm(code);
+        runStatus(true);
+        repaint();
+    }
+    
+    private void doFlood3(ActionEvent ev) {
+        algorithm = new Flood3Algorithm(code, statusField);
         runStatus(true);
         repaint();
     }

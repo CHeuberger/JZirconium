@@ -8,7 +8,9 @@ https://esolangs.org/wiki/Zirconium
 
 ## Changes
 
-### v0.12
+### v0.13
+
+#### v0.12
 
 * use `Monospaced` font if `DejaVu Sans Mono` is not available - #12
 * corrected count of linked stations (`K`) for bound stations - #13
@@ -44,4 +46,8 @@ https://esolangs.org/wiki/Zirconium
   The environment variable `GRAPHVIZ_HOME` should point to the **installation directory** of Graphviz.
   Alternative: the `Graph` system property can be set to point to the Graphviz `dot` **executable** (ignores `GRAPHVIZ_HOME`): 
   `java -DGraph=path-to-dot -jar jzirconium.jar`
+
+### Warning
+
+Branch `java8` is just the main branch retrofitted to Java version 8 - it is not intended for development. The branch will normally be updated by a forced push after a rebase.
 

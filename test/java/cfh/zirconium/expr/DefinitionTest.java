@@ -8,6 +8,7 @@ import cfh.zirconium.net.Pos;
 public class DefinitionTest {
 
     /** Just for testing. */
+    @SuppressWarnings("javadoc")
     public static void main(String[] args) {
         var test = new DefinitionTest(args == null);
         test.test();

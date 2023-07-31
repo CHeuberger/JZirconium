@@ -6,6 +6,7 @@ import static javax.swing.JOptionPane.*;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -34,6 +35,7 @@ import javax.swing.Box;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -65,12 +67,13 @@ import cfh.zirconium.Compiler.CompileException;
 import cfh.zirconium.Environment;
 import cfh.zirconium.Environment.*;
 import cfh.zirconium.Settings;
+import cfh.zirconium.extra.ZoneDetectionProbe;
 import cfh.zirconium.net.Pos;
 
 /** Main for GUI. */
 public class IDE {
 
-    public static final String VERSION = "0.12";
+    public static final String VERSION = "0.13";
     private static final String TITLE = "JZirconium v" + VERSION;
     private static final String ICON = "icon.png";
     
@@ -119,7 +122,7 @@ public class IDE {
     private final Action graphAction;
     
     private final JButton stepButton;
-
+    
     private final Environment environment;
     
     private String name = null;
@@ -156,11 +159,15 @@ public class IDE {
         
         var help = newAction("Help", this::doHelp, "Show help");
         graphAction = newAction("Graph", this::doGraph, "Show a DOT graph of compiled program");
+        var test = newAction("Test",  this::doTest, "Start the test tool for zone detection");
         
         var helpMenu = new JMenu("Help");
         helpMenu.add(newMenuItem(help));
         helpMenu.addSeparator();
         helpMenu.add(newMenuItem(graphAction));
+        helpMenu.addSeparator();
+        helpMenu.addSeparator();
+        helpMenu.add(newMenuItem(test));
         
         stepButton = newMenuBarButton(stepAction);
         
@@ -578,11 +585,20 @@ public class IDE {
         try (var inp = Files.newInputStream(pngPath, READ)) {
             var img = new ImageIcon(ImageIO.read(inp));
             var msg = newScrollPane(new JLabel(img));
-            showMessageDialog(frame, msg, filename, PLAIN_MESSAGE);
+            var dialog = new JDialog(frame);
+            dialog.setLayout(new BorderLayout());
+            dialog.add(msg);
+            dialog.pack();
+            dialog.setVisible(true);
         } catch (IOException ex) {
             error(ex, "reading image \"%s\"", pngPath);
             return;
         }
+    }
+    
+    /** Star test tool for zone detection. */
+    private void doTest(ActionEvent ev) {
+        new ZoneDetectionProbe();
     }
     
     /** Resets program. */
