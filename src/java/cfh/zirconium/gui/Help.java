@@ -41,7 +41,8 @@ public class Help {
                   \\|/
                    o----@
             
-            Based on specification from 2021-09-23 https://esolangs.org/wiki/Zirconium
+            
+            Based on specification revision 1.1 from 2021-09-23 https://esolangs.org/wiki/Zirconium
             """);
         final var STATIONS = String.format(HEADER + """
                                                   STATIONS
@@ -58,6 +59,17 @@ public class Help {
                occupying this station, K is the number of linked stations. (division by 0 returns 0)
             
             These stations can be placed anywhere.
+            
+            
+                                              Bound Stations
+                                             ---------------- 
+            Stations that are adjacent are considered a single bound station. 
+            A bound station executes the behavior of all its child stations each tick, 
+            and is linked to each station its child stations are linked to. A bound station 
+            receiving drones uses the sum of all its occupying drones, and the sum of its 
+            children's linked stations, to compute its behavior. In other words, the children 
+            of the bound station share a single number N for its drone count and K for its 
+            linked station count. This behavior is especially relevant for synthetic stations.
             """);
         final var TUNNELS = String.format(HEADER + """
                                                   TUNNELS
@@ -69,6 +81,8 @@ public class Help {
             +   both horizontal and vertical.
             X   both diagonals.
             *   any direction.
+            
+            The fences will behave as * tunnels.
             """);
         final var APERTURES = String.format(HEADER + """
                                                  APERTURES
@@ -135,6 +149,7 @@ public class Help {
             A synthetic station is a station whose behavior is defined by the user. Each tick, 
             a synthetic station dispatches some number of drones based on the number of 
             occupying drones and the number of linked stations using some arithmetic expression.
+            Synthetic stations are allowed only in a metropolis.
 
             A synthetic station must be defined using a specific grammar. The definition 
             includes a target symbol, which is the synthetic station to be defined, and an 
@@ -164,6 +179,31 @@ public class Help {
             A synthetic station may be defined inside a lens. A lens is parsed at compile time:
                 ((r = N K / 1 +))
             """);
+        final var GUI = HEADER + """
+            GUI
+            =====
+            
+            +----------------------------------------------------------------------------------+
+            |                                                               |                  |
+            |                                                               |                  |
+            |                                                               |                  |
+            |                                                               |                  |
+            |                          CODE / HEADER                        |     STATIONS     |
+            |                            EDITOR                             |       LIST       |
+            |                                                               |                  |
+            |                                                               |                  |
+            |                                                               |                  |
+            |                                                               |                  |
+            +----------------------------------------------------------------------------------+
+            |                                                                                  |
+            |                                      INPUT                                       |
+            |                                                                                  |
+            +----------------------------------------------------------------------------------+
+            |                                                                        |         |
+            |                                 OUTPUT                                 |  ERROR  |
+            |                                                                        |         |
+            +----------------------------------------------------------------------------------+
+            """;
 
         pane = new JTabbedPane();
         pane.addTab("INTRO", newArea(INTRO));
@@ -173,6 +213,7 @@ public class Help {
         pane.addTab("EXCLUSION", newArea(EXCLUSION));
         pane.addTab("METROPOLIS", newArea(METROPOLIS));
         pane.addTab("SYNTHETIC", newArea(SYNTHETIC));
+        pane.addTab("GUI", newArea(GUI));
     }
     
     

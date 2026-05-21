@@ -45,7 +45,6 @@ public class Program {
 
     /** Creates DOT graph. */
     public void graph(Writer wr) {
-        @SuppressWarnings("resource")
         var out = new Formatter(wr);
         out.format("digraph \"%s\" {%n", name);
         out.format("  fontname = \"%s\";%n", settings.codeFont().getName());
